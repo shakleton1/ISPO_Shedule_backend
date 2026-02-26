@@ -51,7 +51,11 @@ go run .\cmd\api
 
 - Логи: zerolog (`log.level`, `log.pretty` в конфиге)
 - Метрики Prometheus: `GET /metrics`
-- Проверка метрик: `GET /api/v1/metrics/health`
+- Проверка метрик/DB: `GET /api/v1/metrics/health`
+
+Prometheus метрики (дополнительно):
+
+- `ispo_db_up` — 1 если Postgres доступен, иначе 0
 
 ## Аутентификация
 

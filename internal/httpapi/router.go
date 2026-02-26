@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -18,23 +19,24 @@ type RouterDeps struct {
 	Repo        *schedule.Repository
 	PDF         *pdf.Engine
 	Tokens      *auth.TokenManager
+	DBPing      func(context.Context) error
 }
 
 func NewRouter(deps RouterDeps) http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(requestLoggingMiddleware())
-	r.Use(metricsMiddleware())
+	r.Use(metricsMiddleware(deps.DBPing))
 
 	// Prometheus metrics endpoint (обычно без auth, т.к. его дергает Prometheus).
-	r.GET("/metrics", metricsHandler())
+	r.GET("/metrics", metricsHandler(deps.DBPing))
 
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/health", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"status": "ok", "time": time.Now().UTC().Format(time.RFC3339)})
 		})
-		v1.GET("/metrics/health", metricsHealthHandler())
+		v1.GET("/metrics/health", metricsHealthHandler(deps.DBPing))
 
 		authGroup := v1.Group("/auth")
 		{

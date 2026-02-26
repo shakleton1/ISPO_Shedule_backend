@@ -35,6 +35,11 @@ func Run() error {
 		return err
 	}
 
+	sqlDB, err := gormDB.DB()
+	if err != nil {
+		return err
+	}
+
 	scheduleRepo := schedule.NewRepository(gormDB)
 
 	tokens, err := auth.NewTokenManager(cfg.Auth.JWTSecret, cfg.Auth.AccessTokenTTL)
@@ -62,6 +67,7 @@ func Run() error {
 		Repo:        scheduleRepo,
 		PDF:         pdfEngine,
 		Tokens:      tokens,
+		DBPing:      sqlDB.PingContext,
 	})
 
 	srv := &http.Server{
