@@ -18,10 +18,14 @@ func (r *Repository) ListTemplatesFor(groupID int, dayOfWeek int16, parity WeekP
 func (r *Repository) ListOverridesForDate(groupID int, date time.Time) ([]OverrideView, error) {
 	var rows []OverrideView
 	err := r.db.Table("schedule_overrides so").
-		Select(`so.pair_number, so.action_type, so.new_subject_id, COALESCE(s.name, '') AS new_subject_name, so.new_location_id, COALESCE(l.name, '') AS new_location_name, so.new_teacher_name, so.comment, so.subgroup`).
+		Select(`so.id, so.pair_number, so.action_type, so.new_subject_id, COALESCE(s.name, '') AS new_subject_name, so.new_location_id, COALESCE(l.name, '') AS new_location_name, so.new_teacher_name, so.comment, so.subgroup, so.updated_at`).
 		Joins("LEFT JOIN subjects s ON s.id = so.new_subject_id").
 		Joins("LEFT JOIN locations l ON l.id = so.new_location_id").
 		Where("so.group_id = ? AND so.target_date = ?", groupID, dateOnly(date)).
+		Order(`so.pair_number asc,
+			(CASE so.action_type WHEN 'CANCEL' THEN 0 WHEN 'REPLACE' THEN 1 WHEN 'ADD' THEN 2 ELSE 3 END) asc,
+			so.updated_at desc,
+			so.id desc`).
 		Scan(&rows).Error
 	return rows, err
 }

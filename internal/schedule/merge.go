@@ -2,7 +2,59 @@ package schedule
 
 import "fmt"
 
+type overrideKey struct {
+	PairNumber int16
+	Subgroup   int16 // -1 means NULL
+}
+
+func normalizeOverrides(in []OverrideView) []OverrideView {
+	best := map[overrideKey]OverrideView{}
+	for _, o := range in {
+		k := overrideKey{PairNumber: o.PairNumber, Subgroup: -1}
+		if o.Subgroup != nil {
+			k.Subgroup = *o.Subgroup
+		}
+		cur, ok := best[k]
+		if !ok || overrideBetterThan(o, cur) {
+			best[k] = o
+		}
+	}
+
+	out := make([]OverrideView, 0, len(best))
+	for _, v := range best {
+		out = append(out, v)
+	}
+	return out
+}
+
+func overrideBetterThan(a, b OverrideView) bool {
+	pa := overridePriority(a.ActionType)
+	pb := overridePriority(b.ActionType)
+	if pa != pb {
+		return pa < pb
+	}
+	if !a.UpdatedAt.Equal(b.UpdatedAt) {
+		return a.UpdatedAt.After(b.UpdatedAt)
+	}
+	return a.ID > b.ID
+}
+
+func overridePriority(a OverrideAction) int {
+	switch a {
+	case OverrideCancel:
+		return 0
+	case OverrideReplace:
+		return 1
+	case OverrideAdd:
+		return 2
+	default:
+		return 3
+	}
+}
+
 func mergeLessons(tpls []TemplateView, ovrs []OverrideView) ([]Lesson, error) {
+	ovrs = normalizeOverrides(ovrs)
+
 	// Start with template lessons
 	lessons := make([]Lesson, 0, len(tpls))
 	for _, t := range tpls {

@@ -413,6 +413,35 @@ type adminOverrideRequest struct {
 	Subgroup       *int16  `json:"subgroup"`
 }
 
+func validateOverrideRequest(o schedule.ScheduleOverride) error {
+	if o.GroupID <= 0 {
+		return errors.New("group_id required")
+	}
+	if o.PairNumber < 1 || o.PairNumber > 8 {
+		return errors.New("pair must be 1..8")
+	}
+	if o.Subgroup != nil && (*o.Subgroup < 1 || *o.Subgroup > 2) {
+		return errors.New("subgroup must be 1 or 2")
+	}
+	switch o.ActionType {
+	case schedule.OverrideCancel:
+		if o.NewSubjectID != nil || o.NewLocationID != nil || o.NewTeacherName != nil {
+			return errors.New("CANCEL must not include new_* fields")
+		}
+	case schedule.OverrideAdd:
+		if o.NewSubjectID == nil || o.NewLocationID == nil {
+			return errors.New("ADD requires new_subject_id and new_location_id")
+		}
+	case schedule.OverrideReplace:
+		if o.NewSubjectID == nil && o.NewLocationID == nil && o.NewTeacherName == nil && o.Comment == nil {
+			return errors.New("REPLACE requires at least one change field")
+		}
+	default:
+		return errors.New("invalid action")
+	}
+	return nil
+}
+
 func handleAdminCreateOverride(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req adminOverrideRequest
@@ -436,8 +465,8 @@ func handleAdminCreateOverride(repo *schedule.Repository) gin.HandlerFunc {
 			Comment:        req.Comment,
 			Subgroup:       req.Subgroup,
 		}
-		if o.GroupID <= 0 || o.PairNumber <= 0 || o.ActionType == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id, pair, action required"})
+		if err := validateOverrideRequest(o); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		if err := repo.CreateOverride(&o); err != nil {
@@ -460,6 +489,10 @@ func handleAdminUpdateOverride(repo *schedule.Repository) gin.HandlerFunc {
 		var req schedule.ScheduleOverride
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			return
+		}
+		if err := validateOverrideRequest(req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		row, err := repo.UpdateOverride(id, &req)

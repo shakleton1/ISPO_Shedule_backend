@@ -109,8 +109,8 @@ func (r *Repository) DeleteLocation(id int) error {
 // Templates
 
 type TemplateFilters struct {
-	GroupID   *int
-	DayOfWeek *int16
+	GroupID    *int
+	DayOfWeek  *int16
 	WeekParity *WeekParity
 }
 
@@ -178,11 +178,17 @@ func (r *Repository) ListOverrides(filters OverrideFilters) ([]ScheduleOverride,
 }
 
 func (r *Repository) CreateOverride(o *ScheduleOverride) error {
+	if err := validateOverrideForWrite(o); err != nil {
+		return err
+	}
 	o.TargetDate = dateOnly(o.TargetDate)
 	return r.db.Create(o).Error
 }
 
 func (r *Repository) UpdateOverride(id int64, patch *ScheduleOverride) (*ScheduleOverride, error) {
+	if err := validateOverrideForWrite(patch); err != nil {
+		return nil, err
+	}
 	var row ScheduleOverride
 	if err := r.db.First(&row, id).Error; err != nil {
 		return nil, err
@@ -200,6 +206,38 @@ func (r *Repository) UpdateOverride(id int64, patch *ScheduleOverride) (*Schedul
 		return nil, err
 	}
 	return &row, nil
+}
+
+func validateOverrideForWrite(o *ScheduleOverride) error {
+	if o == nil {
+		return fmt.Errorf("override is nil")
+	}
+	if o.GroupID <= 0 {
+		return fmt.Errorf("group_id required")
+	}
+	if o.PairNumber < 1 || o.PairNumber > 8 {
+		return fmt.Errorf("pair_number must be 1..8")
+	}
+	if o.Subgroup != nil && (*o.Subgroup < 1 || *o.Subgroup > 2) {
+		return fmt.Errorf("subgroup must be 1 or 2")
+	}
+	switch o.ActionType {
+	case OverrideCancel:
+		if o.NewSubjectID != nil || o.NewLocationID != nil || o.NewTeacherName != nil {
+			return fmt.Errorf("CANCEL must not set new_* fields")
+		}
+	case OverrideAdd:
+		if o.NewSubjectID == nil || o.NewLocationID == nil {
+			return fmt.Errorf("ADD requires new_subject_id and new_location_id")
+		}
+	case OverrideReplace:
+		if o.NewSubjectID == nil && o.NewLocationID == nil && o.NewTeacherName == nil && o.Comment == nil {
+			return fmt.Errorf("REPLACE requires at least one change field")
+		}
+	default:
+		return fmt.Errorf("invalid action_type")
+	}
+	return nil
 }
 
 func (r *Repository) DeleteOverride(id int64) error {
