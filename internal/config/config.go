@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
+	Log      LogConfig      `mapstructure:"log"`
 	DB       DBConfig       `mapstructure:"db"`
 	Schedule ScheduleConfig `mapstructure:"schedule"`
 	Admin    AdminConfig    `mapstructure:"admin"`
@@ -21,6 +22,11 @@ type ServerConfig struct {
 	Addr         string        `mapstructure:"addr"`
 	ReadTimeout  time.Duration `mapstructure:"read_timeout"`
 	WriteTimeout time.Duration `mapstructure:"write_timeout"`
+}
+
+type LogConfig struct {
+	Level  string `mapstructure:"level"`
+	Pretty bool   `mapstructure:"pretty"`
 }
 
 type DBConfig struct {
@@ -83,6 +89,9 @@ func Load(opts LoadOptions) (*Config, error) {
 
 	if cfg.Server.Addr == "" {
 		cfg.Server.Addr = "127.0.0.1:8080"
+	}
+	if cfg.Log.Level == "" {
+		cfg.Log.Level = "info"
 	}
 	if cfg.DB.SSLMode == "" {
 		cfg.DB.SSLMode = "disable"

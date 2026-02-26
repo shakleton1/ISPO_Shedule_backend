@@ -23,12 +23,18 @@ type RouterDeps struct {
 func NewRouter(deps RouterDeps) http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(requestLoggingMiddleware())
+	r.Use(metricsMiddleware())
+
+	// Prometheus metrics endpoint (обычно без auth, т.к. его дергает Prometheus).
+	r.GET("/metrics", metricsHandler())
 
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/health", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"status": "ok", "time": time.Now().UTC().Format(time.RFC3339)})
 		})
+		v1.GET("/metrics/health", metricsHealthHandler())
 
 		authGroup := v1.Group("/auth")
 		{

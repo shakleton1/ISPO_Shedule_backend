@@ -1,13 +1,13 @@
 package main
 
 import (
-	"log"
-
 	"ispo-schedule/internal/app"
+
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
 	if err := app.Run(); err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Msg("app exited")
 	}
 }

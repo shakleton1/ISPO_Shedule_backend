@@ -3,6 +3,10 @@ server:
   read_timeout: "10s"
   write_timeout: "10s"
 
+log:
+  level: "info" # trace|debug|info|warn|error|fatal|panic
+  pretty: true # console output for dev
+
 db:
   host: "localhost"
   port: 5432

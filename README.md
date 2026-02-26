@@ -47,6 +47,12 @@ go run .\cmd\api
 - `GET /api/v1/schedule/range?group_id=1&date_start=2026-02-24&date_end=2026-03-07`
 - `GET /api/v1/schedule/pdf?group_id=1&date_start=2026-02-24`
 
+## Observability
+
+- Логи: zerolog (`log.level`, `log.pretty` в конфиге)
+- Метрики Prometheus: `GET /metrics`
+- Проверка метрик: `GET /api/v1/metrics/health`
+
 ## Аутентификация
 
 Auth endpoints:

@@ -13,6 +13,7 @@ import (
 	"ispo-schedule/internal/config"
 	"ispo-schedule/internal/db"
 	"ispo-schedule/internal/httpapi"
+	"ispo-schedule/internal/obs"
 	"ispo-schedule/internal/pdf"
 	"ispo-schedule/internal/schedule"
 )
@@ -26,6 +27,8 @@ func Run() error {
 			return err
 		}
 	}
+
+	obs.InitLogger(cfg.Log)
 
 	gormDB, err := db.Open(cfg.DB)
 	if err != nil {
