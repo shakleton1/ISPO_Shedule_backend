@@ -28,10 +28,7 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 	var out []DaySchedule
 	for d := dateOnly(startDate); !d.After(endDate); d = d.AddDate(0, 0, 1) {
 		dayKey := d.Format("2006-01-02")
-		dayOfWeek := int16((int(d.Weekday()) + 6) % 7) // Go: Sun=0 => convert to Mon=0
-		if v, ok := worksAs[dayKey]; ok {
-			dayOfWeek = v
-		}
+		dayOfWeek := dayOfWeekForDate(d, worksAs)
 
 		parity := s.weekParityForDate(d)
 
@@ -82,6 +79,15 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 	}
 
 	return out, nil
+}
+
+func dayOfWeekForDate(d time.Time, worksAs map[string]int16) int16 {
+	dayKey := dateOnly(d).Format("2006-01-02")
+	dayOfWeek := int16((int(d.Weekday()) + 6) % 7) // Go: Sun=0 => convert to Mon=0
+	if v, ok := worksAs[dayKey]; ok {
+		return v
+	}
+	return dayOfWeek
 }
 
 func (s *Service) weekParityForDate(date time.Time) WeekParity {
