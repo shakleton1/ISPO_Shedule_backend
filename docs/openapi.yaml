@@ -117,7 +117,7 @@ paths:
         - in: query
           name: date
           required: false
-          description: Reference date (YYYY-MM-DD). Default: today (UTC)
+          description: "Reference date (YYYY-MM-DD). Default: today (UTC)"
           schema: { type: string, format: date }
       responses:
         '200':
