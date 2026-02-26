@@ -8,6 +8,7 @@ const (
 	RoleStudent    Role = "student"
 	RoleDispatcher Role = "dispatcher"
 	RoleAdmin      Role = "admin"
+	RoleViewer     Role = "viewer"
 )
 
 // User is stored in the existing `students` table (historical naming from spec).

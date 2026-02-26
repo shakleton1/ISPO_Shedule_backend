@@ -64,36 +64,53 @@ func NewRouter(deps RouterDeps) http.Handler {
 		admin := v1.Group("/admin")
 		admin.Use(adminGateMiddleware(deps.Config.Admin.APIKey, deps.Tokens, deps.Repo))
 		{
-			admin.GET("/groups", handleAdminListGroups(deps.Repo))
-			admin.POST("/groups", handleAdminCreateGroup(deps.Repo))
-			admin.PUT("/groups/:id", handleAdminUpdateGroup(deps.Repo))
-			admin.DELETE("/groups/:id", handleAdminDeleteGroup(deps.Repo))
+			adminRead := admin.Group("")
+			adminRead.Use(requireAnyRole(auth.RoleAdmin, auth.RoleDispatcher, auth.RoleViewer))
+			{
+				adminRead.GET("/groups", handleAdminListGroups(deps.Repo))
+				adminRead.GET("/subjects", handleAdminListSubjects(deps.Repo))
+				adminRead.GET("/locations", handleAdminListLocations(deps.Repo))
 
-			admin.GET("/subjects", handleAdminListSubjects(deps.Repo))
-			admin.POST("/subjects", handleAdminCreateSubject(deps.Repo))
-			admin.PUT("/subjects/:id", handleAdminUpdateSubject(deps.Repo))
-			admin.DELETE("/subjects/:id", handleAdminDeleteSubject(deps.Repo))
+				adminRead.GET("/templates", handleAdminListTemplates(deps.Repo))
+				adminRead.GET("/overrides", handleAdminListOverrides(deps.Repo))
+				adminRead.GET("/calendar-exceptions", handleAdminListCalendarExceptions(deps.Repo))
+			}
 
-			admin.GET("/locations", handleAdminListLocations(deps.Repo))
-			admin.POST("/locations", handleAdminCreateLocation(deps.Repo))
-			admin.PUT("/locations/:id", handleAdminUpdateLocation(deps.Repo))
-			admin.DELETE("/locations/:id", handleAdminDeleteLocation(deps.Repo))
+			adminDictWrite := admin.Group("")
+			adminDictWrite.Use(requireAnyRole(auth.RoleAdmin))
+			{
+				adminDictWrite.POST("/groups", handleAdminCreateGroup(deps.Repo))
+				adminDictWrite.PUT("/groups/:id", handleAdminUpdateGroup(deps.Repo))
+				adminDictWrite.DELETE("/groups/:id", handleAdminDeleteGroup(deps.Repo))
 
-			admin.GET("/templates", handleAdminListTemplates(deps.Repo))
-			admin.POST("/templates", handleAdminCreateTemplate(deps.Repo, deps.Push))
-			admin.PUT("/templates/:id", handleAdminUpdateTemplate(deps.Repo, deps.Push))
-			admin.DELETE("/templates/:id", handleAdminDeleteTemplate(deps.Repo, deps.Push))
+				adminDictWrite.POST("/subjects", handleAdminCreateSubject(deps.Repo))
+				adminDictWrite.PUT("/subjects/:id", handleAdminUpdateSubject(deps.Repo))
+				adminDictWrite.DELETE("/subjects/:id", handleAdminDeleteSubject(deps.Repo))
 
-			admin.GET("/overrides", handleAdminListOverrides(deps.Repo))
-			admin.POST("/override", handleAdminCreateOverride(deps.Repo, deps.Push))
-			admin.PUT("/overrides/:id", handleAdminUpdateOverride(deps.Repo, deps.Push))
-			admin.DELETE("/overrides/:id", handleAdminDeleteOverride(deps.Repo, deps.Push))
+				adminDictWrite.POST("/locations", handleAdminCreateLocation(deps.Repo))
+				adminDictWrite.PUT("/locations/:id", handleAdminUpdateLocation(deps.Repo))
+				adminDictWrite.DELETE("/locations/:id", handleAdminDeleteLocation(deps.Repo))
+			}
 
-			admin.POST("/overlay", handleAdminUpsertOverlay(deps.Repo, deps.Push))
+			adminScheduleWrite := admin.Group("")
+			adminScheduleWrite.Use(requireAnyRole(auth.RoleAdmin, auth.RoleDispatcher))
+			{
+				adminScheduleWrite.POST("/import/templates/csv", handleAdminImportTemplatesCSV(deps.Repo, deps.Push))
+				adminScheduleWrite.POST("/import/templates/xlsx", handleAdminImportTemplatesXLSX(deps.Repo, deps.Push))
 
-			admin.GET("/calendar-exceptions", handleAdminListCalendarExceptions(deps.Repo))
-			admin.POST("/calendar-exceptions", handleAdminUpsertCalendarException(deps.Repo, deps.Push))
-			admin.DELETE("/calendar-exceptions/:date", handleAdminDeleteCalendarException(deps.Repo, deps.Push))
+				adminScheduleWrite.POST("/templates", handleAdminCreateTemplate(deps.Repo, deps.Push))
+				adminScheduleWrite.PUT("/templates/:id", handleAdminUpdateTemplate(deps.Repo, deps.Push))
+				adminScheduleWrite.DELETE("/templates/:id", handleAdminDeleteTemplate(deps.Repo, deps.Push))
+
+				adminScheduleWrite.POST("/override", handleAdminCreateOverride(deps.Repo, deps.Push))
+				adminScheduleWrite.PUT("/overrides/:id", handleAdminUpdateOverride(deps.Repo, deps.Push))
+				adminScheduleWrite.DELETE("/overrides/:id", handleAdminDeleteOverride(deps.Repo, deps.Push))
+
+				adminScheduleWrite.POST("/overlay", handleAdminUpsertOverlay(deps.Repo, deps.Push))
+
+				adminScheduleWrite.POST("/calendar-exceptions", handleAdminUpsertCalendarException(deps.Repo, deps.Push))
+				adminScheduleWrite.DELETE("/calendar-exceptions/:date", handleAdminDeleteCalendarException(deps.Repo, deps.Push))
+			}
 		}
 	}
 

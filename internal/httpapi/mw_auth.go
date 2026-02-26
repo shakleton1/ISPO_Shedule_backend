@@ -79,11 +79,15 @@ func parseSubjectID(sub string) int64 {
 
 // adminGateMiddleware allows either:
 // - X-Admin-Key (if configured), OR
-// - JWT auth with role admin/dispatcher
+// - JWT auth
+//
+// RBAC role checks are enforced per-route in the admin router.
 func adminGateMiddleware(apiKey string, tokens *auth.TokenManager, repo *schedule.Repository) gin.HandlerFunc {
 	if apiKey != "" {
 		return func(c *gin.Context) {
 			if c.GetHeader("X-Admin-Key") == apiKey {
+				// Synthetic user for audit/RBAC (treated as admin).
+				c.Set(ctxUserKey, &auth.User{ID: 0, Login: "api_key", Role: auth.RoleAdmin})
 				c.Next()
 				return
 			}
@@ -92,7 +96,7 @@ func adminGateMiddleware(apiKey string, tokens *auth.TokenManager, repo *schedul
 			if c.IsAborted() {
 				return
 			}
-			requireAnyRole(auth.RoleAdmin, auth.RoleDispatcher)(c)
+			c.Next()
 		}
 	}
 	return func(c *gin.Context) {
@@ -100,6 +104,6 @@ func adminGateMiddleware(apiKey string, tokens *auth.TokenManager, repo *schedul
 		if c.IsAborted() {
 			return
 		}
-		requireAnyRole(auth.RoleAdmin, auth.RoleDispatcher)(c)
+		c.Next()
 	}
 }
