@@ -53,6 +53,10 @@ go run .\cmd\api
 - Метрики Prometheus: `GET /metrics`
 - Проверка метрик/DB: `GET /api/v1/metrics/health`
 
+## OpenAPI
+
+- Спецификация: `GET /openapi.yaml` (файл: `docs/openapi.yaml`)
+
 Prometheus метрики (дополнительно):
 
 - `ispo_db_up` — 1 если Postgres доступен, иначе 0

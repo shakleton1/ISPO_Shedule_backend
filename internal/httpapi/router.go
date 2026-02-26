@@ -33,6 +33,12 @@ func NewRouter(deps RouterDeps) http.Handler {
 	// Prometheus metrics endpoint (обычно без auth, т.к. его дергает Prometheus).
 	r.GET("/metrics", metricsHandler(deps.DBPing))
 
+	// OpenAPI spec (YAML).
+	r.GET("/openapi.yaml", func(c *gin.Context) {
+		c.Header("Content-Type", "application/yaml")
+		c.File("docs/openapi.yaml")
+	})
+
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/health", func(c *gin.Context) {

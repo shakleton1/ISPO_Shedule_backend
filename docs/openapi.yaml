@@ -1,0 +1,965 @@
+openapi: 3.0.3
+info:
+  title: ISPO Smart Schedule API
+  version: 1.0.0
+  description: |
+    Backend API для системы "Умное расписание" (ИСПО СПбПУ).
+
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: Health
+  - name: Auth
+  - name: Schedule
+  - name: Push
+  - name: Dictionaries
+  - name: Admin
+  - name: Observability
+
+paths:
+  /metrics:
+    get:
+      tags: [Observability]
+      summary: Prometheus metrics
+      responses:
+        '200':
+          description: Prometheus metrics text
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /openapi.yaml:
+    get:
+      tags: [Observability]
+      summary: OpenAPI specification (YAML)
+      responses:
+        '200':
+          description: OpenAPI YAML
+          content:
+            application/yaml:
+              schema:
+                type: string
+
+  /api/v1/health:
+    get:
+      tags: [Health]
+      summary: Service health
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/metrics/health:
+    get:
+      tags: [Observability]
+      summary: Metrics/DB health
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and get JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/schedule/current:
+    get:
+      tags: [Schedule]
+      summary: Current week schedule
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: date
+          required: false
+          description: Reference date (YYYY-MM-DD). Default: today (UTC)
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeekScheduleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/schedule/range:
+    get:
+      tags: [Schedule]
+      summary: Schedule for date range
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: date_start
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: date_end
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeekScheduleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/schedule/version:
+    get:
+      tags: [Schedule]
+      summary: Current schedule data version
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data_version]
+                properties:
+                  data_version:
+                    type: string
+                    description: RFC3339 timestamp
+
+  /api/v1/schedule/pdf:
+    get:
+      tags: [Schedule]
+      summary: PDF for two weeks (week1+week2)
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: date_start
+          required: true
+          description: Any date in week1 (YYYY-MM-DD)
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: PDF document
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/push/register:
+    post:
+      tags: [Push]
+      summary: Register device token for group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PushRegisterRequest'
+      responses:
+        '201':
+          description: Registered
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/push/unregister:
+    post:
+      tags: [Push]
+      summary: Unregister device token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PushUnregisterRequest'
+      responses:
+        '204':
+          description: Unregistered
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/groups:
+    get:
+      tags: [Dictionaries]
+      summary: List groups (public)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Group' }
+
+  /api/v1/subjects:
+    get:
+      tags: [Dictionaries]
+      summary: List subjects (public)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Subject' }
+
+  /api/v1/locations:
+    get:
+      tags: [Dictionaries]
+      summary: List locations (public)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Location' }
+
+  /api/v1/admin/groups:
+    get:
+      tags: [Admin]
+      summary: List groups
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Group' }
+    post:
+      tags: [Admin]
+      summary: Create group (admin only)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Group' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Group' }
+
+  /api/v1/admin/groups/{id}:
+    put:
+      tags: [Admin]
+      summary: Update group (admin only)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Group' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Group' }
+    delete:
+      tags: [Admin]
+      summary: Delete group (admin only)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '204': { description: Deleted }
+
+  /api/v1/admin/subjects:
+    get:
+      tags: [Admin]
+      summary: List subjects
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Subject' }
+    post:
+      tags: [Admin]
+      summary: Create subject (admin only)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Subject' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Subject' }
+
+  /api/v1/admin/subjects/{id}:
+    put:
+      tags: [Admin]
+      summary: Update subject (admin only)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Subject' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Subject' }
+    delete:
+      tags: [Admin]
+      summary: Delete subject (admin only)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '204': { description: Deleted }
+
+  /api/v1/admin/locations:
+    get:
+      tags: [Admin]
+      summary: List locations
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Location' }
+    post:
+      tags: [Admin]
+      summary: Create location (admin only)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Location' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Location' }
+
+  /api/v1/admin/locations/{id}:
+    put:
+      tags: [Admin]
+      summary: Update location (admin only)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Location' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Location' }
+    delete:
+      tags: [Admin]
+      summary: Delete location (admin only)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '204': { description: Deleted }
+
+  /api/v1/admin/templates:
+    get:
+      tags: [Admin]
+      summary: List templates
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      parameters:
+        - in: query
+          name: group_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ScheduleTemplate' }
+    post:
+      tags: [Admin]
+      summary: Create template (dispatcher/admin)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScheduleTemplate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduleTemplate' }
+
+  /api/v1/admin/templates/{id}:
+    put:
+      tags: [Admin]
+      summary: Update template (dispatcher/admin)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScheduleTemplate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduleTemplate' }
+    delete:
+      tags: [Admin]
+      summary: Delete template (dispatcher/admin)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        '204': { description: Deleted }
+
+  /api/v1/admin/overrides:
+    get:
+      tags: [Admin]
+      summary: List overrides
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      parameters:
+        - in: query
+          name: group_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: date
+          required: false
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ScheduleOverride' }
+
+  /api/v1/admin/overrides/{id}:
+    put:
+      tags: [Admin]
+      summary: Update override (dispatcher/admin)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScheduleOverride' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduleOverride' }
+    delete:
+      tags: [Admin]
+      summary: Delete override (dispatcher/admin)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        '204': { description: Deleted }
+
+  /api/v1/admin/override:
+    post:
+      tags: [Admin]
+      summary: Create override (dispatcher/admin)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminOverrideRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduleOverride' }
+
+  /api/v1/admin/overlay:
+    post:
+      tags: [Admin]
+      summary: Upsert day overlay (dispatcher/admin)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminOverlayRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduleDayOverlay' }
+
+  /api/v1/admin/calendar-exceptions:
+    get:
+      tags: [Admin]
+      summary: List calendar exceptions
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CalendarException' }
+    post:
+      tags: [Admin]
+      summary: Upsert calendar exception (dispatcher/admin)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminCalendarExceptionRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CalendarException' }
+
+  /api/v1/admin/calendar-exceptions/{date}:
+    delete:
+      tags: [Admin]
+      summary: Delete calendar exception (dispatcher/admin)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      parameters:
+        - in: path
+          name: date
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '204': { description: Deleted }
+
+  /api/v1/admin/import/templates/csv:
+    post:
+      tags: [Admin]
+      summary: Import templates from CSV (replace by group)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, group_id]
+              properties:
+                group_id:
+                  type: integer
+                  minimum: 1
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResponse'
+
+  /api/v1/admin/import/templates/xlsx:
+    post:
+      tags: [Admin]
+      summary: Import templates from XLSX (replace by group)
+      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, group_id]
+              properties:
+                group_id:
+                  type: integer
+                  minimum: 1
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    adminKey:
+      type: apiKey
+      in: header
+      name: X-Admin-Key
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    HealthResponse:
+      type: object
+      required: [status, time]
+      properties:
+        status: { type: string }
+        time: { type: string }
+
+    LoginRequest:
+      type: object
+      required: [login, password]
+      properties:
+        login: { type: string }
+        password: { type: string }
+
+    LoginResponse:
+      type: object
+      required: [access_token, expires_at, role]
+      properties:
+        access_token: { type: string }
+        expires_at: { type: string, format: date-time }
+        role:
+          type: string
+          enum: [student, dispatcher, admin, viewer]
+
+    MeResponse:
+      type: object
+      required: [id, login, role]
+      properties:
+        id: { type: integer, format: int64 }
+        login: { type: string }
+        role:
+          type: string
+          enum: [student, dispatcher, admin, viewer]
+        group_id: { type: integer, nullable: true }
+        subgroup: { type: integer, nullable: true }
+
+    Group:
+      type: object
+      required: [id, name, course]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        course: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Subject:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        short_name: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Location:
+      type: object
+      required: [id, name, is_virtual]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        is_virtual: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Lesson:
+      type: object
+      required: [pair_number, subject_name, location_name, teacher_name, is_changed, is_added]
+      properties:
+        pair_number: { type: integer }
+        subject_id: { type: integer, nullable: true }
+        subject_name: { type: string }
+        location_id: { type: integer, nullable: true }
+        location_name: { type: string }
+        teacher_name: { type: string }
+        subgroup: { type: integer, nullable: true }
+        is_changed: { type: boolean }
+        is_added: { type: boolean }
+        comment: { type: string, nullable: true }
+
+    DaySchedule:
+      type: object
+      required: [date, day_of_week, week_parity, lessons]
+      properties:
+        date: { type: string, format: date }
+        day_of_week: { type: integer, minimum: 0, maximum: 5 }
+        week_parity:
+          type: string
+          enum: [numerator, denominator, both]
+        overlay_text: { type: string, nullable: true }
+        lessons:
+          type: array
+          items: { $ref: '#/components/schemas/Lesson' }
+
+    WeekScheduleResponse:
+      type: object
+      required: [group_id, date_start, date_end, data_version, days]
+      properties:
+        group_id: { type: integer }
+        date_start: { type: string, format: date }
+        date_end: { type: string, format: date }
+        data_version: { type: string }
+        days:
+          type: array
+          items: { $ref: '#/components/schemas/DaySchedule' }
+
+    PushRegisterRequest:
+      type: object
+      required: [group_id, token]
+      properties:
+        group_id: { type: integer, minimum: 1 }
+        token: { type: string }
+
+    PushUnregisterRequest:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
+
+    ScheduleTemplate:
+      type: object
+      required: [group_id, day_of_week, week_parity, pair_number, subject_id, location_id, teacher_name]
+      properties:
+        id: { type: integer, format: int64 }
+        group_id: { type: integer }
+        day_of_week: { type: integer, minimum: 0, maximum: 5 }
+        week_parity:
+          type: string
+          enum: [numerator, denominator, both]
+        pair_number: { type: integer, minimum: 1, maximum: 8 }
+        subject_id: { type: integer }
+        location_id: { type: integer }
+        teacher_name: { type: string }
+        subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ScheduleOverride:
+      type: object
+      required: [id, target_date, group_id, pair_number, action_type]
+      properties:
+        id: { type: integer, format: int64 }
+        target_date:
+          type: string
+          format: date-time
+          description: Stored as DATE in DB, serialized as time
+        group_id: { type: integer }
+        pair_number: { type: integer, minimum: 1, maximum: 8 }
+        action_type:
+          type: string
+          enum: [CANCEL, REPLACE, ADD]
+        new_subject_id: { type: integer, nullable: true }
+        new_location_id: { type: integer, nullable: true }
+        new_teacher_name: { type: string, nullable: true }
+        comment: { type: string, nullable: true }
+        subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    AdminOverrideRequest:
+      type: object
+      required: [group_id, date, pair, action]
+      properties:
+        group_id: { type: integer, minimum: 1 }
+        date: { type: string, format: date }
+        pair: { type: integer, minimum: 1, maximum: 8 }
+        action:
+          type: string
+          enum: [CANCEL, REPLACE, ADD]
+        new_subject_id: { type: integer, nullable: true }
+        new_location_id: { type: integer, nullable: true }
+        new_teacher_name: { type: string, nullable: true }
+        comment: { type: string, nullable: true }
+        subgroup: { type: integer, nullable: true, enum: [1, 2] }
+
+    ScheduleDayOverlay:
+      type: object
+      required: [id, target_date, group_id, text, style_preset]
+      properties:
+        id: { type: integer, format: int64 }
+        target_date: { type: string, format: date-time, description: Stored as DATE in DB, serialized as time }
+        group_id: { type: integer }
+        text: { type: string }
+        style_preset: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CalendarException:
+      type: object
+      required: [id, target_date, works_as_day]
+      properties:
+        id: { type: integer, format: int64 }
+        target_date: { type: string, format: date-time, description: Stored as DATE in DB, serialized as time }
+        works_as_day: { type: integer, minimum: 0, maximum: 6 }
+        comment: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    AdminOverlayRequest:
+      type: object
+      required: [group_id, date, text]
+      properties:
+        group_id: { type: integer, minimum: 1 }
+        date: { type: string, format: date }
+        text: { type: string }
+        style_preset: { type: string, nullable: true }
+
+    AdminCalendarExceptionRequest:
+      type: object
+      required: [date, works_as_day]
+      properties:
+        date: { type: string, format: date }
+        works_as_day: { type: integer, minimum: 0, maximum: 6 }
+        comment: { type: string, nullable: true }
+
+    ImportResponse:
+      type: object
+      required: [inserted, schedule_version]
+      properties:
+        inserted: { type: integer }
+        schedule_version: { type: string }
