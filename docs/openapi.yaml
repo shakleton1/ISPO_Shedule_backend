@@ -710,14 +710,23 @@ paths:
           name: id
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
+        - in: query
+          name: tree
+          required: false
+          description: When true, returns items as a hierarchy (parent_id -> children)
+          schema: { type: boolean }
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items: { $ref: "#/components/schemas/CurriculumItem" }
+                oneOf:
+                  - type: array
+                    items: { $ref: "#/components/schemas/CurriculumItem" }
+                  - type: array
+                    items:
+                      { $ref: "#/components/schemas/CurriculumItemTreeNode" }
     post:
       tags: [Admin]
       summary: Create curriculum item (admin only)
@@ -1334,6 +1343,16 @@ components:
         subject_id: { type: integer, nullable: true }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+
+    CurriculumItemTreeNode:
+      allOf:
+        - $ref: "#/components/schemas/CurriculumItem"
+        - type: object
+          required: [children]
+          properties:
+            children:
+              type: array
+              items: { $ref: "#/components/schemas/CurriculumItemTreeNode" }
 
     CurriculumItemAllocation:
       type: object

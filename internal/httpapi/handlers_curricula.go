@@ -2,7 +2,9 @@ package httpapi
 
 import (
 	"net/http"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -308,6 +310,74 @@ func handleAdminUpsertAcademicCalendarWeeks(repo *schedule.Repository) gin.Handl
 
 // Curriculum items + allocations
 
+type curriculumItemTreeNode struct {
+	schedule.CurriculumItem
+	Children []*curriculumItemTreeNode `json:"children"`
+}
+
+func buildCurriculumItemTree(items []schedule.CurriculumItem) []*curriculumItemTreeNode {
+	nodesByID := make(map[int64]*curriculumItemTreeNode, len(items))
+	for i := range items {
+		it := items[i]
+		nodesByID[it.ID] = &curriculumItemTreeNode{
+			CurriculumItem: it,
+			Children:       []*curriculumItemTreeNode{},
+		}
+	}
+
+	roots := []*curriculumItemTreeNode{}
+	for _, node := range nodesByID {
+		if node.ParentID == nil {
+			roots = append(roots, node)
+			continue
+		}
+		if *node.ParentID == node.ID {
+			roots = append(roots, node)
+			continue
+		}
+		parent, ok := nodesByID[*node.ParentID]
+		if !ok {
+			roots = append(roots, node)
+			continue
+		}
+		parent.Children = append(parent.Children, node)
+	}
+
+	less := func(a, b *curriculumItemTreeNode) bool {
+		aHasCode := a.IndexCode != nil && strings.TrimSpace(*a.IndexCode) != ""
+		bHasCode := b.IndexCode != nil && strings.TrimSpace(*b.IndexCode) != ""
+		if aHasCode != bHasCode {
+			return aHasCode
+		}
+		aCode := ""
+		bCode := ""
+		if a.IndexCode != nil {
+			aCode = strings.TrimSpace(*a.IndexCode)
+		}
+		if b.IndexCode != nil {
+			bCode = strings.TrimSpace(*b.IndexCode)
+		}
+		if cmp := strings.Compare(aCode, bCode); cmp != 0 {
+			return cmp < 0
+		}
+		if cmp := strings.Compare(a.Name, b.Name); cmp != 0 {
+			return cmp < 0
+		}
+		return a.ID < b.ID
+	}
+
+	var sortRec func(nodes []*curriculumItemTreeNode)
+	sortRec = func(nodes []*curriculumItemTreeNode) {
+		sort.SliceStable(nodes, func(i, j int) bool { return less(nodes[i], nodes[j]) })
+		for _, n := range nodes {
+			sortRec(n.Children)
+		}
+	}
+
+	sortRec(roots)
+	return roots
+}
+
 func handleAdminListCurriculumItems(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		currID, err := strconv.ParseInt(c.Param("id"), 10, 64)
@@ -318,6 +388,12 @@ func handleAdminListCurriculumItems(repo *schedule.Repository) gin.HandlerFunc {
 		rows, err := repo.ListCurriculumItems(currID)
 		if err != nil {
 			writeDBError(c, err)
+			return
+		}
+
+		tree := c.Query("tree")
+		if tree == "true" || tree == "1" {
+			c.JSON(http.StatusOK, buildCurriculumItemTree(rows))
 			return
 		}
 		c.JSON(http.StatusOK, rows)
