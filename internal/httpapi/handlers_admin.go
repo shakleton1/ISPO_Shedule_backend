@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -9,8 +10,48 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"ispo-schedule/internal/auth"
 	"ispo-schedule/internal/schedule"
 )
+
+func auditActorFromContext(c *gin.Context) (actorType string, actorID *int64, actorLogin *string, actorRole *string) {
+	if v, ok := c.Get(ctxUserKey); ok {
+		if u, ok := v.(*auth.User); ok && u != nil {
+			actorType = "jwt"
+			id := u.ID
+			actorID = &id
+			login := u.Login
+			actorLogin = &login
+			role := string(u.Role)
+			actorRole = &role
+			return
+		}
+	}
+	if c.GetHeader("X-Admin-Key") != "" {
+		return "admin_key", nil, nil, nil
+	}
+	return "unknown", nil, nil, nil
+}
+
+func writeAudit(c *gin.Context, repo *schedule.Repository, action, entityType, entityID string, payload any) {
+	actorType, actorID, actorLogin, actorRole := auditActorFromContext(c)
+	var b []byte
+	if payload != nil {
+		b, _ = json.Marshal(payload)
+	}
+	_ = repo.CreateAuditLog(&schedule.AuditLog{
+		ActorType:  actorType,
+		ActorID:    actorID,
+		ActorLogin: actorLogin,
+		ActorRole:  actorRole,
+		Method:     c.Request.Method,
+		Path:       c.FullPath(),
+		Action:     action,
+		EntityType: entityType,
+		EntityID:   entityID,
+		Payload:    b,
+	})
+}
 
 func writeDBError(c *gin.Context, err error) {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -49,6 +90,7 @@ func handleAdminCreateGroup(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "create", "groups", strconv.Itoa(req.ID), req)
 		c.JSON(http.StatusCreated, req)
 	}
 }
@@ -71,6 +113,7 @@ func handleAdminUpdateGroup(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "update", "groups", strconv.Itoa(id), row)
 		c.JSON(http.StatusOK, row)
 	}
 }
@@ -87,6 +130,7 @@ func handleAdminDeleteGroup(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "delete", "groups", strconv.Itoa(id), nil)
 		c.Status(http.StatusNoContent)
 	}
 }
@@ -120,6 +164,7 @@ func handleAdminCreateSubject(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "create", "subjects", strconv.Itoa(req.ID), req)
 		c.JSON(http.StatusCreated, req)
 	}
 }
@@ -142,6 +187,7 @@ func handleAdminUpdateSubject(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "update", "subjects", strconv.Itoa(id), row)
 		c.JSON(http.StatusOK, row)
 	}
 }
@@ -158,6 +204,7 @@ func handleAdminDeleteSubject(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "delete", "subjects", strconv.Itoa(id), nil)
 		c.Status(http.StatusNoContent)
 	}
 }
@@ -191,6 +238,7 @@ func handleAdminCreateLocation(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "create", "locations", strconv.Itoa(req.ID), req)
 		c.JSON(http.StatusCreated, req)
 	}
 }
@@ -213,6 +261,7 @@ func handleAdminUpdateLocation(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "update", "locations", strconv.Itoa(id), row)
 		c.JSON(http.StatusOK, row)
 	}
 }
@@ -229,6 +278,7 @@ func handleAdminDeleteLocation(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "delete", "locations", strconv.Itoa(id), nil)
 		c.Status(http.StatusNoContent)
 	}
 }
@@ -280,6 +330,7 @@ func handleAdminCreateTemplate(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "create", "schedule_templates", strconv.FormatInt(req.ID, 10), req)
 		c.JSON(http.StatusCreated, req)
 	}
 }
@@ -302,6 +353,7 @@ func handleAdminUpdateTemplate(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "update", "schedule_templates", strconv.FormatInt(id, 10), row)
 		c.JSON(http.StatusOK, row)
 	}
 }
@@ -318,6 +370,7 @@ func handleAdminDeleteTemplate(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "delete", "schedule_templates", strconv.FormatInt(id, 10), nil)
 		c.Status(http.StatusNoContent)
 	}
 }
@@ -349,15 +402,15 @@ func handleAdminListOverrides(repo *schedule.Repository) gin.HandlerFunc {
 }
 
 type adminOverrideRequest struct {
-	GroupID       int     `json:"group_id"`
-	Date          string  `json:"date"`
-	Pair          int16   `json:"pair"`
-	Action        string  `json:"action"`
-	NewSubjectID  *int    `json:"new_subject_id"`
-	NewLocationID *int    `json:"new_location_id"`
+	GroupID        int     `json:"group_id"`
+	Date           string  `json:"date"`
+	Pair           int16   `json:"pair"`
+	Action         string  `json:"action"`
+	NewSubjectID   *int    `json:"new_subject_id"`
+	NewLocationID  *int    `json:"new_location_id"`
 	NewTeacherName *string `json:"new_teacher_name"`
-	Comment       *string `json:"comment"`
-	Subgroup      *int16  `json:"subgroup"`
+	Comment        *string `json:"comment"`
+	Subgroup       *int16  `json:"subgroup"`
 }
 
 func handleAdminCreateOverride(repo *schedule.Repository) gin.HandlerFunc {
@@ -392,6 +445,7 @@ func handleAdminCreateOverride(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "create", "schedule_overrides", strconv.FormatInt(o.ID, 10), o)
 		c.JSON(http.StatusCreated, o)
 	}
 }
@@ -414,6 +468,7 @@ func handleAdminUpdateOverride(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "update", "schedule_overrides", strconv.FormatInt(id, 10), row)
 		c.JSON(http.StatusOK, row)
 	}
 }
@@ -430,6 +485,7 @@ func handleAdminDeleteOverride(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "delete", "schedule_overrides", strconv.FormatInt(id, 10), nil)
 		c.Status(http.StatusNoContent)
 	}
 }
@@ -465,6 +521,7 @@ func handleAdminUpsertOverlay(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "upsert", "schedule_day_overlays", strconv.FormatInt(row.ID, 10), row)
 		c.JSON(http.StatusOK, row)
 	}
 }
@@ -506,6 +563,7 @@ func handleAdminUpsertCalendarException(repo *schedule.Repository) gin.HandlerFu
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "upsert", "calendar_exceptions", strconv.FormatInt(row.ID, 10), row)
 		c.JSON(http.StatusOK, row)
 	}
 }
@@ -522,6 +580,7 @@ func handleAdminDeleteCalendarException(repo *schedule.Repository) gin.HandlerFu
 			return
 		}
 		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "delete", "calendar_exceptions", dateStr, nil)
 		c.Status(http.StatusNoContent)
 	}
 }
