@@ -156,6 +156,10 @@ func importTemplatesReplace(c *gin.Context, repo *schedule.Repository, groupID i
 			if err != nil {
 				return fmt.Errorf("row %d: location: %w", i+1, err)
 			}
+			teacherID, err := getOrCreateTeacherID(tx, r.TeacherName)
+			if err != nil {
+				return fmt.Errorf("row %d: teacher: %w", i+1, err)
+			}
 			templates = append(templates, schedule.ScheduleTemplate{
 				GroupID:     groupID,
 				DayOfWeek:   r.DayOfWeek,
@@ -163,7 +167,7 @@ func importTemplatesReplace(c *gin.Context, repo *schedule.Repository, groupID i
 				PairNumber:  r.PairNumber,
 				SubjectID:   subID,
 				LocationID:  locID,
-				TeacherName: r.TeacherName,
+				TeacherID:   teacherID,
 				Subgroup:    r.Subgroup,
 				CreatedAt:   time.Now().UTC(),
 				UpdatedAt:   time.Now().UTC(),
@@ -224,6 +228,23 @@ func getOrCreateLocationID(tx *gorm.DB, name string) (int, error) {
 		return 0, err
 	}
 	return l.ID, nil
+}
+
+func getOrCreateTeacherID(tx *gorm.DB, name string) (*int, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return nil, nil
+	}
+	var out struct {
+		ID int `gorm:"column:id"`
+	}
+	if err := tx.Raw(
+		"INSERT INTO teachers (name) VALUES (?) ON CONFLICT (name_key) DO UPDATE SET name = EXCLUDED.name RETURNING id",
+		name,
+	).Scan(&out).Error; err != nil {
+		return nil, err
+	}
+	return &out.ID, nil
 }
 
 func parseTemplatesCSV(r io.Reader) ([]importTemplateRow, error) {

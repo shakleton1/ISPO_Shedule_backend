@@ -4,12 +4,35 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"ispo-schedule/internal/auth"
 
 	"gorm.io/gorm"
 )
+
+func normalizeTeacherName(name string) string {
+	return strings.TrimSpace(name)
+}
+
+func ensureTeacherID(tx *gorm.DB, name string) (*int, error) {
+	name = normalizeTeacherName(name)
+	if name == "" {
+		return nil, nil
+	}
+	var out struct {
+		ID int `gorm:"column:id"`
+	}
+	err := tx.Raw(
+		"INSERT INTO teachers (name) VALUES (?) ON CONFLICT (name_key) DO UPDATE SET name = EXCLUDED.name RETURNING id",
+		name,
+	).Scan(&out).Error
+	if err != nil {
+		return nil, err
+	}
+	return &out.ID, nil
+}
 
 // Groups
 
@@ -115,28 +138,43 @@ type TemplateFilters struct {
 }
 
 func (r *Repository) ListTemplates(filters TemplateFilters) ([]ScheduleTemplate, error) {
-	q := r.db.Model(&ScheduleTemplate{}).Order("group_id asc, day_of_week asc, pair_number asc")
+	q := r.db.Table("schedule_templates st").
+		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.created_at, st.updated_at").
+		Joins("LEFT JOIN teachers t ON t.id = st.teacher_id").
+		Order("st.group_id asc, st.day_of_week asc, st.week_parity asc, st.pair_number asc, st.subgroup asc")
 	if filters.GroupID != nil {
-		q = q.Where("group_id = ?", *filters.GroupID)
+		q = q.Where("st.group_id = ?", *filters.GroupID)
 	}
 	if filters.DayOfWeek != nil {
-		q = q.Where("day_of_week = ?", *filters.DayOfWeek)
+		q = q.Where("st.day_of_week = ?", *filters.DayOfWeek)
 	}
 	if filters.WeekParity != nil {
-		q = q.Where("week_parity = ?", *filters.WeekParity)
+		q = q.Where("st.week_parity = ?", *filters.WeekParity)
 	}
 	var rows []ScheduleTemplate
-	err := q.Find(&rows).Error
+	err := q.Scan(&rows).Error
 	return rows, err
 }
 
 func (r *Repository) CreateTemplate(tpl *ScheduleTemplate) error {
-	return r.db.Create(tpl).Error
+	if tpl == nil {
+		return fmt.Errorf("template is nil")
+	}
+	teacherID, err := ensureTeacherID(r.db, tpl.TeacherName)
+	if err != nil {
+		return err
+	}
+	tpl.TeacherID = teacherID
+	return r.db.Omit("TeacherName").Create(tpl).Error
 }
 
 func (r *Repository) UpdateTemplate(id int64, patch *ScheduleTemplate) (*ScheduleTemplate, error) {
 	var row ScheduleTemplate
-	if err := r.db.First(&row, id).Error; err != nil {
+	if err := r.db.Table("schedule_templates").First(&row, id).Error; err != nil {
+		return nil, err
+	}
+	teacherID, err := ensureTeacherID(r.db, patch.TeacherName)
+	if err != nil {
 		return nil, err
 	}
 	row.GroupID = patch.GroupID
@@ -145,12 +183,12 @@ func (r *Repository) UpdateTemplate(id int64, patch *ScheduleTemplate) (*Schedul
 	row.PairNumber = patch.PairNumber
 	row.SubjectID = patch.SubjectID
 	row.LocationID = patch.LocationID
-	row.TeacherName = patch.TeacherName
+	row.TeacherID = teacherID
 	row.Subgroup = patch.Subgroup
-	if err := r.db.Save(&row).Error; err != nil {
+	if err := r.db.Omit("TeacherName").Save(&row).Error; err != nil {
 		return nil, err
 	}
-	return &row, nil
+	return r.GetTemplateByID(id)
 }
 
 func (r *Repository) DeleteTemplate(id int64) error {
@@ -159,7 +197,11 @@ func (r *Repository) DeleteTemplate(id int64) error {
 
 func (r *Repository) GetTemplateByID(id int64) (*ScheduleTemplate, error) {
 	var row ScheduleTemplate
-	if err := r.db.First(&row, id).Error; err != nil {
+	if err := r.db.Table("schedule_templates st").
+		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.created_at, st.updated_at").
+		Joins("LEFT JOIN teachers t ON t.id = st.teacher_id").
+		Where("st.id = ?", id).
+		Scan(&row).Error; err != nil {
 		return nil, err
 	}
 	return &row, nil
@@ -173,15 +215,18 @@ type OverrideFilters struct {
 }
 
 func (r *Repository) ListOverrides(filters OverrideFilters) ([]ScheduleOverride, error) {
-	q := r.db.Model(&ScheduleOverride{}).Order("target_date asc, pair_number asc")
+	q := r.db.Table("schedule_overrides so").
+		Select("so.id, so.target_date, so.group_id, so.pair_number, so.action_type, so.new_subject_id, so.new_location_id, t.name AS new_teacher_name, so.comment, so.subgroup, so.created_at, so.updated_at").
+		Joins("LEFT JOIN teachers t ON t.id = so.new_teacher_id").
+		Order("so.target_date asc, so.pair_number asc")
 	if filters.GroupID != nil {
-		q = q.Where("group_id = ?", *filters.GroupID)
+		q = q.Where("so.group_id = ?", *filters.GroupID)
 	}
 	if filters.TargetDate != nil {
-		q = q.Where("target_date = ?", dateOnly(*filters.TargetDate))
+		q = q.Where("so.target_date = ?", dateOnly(*filters.TargetDate))
 	}
 	var rows []ScheduleOverride
-	err := q.Find(&rows).Error
+	err := q.Scan(&rows).Error
 	return rows, err
 }
 
@@ -189,8 +234,15 @@ func (r *Repository) CreateOverride(o *ScheduleOverride) error {
 	if err := validateOverrideForWrite(o); err != nil {
 		return err
 	}
+	if o.NewTeacherName != nil {
+		teacherID, err := ensureTeacherID(r.db, *o.NewTeacherName)
+		if err != nil {
+			return err
+		}
+		o.NewTeacherID = teacherID
+	}
 	o.TargetDate = dateOnly(o.TargetDate)
-	return r.db.Create(o).Error
+	return r.db.Omit("NewTeacherName").Create(o).Error
 }
 
 func (r *Repository) UpdateOverride(id int64, patch *ScheduleOverride) (*ScheduleOverride, error) {
@@ -198,8 +250,17 @@ func (r *Repository) UpdateOverride(id int64, patch *ScheduleOverride) (*Schedul
 		return nil, err
 	}
 	var row ScheduleOverride
-	if err := r.db.First(&row, id).Error; err != nil {
+	if err := r.db.Table("schedule_overrides").First(&row, id).Error; err != nil {
 		return nil, err
+	}
+	if patch.NewTeacherName != nil {
+		teacherID, err := ensureTeacherID(r.db, *patch.NewTeacherName)
+		if err != nil {
+			return nil, err
+		}
+		row.NewTeacherID = teacherID
+	} else {
+		row.NewTeacherID = nil
 	}
 	row.TargetDate = dateOnly(patch.TargetDate)
 	row.GroupID = patch.GroupID
@@ -207,13 +268,12 @@ func (r *Repository) UpdateOverride(id int64, patch *ScheduleOverride) (*Schedul
 	row.ActionType = patch.ActionType
 	row.NewSubjectID = patch.NewSubjectID
 	row.NewLocationID = patch.NewLocationID
-	row.NewTeacherName = patch.NewTeacherName
 	row.Comment = patch.Comment
 	row.Subgroup = patch.Subgroup
-	if err := r.db.Save(&row).Error; err != nil {
+	if err := r.db.Omit("NewTeacherName").Save(&row).Error; err != nil {
 		return nil, err
 	}
-	return &row, nil
+	return r.GetOverrideByID(id)
 }
 
 func validateOverrideForWrite(o *ScheduleOverride) error {
@@ -254,7 +314,11 @@ func (r *Repository) DeleteOverride(id int64) error {
 
 func (r *Repository) GetOverrideByID(id int64) (*ScheduleOverride, error) {
 	var row ScheduleOverride
-	if err := r.db.First(&row, id).Error; err != nil {
+	if err := r.db.Table("schedule_overrides so").
+		Select("so.id, so.target_date, so.group_id, so.pair_number, so.action_type, so.new_subject_id, so.new_location_id, t.name AS new_teacher_name, so.comment, so.subgroup, so.created_at, so.updated_at").
+		Joins("LEFT JOIN teachers t ON t.id = so.new_teacher_id").
+		Where("so.id = ?", id).
+		Scan(&row).Error; err != nil {
 		return nil, err
 	}
 	return &row, nil

@@ -26,6 +26,13 @@ type Location struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type Teacher struct {
+	ID        int       `gorm:"primaryKey" json:"id"`
+	Name      string    `gorm:"size:100;not null" json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type ScheduleTemplate struct {
 	ID        int64      `gorm:"primaryKey" json:"id"`
 	GroupID   int        `gorm:"not null;index:idx_tpl_query,priority:1" json:"group_id"`
@@ -34,7 +41,8 @@ type ScheduleTemplate struct {
 	PairNumber int16     `gorm:"not null;index:idx_tpl_query,priority:4" json:"pair_number"`
 	SubjectID int        `gorm:"not null" json:"subject_id"`
 	LocationID int       `gorm:"not null" json:"location_id"`
-	TeacherName string   `gorm:"size:100;not null" json:"teacher_name"`
+	TeacherID  *int      `gorm:"" json:"-"`
+	TeacherName string   `gorm:"column:teacher_name;->" json:"teacher_name"`
 	Subgroup  *int16     `gorm:"" json:"subgroup"` // nil = вся группа
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
@@ -48,7 +56,8 @@ type ScheduleOverride struct {
 	ActionType    OverrideAction `gorm:"type:text;not null" json:"action_type"`
 	NewSubjectID  *int           `json:"new_subject_id"`
 	NewLocationID *int           `json:"new_location_id"`
-	NewTeacherName *string       `gorm:"size:100" json:"new_teacher_name"`
+	NewTeacherID  *int           `json:"-"`
+	NewTeacherName *string       `gorm:"column:new_teacher_name;->" json:"new_teacher_name"`
 	Comment       *string        `json:"comment"`
 	Subgroup      *int16         `json:"subgroup"` // nil = для всех
 	CreatedAt     time.Time      `json:"created_at"`
