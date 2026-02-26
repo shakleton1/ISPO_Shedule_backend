@@ -61,6 +61,11 @@ func NewRouter(deps RouterDeps) http.Handler {
 			pushGroup.POST("/unregister", handlePushUnregister(deps.Repo))
 		}
 
+		// Public dictionary endpoints for clients.
+		v1.GET("/groups", handlePublicListGroups(deps.Repo))
+		v1.GET("/subjects", handlePublicListSubjects(deps.Repo))
+		v1.GET("/locations", handlePublicListLocations(deps.Repo))
+
 		admin := v1.Group("/admin")
 		admin.Use(adminGateMiddleware(deps.Config.Admin.APIKey, deps.Tokens, deps.Repo))
 		{
