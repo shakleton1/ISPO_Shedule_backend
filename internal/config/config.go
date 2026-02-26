@@ -15,6 +15,7 @@ type Config struct {
 	Schedule ScheduleConfig `mapstructure:"schedule"`
 	Admin    AdminConfig    `mapstructure:"admin"`
 	Auth     AuthConfig     `mapstructure:"auth"`
+	Push     PushConfig     `mapstructure:"push"`
 	PDF      PDFConfig      `mapstructure:"pdf"`
 }
 
@@ -30,12 +31,12 @@ type LogConfig struct {
 }
 
 type DBConfig struct {
-	Host    string `mapstructure:"host"`
-	Port    int    `mapstructure:"port"`
-	User    string `mapstructure:"user"`
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
-	Name    string `mapstructure:"name"`
-	SSLMode string `mapstructure:"sslmode"`
+	Name     string `mapstructure:"name"`
+	SSLMode  string `mapstructure:"sslmode"`
 }
 
 type ScheduleConfig struct {
@@ -51,6 +52,18 @@ type AuthConfig struct {
 	AccessTokenTTL         time.Duration `mapstructure:"access_token_ttl"`
 	BootstrapAdminLogin    string        `mapstructure:"bootstrap_admin_login"`
 	BootstrapAdminPassword string        `mapstructure:"bootstrap_admin_password"`
+}
+
+type PushConfig struct {
+	Enabled bool      `mapstructure:"enabled"`
+	FCM     FCMConfig `mapstructure:"fcm"`
+}
+
+type FCMConfig struct {
+	Enabled         bool          `mapstructure:"enabled"`
+	ProjectID       string        `mapstructure:"project_id"`
+	CredentialsFile string        `mapstructure:"credentials_file"`
+	Timeout         time.Duration `mapstructure:"timeout"`
 }
 
 type PDFConfig struct {
@@ -101,6 +114,9 @@ func Load(opts LoadOptions) (*Config, error) {
 	}
 	if cfg.Auth.AccessTokenTTL == 0 {
 		cfg.Auth.AccessTokenTTL = 12 * time.Hour
+	}
+	if cfg.Push.FCM.Timeout == 0 {
+		cfg.Push.FCM.Timeout = 5 * time.Second
 	}
 
 	return &cfg, nil

@@ -10,6 +10,7 @@ import (
 	"ispo-schedule/internal/auth"
 	"ispo-schedule/internal/config"
 	"ispo-schedule/internal/pdf"
+	"ispo-schedule/internal/push"
 	"ispo-schedule/internal/schedule"
 )
 
@@ -20,6 +21,7 @@ type RouterDeps struct {
 	PDF         *pdf.Engine
 	Tokens      *auth.TokenManager
 	DBPing      func(context.Context) error
+	Push        *push.Service
 }
 
 func NewRouter(deps RouterDeps) http.Handler {
@@ -53,6 +55,12 @@ func NewRouter(deps RouterDeps) http.Handler {
 			client.GET("/pdf", handleGetSchedulePDF(deps.ScheduleSvc, deps.Repo, pdfEngineAdapter{e: deps.PDF}))
 		}
 
+		pushGroup := v1.Group("/push")
+		{
+			pushGroup.POST("/register", handlePushRegister(deps.Repo))
+			pushGroup.POST("/unregister", handlePushUnregister(deps.Repo))
+		}
+
 		admin := v1.Group("/admin")
 		admin.Use(adminGateMiddleware(deps.Config.Admin.APIKey, deps.Tokens, deps.Repo))
 		{
@@ -72,20 +80,20 @@ func NewRouter(deps RouterDeps) http.Handler {
 			admin.DELETE("/locations/:id", handleAdminDeleteLocation(deps.Repo))
 
 			admin.GET("/templates", handleAdminListTemplates(deps.Repo))
-			admin.POST("/templates", handleAdminCreateTemplate(deps.Repo))
-			admin.PUT("/templates/:id", handleAdminUpdateTemplate(deps.Repo))
-			admin.DELETE("/templates/:id", handleAdminDeleteTemplate(deps.Repo))
+			admin.POST("/templates", handleAdminCreateTemplate(deps.Repo, deps.Push))
+			admin.PUT("/templates/:id", handleAdminUpdateTemplate(deps.Repo, deps.Push))
+			admin.DELETE("/templates/:id", handleAdminDeleteTemplate(deps.Repo, deps.Push))
 
 			admin.GET("/overrides", handleAdminListOverrides(deps.Repo))
-			admin.POST("/override", handleAdminCreateOverride(deps.Repo))
-			admin.PUT("/overrides/:id", handleAdminUpdateOverride(deps.Repo))
-			admin.DELETE("/overrides/:id", handleAdminDeleteOverride(deps.Repo))
+			admin.POST("/override", handleAdminCreateOverride(deps.Repo, deps.Push))
+			admin.PUT("/overrides/:id", handleAdminUpdateOverride(deps.Repo, deps.Push))
+			admin.DELETE("/overrides/:id", handleAdminDeleteOverride(deps.Repo, deps.Push))
 
-			admin.POST("/overlay", handleAdminUpsertOverlay(deps.Repo))
+			admin.POST("/overlay", handleAdminUpsertOverlay(deps.Repo, deps.Push))
 
 			admin.GET("/calendar-exceptions", handleAdminListCalendarExceptions(deps.Repo))
-			admin.POST("/calendar-exceptions", handleAdminUpsertCalendarException(deps.Repo))
-			admin.DELETE("/calendar-exceptions/:date", handleAdminDeleteCalendarException(deps.Repo))
+			admin.POST("/calendar-exceptions", handleAdminUpsertCalendarException(deps.Repo, deps.Push))
+			admin.DELETE("/calendar-exceptions/:date", handleAdminDeleteCalendarException(deps.Repo, deps.Push))
 		}
 	}
 

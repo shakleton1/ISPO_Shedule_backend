@@ -157,6 +157,14 @@ func (r *Repository) DeleteTemplate(id int64) error {
 	return r.db.Delete(&ScheduleTemplate{}, id).Error
 }
 
+func (r *Repository) GetTemplateByID(id int64) (*ScheduleTemplate, error) {
+	var row ScheduleTemplate
+	if err := r.db.First(&row, id).Error; err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
 // Overrides
 
 type OverrideFilters struct {
@@ -242,6 +250,14 @@ func validateOverrideForWrite(o *ScheduleOverride) error {
 
 func (r *Repository) DeleteOverride(id int64) error {
 	return r.db.Delete(&ScheduleOverride{}, id).Error
+}
+
+func (r *Repository) GetOverrideByID(id int64) (*ScheduleOverride, error) {
+	var row ScheduleOverride
+	if err := r.db.First(&row, id).Error; err != nil {
+		return nil, err
+	}
+	return &row, nil
 }
 
 // Overlay

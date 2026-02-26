@@ -15,6 +15,7 @@ import (
 	"ispo-schedule/internal/httpapi"
 	"ispo-schedule/internal/obs"
 	"ispo-schedule/internal/pdf"
+	"ispo-schedule/internal/push"
 	"ispo-schedule/internal/schedule"
 )
 
@@ -61,6 +62,11 @@ func Run() error {
 		Timeout:              cfg.PDF.Timeout,
 	})
 
+	pushSvc, err := initPush(cfg, scheduleRepo)
+	if err != nil {
+		return err
+	}
+
 	router := httpapi.NewRouter(httpapi.RouterDeps{
 		Config:      cfg,
 		ScheduleSvc: scheduleSvc,
@@ -68,6 +74,7 @@ func Run() error {
 		PDF:         pdfEngine,
 		Tokens:      tokens,
 		DBPing:      sqlDB.PingContext,
+		Push:        pushSvc,
 	})
 
 	srv := &http.Server{
@@ -97,6 +104,20 @@ func Run() error {
 		}
 		return fmt.Errorf("http server: %w", err)
 	}
+}
+
+func initPush(cfg *config.Config, repo *schedule.Repository) (*push.Service, error) {
+	if !cfg.Push.Enabled {
+		return push.NewService(push.ServiceDeps{Repo: repo, Notifier: nil, Timeout: cfg.Push.FCM.Timeout}), nil
+	}
+	if !cfg.Push.FCM.Enabled {
+		return push.NewService(push.ServiceDeps{Repo: repo, Notifier: nil, Timeout: cfg.Push.FCM.Timeout}), nil
+	}
+	n, err := push.BuildFCMNotifier(context.Background(), cfg.Push.FCM.ProjectID, cfg.Push.FCM.CredentialsFile, cfg.Push.FCM.Timeout)
+	if err != nil {
+		return nil, err
+	}
+	return push.NewService(push.ServiceDeps{Repo: repo, Notifier: n, Timeout: cfg.Push.FCM.Timeout}), nil
 }
 
 func bootstrapAdminIfNeeded(cfg *config.Config, repo *schedule.Repository) error {

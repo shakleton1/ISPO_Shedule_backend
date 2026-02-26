@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 
 	"ispo-schedule/internal/auth"
+	"ispo-schedule/internal/push"
 	"ispo-schedule/internal/schedule"
 )
 
@@ -59,6 +60,17 @@ func writeDBError(c *gin.Context, err error) {
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+}
+
+func bumpScheduleVersionAndGet(repo *schedule.Repository) (time.Time, error) {
+	if err := repo.BumpScheduleVersion(); err != nil {
+		return time.Time{}, err
+	}
+	st, err := repo.GetSystemState()
+	if err != nil {
+		return time.Time{}, err
+	}
+	return st.ScheduleVersion, nil
 }
 
 // Groups
@@ -314,7 +326,7 @@ func handleAdminListTemplates(repo *schedule.Repository) gin.HandlerFunc {
 	}
 }
 
-func handleAdminCreateTemplate(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminCreateTemplate(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req schedule.ScheduleTemplate
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -329,13 +341,16 @@ func handleAdminCreateTemplate(repo *schedule.Repository) gin.HandlerFunc {
 			writeDBError(c, err)
 			return
 		}
-		_ = repo.BumpScheduleVersion()
+		ver, _ := bumpScheduleVersionAndGet(repo)
+		if pushSvc != nil {
+			pushSvc.NotifyScheduleUpdatedAsync(req.GroupID, ver)
+		}
 		writeAudit(c, repo, "create", "schedule_templates", strconv.FormatInt(req.ID, 10), req)
 		c.JSON(http.StatusCreated, req)
 	}
 }
 
-func handleAdminUpdateTemplate(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminUpdateTemplate(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
@@ -352,24 +367,35 @@ func handleAdminUpdateTemplate(repo *schedule.Repository) gin.HandlerFunc {
 			writeDBError(c, err)
 			return
 		}
-		_ = repo.BumpScheduleVersion()
+		ver, _ := bumpScheduleVersionAndGet(repo)
+		if pushSvc != nil {
+			pushSvc.NotifyScheduleUpdatedAsync(row.GroupID, ver)
+		}
 		writeAudit(c, repo, "update", "schedule_templates", strconv.FormatInt(id, 10), row)
 		c.JSON(http.StatusOK, row)
 	}
 }
 
-func handleAdminDeleteTemplate(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminDeleteTemplate(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 			return
 		}
+		tpl, err := repo.GetTemplateByID(id)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
 		if err := repo.DeleteTemplate(id); err != nil {
 			writeDBError(c, err)
 			return
 		}
-		_ = repo.BumpScheduleVersion()
+		ver, _ := bumpScheduleVersionAndGet(repo)
+		if pushSvc != nil {
+			pushSvc.NotifyScheduleUpdatedAsync(tpl.GroupID, ver)
+		}
 		writeAudit(c, repo, "delete", "schedule_templates", strconv.FormatInt(id, 10), nil)
 		c.Status(http.StatusNoContent)
 	}
@@ -442,7 +468,7 @@ func validateOverrideRequest(o schedule.ScheduleOverride) error {
 	return nil
 }
 
-func handleAdminCreateOverride(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminCreateOverride(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req adminOverrideRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -473,13 +499,16 @@ func handleAdminCreateOverride(repo *schedule.Repository) gin.HandlerFunc {
 			writeDBError(c, err)
 			return
 		}
-		_ = repo.BumpScheduleVersion()
+		ver, _ := bumpScheduleVersionAndGet(repo)
+		if pushSvc != nil {
+			pushSvc.NotifyScheduleUpdatedAsync(o.GroupID, ver)
+		}
 		writeAudit(c, repo, "create", "schedule_overrides", strconv.FormatInt(o.ID, 10), o)
 		c.JSON(http.StatusCreated, o)
 	}
 }
 
-func handleAdminUpdateOverride(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminUpdateOverride(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
@@ -500,24 +529,35 @@ func handleAdminUpdateOverride(repo *schedule.Repository) gin.HandlerFunc {
 			writeDBError(c, err)
 			return
 		}
-		_ = repo.BumpScheduleVersion()
+		ver, _ := bumpScheduleVersionAndGet(repo)
+		if pushSvc != nil {
+			pushSvc.NotifyScheduleUpdatedAsync(row.GroupID, ver)
+		}
 		writeAudit(c, repo, "update", "schedule_overrides", strconv.FormatInt(id, 10), row)
 		c.JSON(http.StatusOK, row)
 	}
 }
 
-func handleAdminDeleteOverride(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminDeleteOverride(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 			return
 		}
+		o, err := repo.GetOverrideByID(id)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
 		if err := repo.DeleteOverride(id); err != nil {
 			writeDBError(c, err)
 			return
 		}
-		_ = repo.BumpScheduleVersion()
+		ver, _ := bumpScheduleVersionAndGet(repo)
+		if pushSvc != nil {
+			pushSvc.NotifyScheduleUpdatedAsync(o.GroupID, ver)
+		}
 		writeAudit(c, repo, "delete", "schedule_overrides", strconv.FormatInt(id, 10), nil)
 		c.Status(http.StatusNoContent)
 	}
@@ -532,7 +572,7 @@ type adminOverlayRequest struct {
 	StylePreset string `json:"style_preset"`
 }
 
-func handleAdminUpsertOverlay(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminUpsertOverlay(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req adminOverlayRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -553,7 +593,10 @@ func handleAdminUpsertOverlay(repo *schedule.Repository) gin.HandlerFunc {
 			writeDBError(c, err)
 			return
 		}
-		_ = repo.BumpScheduleVersion()
+		ver, _ := bumpScheduleVersionAndGet(repo)
+		if pushSvc != nil {
+			pushSvc.NotifyScheduleUpdatedAsync(req.GroupID, ver)
+		}
 		writeAudit(c, repo, "upsert", "schedule_day_overlays", strconv.FormatInt(row.ID, 10), row)
 		c.JSON(http.StatusOK, row)
 	}
@@ -578,7 +621,7 @@ type adminCalendarExceptionRequest struct {
 	Comment    *string `json:"comment"`
 }
 
-func handleAdminUpsertCalendarException(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminUpsertCalendarException(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req adminCalendarExceptionRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -595,13 +638,16 @@ func handleAdminUpsertCalendarException(repo *schedule.Repository) gin.HandlerFu
 			writeDBError(c, err)
 			return
 		}
-		_ = repo.BumpScheduleVersion()
+		ver, _ := bumpScheduleVersionAndGet(repo)
+		if pushSvc != nil {
+			pushSvc.NotifyScheduleUpdatedAllAsync(ver)
+		}
 		writeAudit(c, repo, "upsert", "calendar_exceptions", strconv.FormatInt(row.ID, 10), row)
 		c.JSON(http.StatusOK, row)
 	}
 }
 
-func handleAdminDeleteCalendarException(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminDeleteCalendarException(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		dateStr := c.Param("date")
 		if dateStr == "" {
@@ -612,7 +658,10 @@ func handleAdminDeleteCalendarException(repo *schedule.Repository) gin.HandlerFu
 			writeDBError(c, err)
 			return
 		}
-		_ = repo.BumpScheduleVersion()
+		ver, _ := bumpScheduleVersionAndGet(repo)
+		if pushSvc != nil {
+			pushSvc.NotifyScheduleUpdatedAllAsync(ver)
+		}
 		writeAudit(c, repo, "delete", "calendar_exceptions", dateStr, nil)
 		c.Status(http.StatusNoContent)
 	}

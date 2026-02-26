@@ -32,6 +32,16 @@ auth:
   bootstrap_admin_login: "admin"
   bootstrap_admin_password: "admin123"
 
+push:
+  enabled: false
+  fcm:
+    enabled: true
+    # ID проекта Firebase (Project ID).
+    project_id: ""
+    # Путь к service account JSON (Google Cloud / Firebase).
+    credentials_file: ""
+    timeout: "5s"
+
 pdf:
   # Опционально: путь к chrome.exe, если chromedp не находит браузер.
   chrome_executable_path: ""
