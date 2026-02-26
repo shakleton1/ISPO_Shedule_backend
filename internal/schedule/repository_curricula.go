@@ -1,0 +1,265 @@
+package schedule
+
+import (
+	"fmt"
+	"time"
+
+	"gorm.io/gorm"
+)
+
+// Specialties
+
+func (r *Repository) ListSpecialties() ([]Specialty, error) {
+	var rows []Specialty
+	err := r.db.Order("id asc").Find(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) CreateSpecialty(s *Specialty) error {
+	return r.db.Create(s).Error
+}
+
+func (r *Repository) UpdateSpecialty(id int, patch *Specialty) (*Specialty, error) {
+	var row Specialty
+	if err := r.db.First(&row, id).Error; err != nil {
+		return nil, err
+	}
+	row.Code = patch.Code
+	row.Name = patch.Name
+	if err := r.db.Save(&row).Error; err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
+func (r *Repository) DeleteSpecialty(id int) error {
+	return r.db.Delete(&Specialty{}, id).Error
+}
+
+// Curricula
+
+type CurriculumFilters struct {
+	SpecialtyID   *int
+	AdmissionYear *int16
+	IsActive      *bool
+}
+
+func (r *Repository) ListCurricula(filters CurriculumFilters) ([]Curriculum, error) {
+	q := r.db.Order("specialty_id asc, admission_year asc, variant asc, id asc")
+	if filters.SpecialtyID != nil {
+		q = q.Where("specialty_id = ?", *filters.SpecialtyID)
+	}
+	if filters.AdmissionYear != nil {
+		q = q.Where("admission_year = ?", *filters.AdmissionYear)
+	}
+	if filters.IsActive != nil {
+		q = q.Where("is_active = ?", *filters.IsActive)
+	}
+	var rows []Curriculum
+	err := q.Find(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) CreateCurriculum(c *Curriculum) error {
+	return r.db.Create(c).Error
+}
+
+func (r *Repository) UpdateCurriculum(id int64, patch *Curriculum) (*Curriculum, error) {
+	var row Curriculum
+	if err := r.db.First(&row, id).Error; err != nil {
+		return nil, err
+	}
+	row.SpecialtyID = patch.SpecialtyID
+	row.AdmissionYear = patch.AdmissionYear
+	row.Variant = patch.Variant
+	row.Title = patch.Title
+	row.Notes = patch.Notes
+	row.IsActive = patch.IsActive
+	if err := r.db.Save(&row).Error; err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
+func (r *Repository) DeleteCurriculum(id int64) error {
+	return r.db.Delete(&Curriculum{}, id).Error
+}
+
+// Academic calendars
+
+func (r *Repository) ListAcademicCalendars(curriculumID int64) ([]AcademicCalendar, error) {
+	var rows []AcademicCalendar
+	err := r.db.Where("curriculum_id = ?", curriculumID).Order("academic_year_start asc").Find(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) CreateAcademicCalendar(ac *AcademicCalendar) error {
+	ac.AcademicYearStart = dateOnly(ac.AcademicYearStart)
+	return r.db.Create(ac).Error
+}
+
+func (r *Repository) DeleteAcademicCalendar(id int64) error {
+	return r.db.Delete(&AcademicCalendar{}, id).Error
+}
+
+func (r *Repository) ListAcademicCalendarWeeks(calendarID int64) ([]AcademicCalendarWeek, error) {
+	var rows []AcademicCalendarWeek
+	err := r.db.Where("calendar_id = ?", calendarID).Order("week_number asc").Find(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) UpsertAcademicCalendarWeeks(calendarID int64, weeks []AcademicCalendarWeek) ([]AcademicCalendarWeek, error) {
+	if len(weeks) == 0 {
+		return []AcademicCalendarWeek{}, nil
+	}
+	for i := range weeks {
+		weeks[i].CalendarID = calendarID
+		weeks[i].WeekStartDate = mondayOfWeek(weeks[i].WeekStartDate)
+		if weeks[i].ActivityCode == "" {
+			return nil, fmt.Errorf("activity_code required")
+		}
+		if weeks[i].WeekNumber <= 0 {
+			return nil, fmt.Errorf("week_number must be > 0")
+		}
+	}
+
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		for _, w := range weeks {
+			// Upsert by (calendar_id, week_number)
+			// Note: also unique by (calendar_id, week_start_date), so week_start_date changes can fail if colliding.
+			if err := tx.Exec(`
+INSERT INTO academic_calendar_weeks
+  (calendar_id, week_number, week_start_date, activity_code, activity_name, is_teaching, comment)
+VALUES
+  (?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT (calendar_id, week_number)
+DO UPDATE SET
+  week_start_date = EXCLUDED.week_start_date,
+  activity_code = EXCLUDED.activity_code,
+  activity_name = EXCLUDED.activity_name,
+  is_teaching = EXCLUDED.is_teaching,
+  comment = EXCLUDED.comment`,
+				w.CalendarID, w.WeekNumber, dateOnly(w.WeekStartDate), w.ActivityCode, w.ActivityName, w.IsTeaching, w.Comment,
+			).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.ListAcademicCalendarWeeks(calendarID)
+}
+
+// Curriculum items
+
+func (r *Repository) ListCurriculumItems(curriculumID int64) ([]CurriculumItem, error) {
+	var rows []CurriculumItem
+	err := r.db.Where("curriculum_id = ?", curriculumID).Order("id asc").Find(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) CreateCurriculumItem(it *CurriculumItem) error {
+	return r.db.Create(it).Error
+}
+
+func (r *Repository) UpdateCurriculumItem(id int64, patch *CurriculumItem) (*CurriculumItem, error) {
+	var row CurriculumItem
+	if err := r.db.First(&row, id).Error; err != nil {
+		return nil, err
+	}
+	row.ItemType = patch.ItemType
+	row.Name = patch.Name
+	row.SubjectID = patch.SubjectID
+	if err := r.db.Save(&row).Error; err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
+func (r *Repository) DeleteCurriculumItem(id int64) error {
+	return r.db.Delete(&CurriculumItem{}, id).Error
+}
+
+func (r *Repository) ListCurriculumItemAllocations(itemID int64) ([]CurriculumItemAllocation, error) {
+	var rows []CurriculumItemAllocation
+	err := r.db.Where("item_id = ?", itemID).Order("semester asc").Find(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) UpsertCurriculumItemAllocations(itemID int64, allocs []CurriculumItemAllocation) ([]CurriculumItemAllocation, error) {
+	if len(allocs) == 0 {
+		return []CurriculumItemAllocation{}, nil
+	}
+	for i := range allocs {
+		allocs[i].ItemID = itemID
+		if allocs[i].Semester <= 0 {
+			return nil, fmt.Errorf("semester must be > 0")
+		}
+	}
+
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		for _, a := range allocs {
+			if err := tx.Exec(`
+INSERT INTO curriculum_item_allocations
+  (item_id, semester, weeks, hours, comment)
+VALUES
+  (?, ?, ?, ?, ?)
+ON CONFLICT (item_id, semester)
+DO UPDATE SET
+  weeks = EXCLUDED.weeks,
+  hours = EXCLUDED.hours,
+  comment = EXCLUDED.comment`,
+				a.ItemID, a.Semester, a.Weeks, a.Hours, a.Comment,
+			).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.ListCurriculumItemAllocations(itemID)
+}
+
+// Calendar helpers for schedule building
+
+type teachingWeekRow struct {
+	WeekStartDate time.Time `gorm:"column:week_start_date"`
+	IsTeaching    bool      `gorm:"column:is_teaching"`
+}
+
+func (r *Repository) ListTeachingWeeksForGroupBetween(groupID int, startDate, endDate time.Time) (map[string]bool, error) {
+	start := mondayOfWeek(startDate)
+	end := mondayOfWeek(endDate)
+
+	var group Group
+	if err := r.db.First(&group, groupID).Error; err != nil {
+		return nil, err
+	}
+	if group.CurriculumID == nil {
+		return map[string]bool{}, nil
+	}
+
+	var rows []teachingWeekRow
+	err := r.db.Raw(`
+SELECT w.week_start_date, w.is_teaching
+FROM groups g
+JOIN curricula c ON c.id = g.curriculum_id
+JOIN academic_calendars ac ON ac.curriculum_id = c.id
+JOIN academic_calendar_weeks w ON w.calendar_id = ac.id
+WHERE g.id = ?
+  AND w.week_start_date BETWEEN ? AND ?
+`, groupID, dateOnly(start), dateOnly(end)).Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	out := map[string]bool{}
+	for _, r := range rows {
+		out[dateOnly(r.WeekStartDate).Format("2006-01-02")] = r.IsTeaching
+	}
+	return out, nil
+}

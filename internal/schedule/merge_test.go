@@ -143,10 +143,10 @@ func TestMergeLessons_Normalization_UpdatedAtThenID(t *testing.T) {
 	sg1 := int16(1)
 	base := time.Date(2026, 2, 26, 10, 0, 0, 0, time.UTC)
 	later := base.Add(time.Minute)
-	
+
 	newTeacher1 := "T1"
 	newTeacher2 := "T2"
-	
+
 	// Two REPLACE for same key: later UpdatedAt should win.
 	ovrs := []OverrideView{
 		{ID: 1, PairNumber: 2, ActionType: OverrideReplace, NewTeacherName: &newTeacher1, Subgroup: &sg1, UpdatedAt: base},

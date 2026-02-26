@@ -122,8 +122,26 @@ go run .\cmd\api
 - Импорт шаблонов: `POST /api/v1/admin/import/templates/csv|xlsx`
 - Шаблоны: `GET/POST/PUT/DELETE /api/v1/admin/templates`
 - Оверрайды: `GET /api/v1/admin/overrides`, `POST /api/v1/admin/override`, `PUT/DELETE /api/v1/admin/overrides/:id`
+- Массовые оверрайды (на период): `POST /api/v1/admin/overrides/bulk`
+- Перенос пары (атомарно `CANCEL` + `ADD`): `POST /api/v1/admin/override/move`
 - Оверлей дня: `POST /api/v1/admin/overlay`
+- События дня (структурированные, не только текст): `GET/POST /api/v1/admin/day-events`, `PUT/DELETE /api/v1/admin/day-events/:id`
 - Calendar exceptions: `GET/POST /api/v1/admin/calendar-exceptions`, `DELETE /api/v1/admin/calendar-exceptions/:date`
+
+Учебные планы и календарный учебный график:
+
+- Специальности: `GET/POST/PUT/DELETE /api/v1/admin/specialties`
+- Учебные планы (варианты по году набора): `GET/POST/PUT/DELETE /api/v1/admin/curricula`
+- Академ. календари (на учебный год): `GET/POST /api/v1/admin/curricula/:id/calendars`, `DELETE /api/v1/admin/calendars/:id`
+- Недели календаря: `GET /api/v1/admin/calendars/:id/weeks`, `PUT /api/v1/admin/calendars/:id/weeks`
+- Строки учебного плана: `GET/POST /api/v1/admin/curricula/:id/items`, `PUT/DELETE /api/v1/admin/curriculum-items/:id`
+- Распределение по семестрам: `GET /api/v1/admin/curriculum-items/:id/allocations`, `PUT /api/v1/admin/curriculum-items/:id/allocations`
+
+Важно: если группа привязана к `curriculum_id` и в академ. календаре неделя помечена как `is_teaching=false`, то шаблоны на эти даты не применяются (каникулы/практики и т.п.), но оверрайды по датам всё равно можно задавать вручную.
+
+Просмотр структуры БД “Atlas-style” (локально):
+
+- `GET /api/v1/admin/db/schema` — HTML страница с ER-диаграммой (Mermaid) по текущей схеме Postgres. Это read-only интроспекция, доступна только через admin gate.
 
 Полный список и схемы — в `docs/openapi.yaml`.
 

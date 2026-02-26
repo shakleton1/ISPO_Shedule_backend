@@ -10,16 +10,16 @@ import (
 )
 
 type dbTableColumn struct {
-	TableName string `gorm:"column:table_name"`
-	Column    string `gorm:"column:column_name"`
-	DataType  string `gorm:"column:data_type"`
+	TableName  string `gorm:"column:table_name"`
+	Column     string `gorm:"column:column_name"`
+	DataType   string `gorm:"column:data_type"`
 	IsNullable string `gorm:"column:is_nullable"`
 }
 
 type dbFK struct {
-	TableName    string `gorm:"column:table_name"`
-	ColumnName   string `gorm:"column:column_name"`
-	RefTableName string `gorm:"column:ref_table_name"`
+	TableName     string `gorm:"column:table_name"`
+	ColumnName    string `gorm:"column:column_name"`
+	RefTableName  string `gorm:"column:ref_table_name"`
 	RefColumnName string `gorm:"column:ref_column_name"`
 }
 

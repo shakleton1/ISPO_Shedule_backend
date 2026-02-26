@@ -14,8 +14,8 @@ type TokenManager struct {
 }
 
 type Claims struct {
-	Role    Role  `json:"role"`
-	GroupID *int  `json:"group_id,omitempty"`
+	Role     Role   `json:"role"`
+	GroupID  *int   `json:"group_id,omitempty"`
 	Subgroup *int16 `json:"subgroup,omitempty"`
 	jwt.RegisteredClaims
 }

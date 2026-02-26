@@ -161,16 +161,16 @@ func importTemplatesReplace(c *gin.Context, repo *schedule.Repository, groupID i
 				return fmt.Errorf("row %d: teacher: %w", i+1, err)
 			}
 			templates = append(templates, schedule.ScheduleTemplate{
-				GroupID:     groupID,
-				DayOfWeek:   r.DayOfWeek,
-				WeekParity:  r.WeekParity,
-				PairNumber:  r.PairNumber,
-				SubjectID:   subID,
-				LocationID:  locID,
-				TeacherID:   teacherID,
-				Subgroup:    r.Subgroup,
-				CreatedAt:   time.Now().UTC(),
-				UpdatedAt:   time.Now().UTC(),
+				GroupID:    groupID,
+				DayOfWeek:  r.DayOfWeek,
+				WeekParity: r.WeekParity,
+				PairNumber: r.PairNumber,
+				SubjectID:  subID,
+				LocationID: locID,
+				TeacherID:  teacherID,
+				Subgroup:   r.Subgroup,
+				CreatedAt:  time.Now().UTC(),
+				UpdatedAt:  time.Now().UTC(),
 			})
 		}
 		if err := tx.CreateInBatches(&templates, 200).Error; err != nil {

@@ -25,16 +25,53 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 		overlayText[o.TargetDate.Format("2006-01-02")] = o.Text
 	}
 
+	events, err := s.repo.ListDayEventsBetween(groupID, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+	eventsByDay := map[string][]DayEvent{}
+	for _, e := range events {
+		dayKey := e.TargetDate.Format("2006-01-02")
+		locationName := e.LocationName
+		var locNamePtr *string
+		if locationName != "" {
+			locNamePtr = &locationName
+		}
+		eventsByDay[dayKey] = append(eventsByDay[dayKey], DayEvent{
+			ID:           e.ID,
+			EventType:    e.EventType,
+			Title:        e.Title,
+			Details:      e.Details,
+			LocationID:   e.LocationID,
+			LocationName: locNamePtr,
+		})
+	}
+
+	// Preload academic calendar weeks (if group is linked to a curriculum).
+	teachingWeeks, err := s.repo.ListTeachingWeeksForGroupBetween(groupID, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+
 	var out []DaySchedule
 	for d := dateOnly(startDate); !d.After(endDate); d = d.AddDate(0, 0, 1) {
 		dayKey := d.Format("2006-01-02")
 		dayOfWeek := dayOfWeekForDate(d, worksAs)
 
+		weekKey := mondayOfWeek(d).Format("2006-01-02")
+		nonTeaching := false
+		if v, ok := teachingWeeks[weekKey]; ok && !v {
+			nonTeaching = true
+		}
+
 		parity := s.weekParityForDate(d)
 
-		tpls, err := s.repo.ListTemplatesFor(groupID, dayOfWeek, parity)
-		if err != nil {
-			return nil, err
+		var tpls []TemplateView
+		if !nonTeaching {
+			tpls, err = s.repo.ListTemplatesFor(groupID, dayOfWeek, parity)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		ovrs, err := s.repo.ListOverridesForDate(groupID, d)
@@ -69,11 +106,17 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 			overlayPtr = &t
 		}
 
+		dEvents := eventsByDay[dayKey]
+		if dEvents == nil {
+			dEvents = []DayEvent{}
+		}
+
 		out = append(out, DaySchedule{
 			Date:        dayKey,
 			DayOfWeek:   dayOfWeek,
 			WeekParity:  parity,
 			OverlayText: overlayPtr,
+			Events:      dEvents,
 			Lessons:     lessons,
 		})
 	}

@@ -455,6 +455,366 @@ paths:
       responses:
         "204": { description: Deleted }
 
+  /api/v1/admin/db/schema:
+    get:
+      tags: [Admin]
+      summary: Atlas-style DB schema diagram (Mermaid HTML)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      responses:
+        "200":
+          description: HTML page containing Mermaid diagram
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/v1/admin/specialties:
+    get:
+      tags: [Admin]
+      summary: List specialties
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Specialty" }
+    post:
+      tags: [Admin]
+      summary: Create specialty (admin only)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Specialty" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Specialty" }
+
+  /api/v1/admin/specialties/{id}:
+    put:
+      tags: [Admin]
+      summary: Update specialty (admin only)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Specialty" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Specialty" }
+    delete:
+      tags: [Admin]
+      summary: Delete specialty (admin only)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "204": { description: Deleted }
+
+  /api/v1/admin/curricula:
+    get:
+      tags: [Admin]
+      summary: List curricula
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: specialty_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: admission_year
+          required: false
+          schema: { type: integer, minimum: 2000 }
+        - in: query
+          name: is_active
+          required: false
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Curriculum" }
+    post:
+      tags: [Admin]
+      summary: Create curriculum (admin only)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Curriculum" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Curriculum" }
+
+  /api/v1/admin/curricula/{id}:
+    put:
+      tags: [Admin]
+      summary: Update curriculum (admin only)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Curriculum" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Curriculum" }
+    delete:
+      tags: [Admin]
+      summary: Delete curriculum (admin only)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Deleted }
+
+  /api/v1/admin/curricula/{id}/calendars:
+    get:
+      tags: [Admin]
+      summary: List academic calendars for curriculum
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AcademicCalendar" }
+    post:
+      tags: [Admin]
+      summary: Create academic calendar for curriculum (admin only)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AcademicCalendar" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcademicCalendar" }
+
+  /api/v1/admin/calendars/{id}:
+    delete:
+      tags: [Admin]
+      summary: Delete academic calendar (admin only)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Deleted }
+
+  /api/v1/admin/calendars/{id}/weeks:
+    get:
+      tags: [Admin]
+      summary: List academic calendar weeks
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AcademicCalendarWeek" }
+    put:
+      tags: [Admin]
+      summary: Upsert academic calendar weeks (admin only)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: "#/components/schemas/AcademicCalendarWeek" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AcademicCalendarWeek" }
+
+  /api/v1/admin/curricula/{id}/items:
+    get:
+      tags: [Admin]
+      summary: List curriculum items
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CurriculumItem" }
+    post:
+      tags: [Admin]
+      summary: Create curriculum item (admin only)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CurriculumItem" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CurriculumItem" }
+
+  /api/v1/admin/curriculum-items/{id}:
+    put:
+      tags: [Admin]
+      summary: Update curriculum item (admin only)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CurriculumItem" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CurriculumItem" }
+    delete:
+      tags: [Admin]
+      summary: Delete curriculum item (admin only)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Deleted }
+
+  /api/v1/admin/curriculum-items/{id}/allocations:
+    get:
+      tags: [Admin]
+      summary: List curriculum item allocations
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CurriculumItemAllocation" }
+    put:
+      tags: [Admin]
+      summary: Upsert curriculum item allocations (admin only)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: "#/components/schemas/CurriculumItemAllocation" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CurriculumItemAllocation" }
+
   /api/v1/admin/templates:
     get:
       tags: [Admin]
@@ -594,6 +954,109 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScheduleOverride" }
+
+  /api/v1/admin/overrides/bulk:
+    post:
+      tags: [Admin]
+      summary: Create overrides in bulk for a date range (dispatcher/admin)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminBulkOverridesRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                { $ref: "#/components/schemas/AdminBulkOverridesResponse" }
+
+  /api/v1/admin/override/move:
+    post:
+      tags: [Admin]
+      summary: Move a lesson to another pair number (CANCEL + ADD) (dispatcher/admin)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminMovePairRequest" }
+      responses:
+        "200":
+          description: OK
+
+  /api/v1/admin/day-events:
+    get:
+      tags: [Admin]
+      summary: List day events
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: group_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: target_date
+          required: false
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ScheduleDayEvent" }
+    post:
+      tags: [Admin]
+      summary: Create day event (dispatcher/admin)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminDayEventRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScheduleDayEvent" }
+
+  /api/v1/admin/day-events/{id}:
+    put:
+      tags: [Admin]
+      summary: Update day event (dispatcher/admin)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminDayEventRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScheduleDayEvent" }
+    delete:
+      tags: [Admin]
+      summary: Delete day event (dispatcher/admin)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Deleted }
 
   /api/v1/admin/overlay:
     post:
@@ -785,6 +1248,101 @@ components:
         id: { type: integer }
         name: { type: string }
         course: { type: integer }
+        curriculum_id: { type: integer, format: int64, nullable: true }
+        admission_year: { type: integer, nullable: true }
+        specialty_id: { type: integer, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Specialty:
+      type: object
+      required: [id, code, name]
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Curriculum:
+      type: object
+      required: [id, specialty_id, admission_year, variant, title, is_active]
+      properties:
+        id: { type: integer, format: int64 }
+        specialty_id: { type: integer }
+        admission_year: { type: integer }
+        variant: { type: string }
+        title: { type: string }
+        notes: { type: string, nullable: true }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    AcademicCalendar:
+      type: object
+      required: [id, curriculum_id, academic_year_start, weeks_total]
+      properties:
+        id: { type: integer, format: int64 }
+        curriculum_id: { type: integer, format: int64 }
+        academic_year_start:
+          type: string
+          format: date
+          description: Academic year start date (YYYY-MM-DD)
+        weeks_total: { type: integer }
+        notes: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    AcademicCalendarWeek:
+      type: object
+      required:
+        [
+          id,
+          calendar_id,
+          week_number,
+          week_start_date,
+          activity_code,
+          is_teaching,
+        ]
+      properties:
+        id: { type: integer, format: int64 }
+        calendar_id: { type: integer, format: int64 }
+        week_number: { type: integer }
+        week_start_date:
+          type: string
+          format: date
+          description: Week start date (YYYY-MM-DD)
+        activity_code: { type: string }
+        activity_name: { type: string, nullable: true }
+        is_teaching: { type: boolean }
+        comment: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CurriculumItem:
+      type: object
+      required: [id, curriculum_id, item_type, name]
+      properties:
+        id: { type: integer, format: int64 }
+        curriculum_id: { type: integer, format: int64 }
+        item_type:
+          type: string
+          enum: [DISCIPLINE, PRACTICE, ATTESTATION, GIA, VACATION, OTHER]
+        name: { type: string }
+        subject_id: { type: integer, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CurriculumItemAllocation:
+      type: object
+      required: [id, item_id, semester]
+      properties:
+        id: { type: integer, format: int64 }
+        item_id: { type: integer, format: int64 }
+        semester: { type: integer }
+        weeks: { type: integer, nullable: true }
+        hours: { type: integer, nullable: true }
+        comment: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -833,7 +1391,7 @@ components:
 
     DaySchedule:
       type: object
-      required: [date, day_of_week, week_parity, lessons]
+      required: [date, day_of_week, week_parity, lessons, events]
       properties:
         date: { type: string, format: date }
         day_of_week: { type: integer, minimum: 0, maximum: 5 }
@@ -841,9 +1399,25 @@ components:
           type: string
           enum: [numerator, denominator, both]
         overlay_text: { type: string, nullable: true }
+        events:
+          type: array
+          items: { $ref: "#/components/schemas/DayEvent" }
         lessons:
           type: array
           items: { $ref: "#/components/schemas/Lesson" }
+
+    DayEvent:
+      type: object
+      required: [id, event_type, title]
+      properties:
+        id: { type: integer, format: int64 }
+        event_type:
+          type: string
+          enum: [INFO, EXAM, PRACTICE, ATTESTATION, GIA, OTHER]
+        title: { type: string }
+        details: { type: string, nullable: true }
+        location_id: { type: integer, nullable: true }
+        location_name: { type: string, nullable: true }
 
     WeekScheduleResponse:
       type: object
@@ -985,6 +1559,87 @@ components:
       properties:
         date: { type: string, format: date }
         works_as_day: { type: integer, minimum: 0, maximum: 6 }
+        comment: { type: string, nullable: true }
+
+    ScheduleDayEvent:
+      type: object
+      required: [id, target_date, group_id, event_type, title]
+      properties:
+        id: { type: integer, format: int64 }
+        target_date:
+          {
+            type: string,
+            format: date-time,
+            description: Stored as DATE in DB,
+            serialized as time,
+          }
+        group_id: { type: integer }
+        event_type:
+          type: string
+          enum: [INFO, EXAM, PRACTICE, ATTESTATION, GIA, OTHER]
+        title: { type: string }
+        details: { type: string, nullable: true }
+        location_id: { type: integer, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    AdminDayEventRequest:
+      type: object
+      required: [group_id, target_date, event_type, title]
+      properties:
+        group_id: { type: integer, minimum: 1 }
+        target_date: { type: string, format: date }
+        event_type:
+          type: string
+          enum: [INFO, EXAM, PRACTICE, ATTESTATION, GIA, OTHER]
+        title: { type: string }
+        details: { type: string, nullable: true }
+        location_id: { type: integer, nullable: true }
+
+    AdminBulkOverridesRequest:
+      type: object
+      required: [group_id, start_date, end_date, action_type]
+      properties:
+        group_id: { type: integer, minimum: 1 }
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date }
+        days_of_week:
+          type: array
+          items: { type: integer, minimum: 0, maximum: 6 }
+        pair_number: { type: integer, minimum: 1, maximum: 8, nullable: true }
+        pair_numbers:
+          type: array
+          items: { type: integer, minimum: 1, maximum: 8 }
+        action_type:
+          type: string
+          enum: [CANCEL, REPLACE, ADD]
+        new_subject_id: { type: integer, nullable: true }
+        new_location_id: { type: integer, nullable: true }
+        new_teacher_name: { type: string, nullable: true }
+        comment: { type: string, nullable: true }
+        subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        only_teaching_days: { type: boolean, nullable: true }
+        on_conflict:
+          type: string
+          enum: [error, skip]
+          nullable: true
+
+    AdminBulkOverridesResponse:
+      type: object
+      required: [created, skipped]
+      properties:
+        created: { type: integer }
+        skipped: { type: integer }
+
+    AdminMovePairRequest:
+      type: object
+      required: [group_id, target_date, from_pair_number, to_pair_number]
+      properties:
+        group_id: { type: integer, minimum: 1 }
+        target_date: { type: string, format: date }
+        from_pair_number: { type: integer, minimum: 1, maximum: 8 }
+        to_pair_number: { type: integer, minimum: 1, maximum: 8 }
+        subgroup: { type: integer, nullable: true, enum: [1, 2] }
         comment: { type: string, nullable: true }
 
     ImportResponse:

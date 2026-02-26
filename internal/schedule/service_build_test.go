@@ -6,7 +6,7 @@ import (
 )
 
 func TestWeekParityForDate_SpecEvenIsDenominator(t *testing.T) {
-	repo := &Repository{} // not used by weekParityForDate
+	repo := &Repository{}                                                                        // not used by weekParityForDate
 	svc := &Service{repo: repo, semesterStartDate: time.Date(2026, 2, 23, 0, 0, 0, 0, time.UTC)} // Monday
 
 	// week_diff=0 => denominator

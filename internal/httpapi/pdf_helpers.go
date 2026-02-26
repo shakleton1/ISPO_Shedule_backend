@@ -51,9 +51,9 @@ type pdfLesson struct {
 }
 
 type pdfTemplateData struct {
-	GroupName  string
-	DaysWeek1  []pdfDay
-	DaysWeek2  []pdfDay
+	GroupName string
+	DaysWeek1 []pdfDay
+	DaysWeek2 []pdfDay
 }
 
 var pdfTpl = pdf.MustParseTemplate("schedule", scheduleHTMLTemplate)

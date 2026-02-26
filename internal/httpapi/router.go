@@ -121,10 +121,17 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminRead.GET("/locations", handleAdminListLocations(deps.Repo))
 
 				adminRead.GET("/db/schema", handleAdminDBSchema(deps.Repo.DB()))
+				adminRead.GET("/specialties", handleAdminListSpecialties(deps.Repo))
+				adminRead.GET("/curricula", handleAdminListCurricula(deps.Repo))
+				adminRead.GET("/curricula/:id/calendars", handleAdminListAcademicCalendars(deps.Repo))
+				adminRead.GET("/calendars/:id/weeks", handleAdminListAcademicCalendarWeeks(deps.Repo))
+				adminRead.GET("/curricula/:id/items", handleAdminListCurriculumItems(deps.Repo))
+				adminRead.GET("/curriculum-items/:id/allocations", handleAdminListCurriculumItemAllocations(deps.Repo))
 
 				adminRead.GET("/templates", handleAdminListTemplates(deps.Repo))
 				adminRead.GET("/overrides", handleAdminListOverrides(deps.Repo))
 				adminRead.GET("/calendar-exceptions", handleAdminListCalendarExceptions(deps.Repo))
+				adminRead.GET("/day-events", handleAdminListDayEvents(deps.Repo))
 			}
 
 			adminDictWrite := admin.Group("")
@@ -133,6 +140,23 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminDictWrite.POST("/groups", handleAdminCreateGroup(deps.Repo))
 				adminDictWrite.PUT("/groups/:id", handleAdminUpdateGroup(deps.Repo))
 				adminDictWrite.DELETE("/groups/:id", handleAdminDeleteGroup(deps.Repo))
+
+				adminDictWrite.POST("/specialties", handleAdminCreateSpecialty(deps.Repo))
+				adminDictWrite.PUT("/specialties/:id", handleAdminUpdateSpecialty(deps.Repo))
+				adminDictWrite.DELETE("/specialties/:id", handleAdminDeleteSpecialty(deps.Repo))
+
+				adminDictWrite.POST("/curricula", handleAdminCreateCurriculum(deps.Repo))
+				adminDictWrite.PUT("/curricula/:id", handleAdminUpdateCurriculum(deps.Repo))
+				adminDictWrite.DELETE("/curricula/:id", handleAdminDeleteCurriculum(deps.Repo))
+
+				adminDictWrite.POST("/curricula/:id/calendars", handleAdminCreateAcademicCalendar(deps.Repo))
+				adminDictWrite.DELETE("/calendars/:id", handleAdminDeleteAcademicCalendar(deps.Repo))
+				adminDictWrite.PUT("/calendars/:id/weeks", handleAdminUpsertAcademicCalendarWeeks(deps.Repo))
+
+				adminDictWrite.POST("/curricula/:id/items", handleAdminCreateCurriculumItem(deps.Repo))
+				adminDictWrite.PUT("/curriculum-items/:id", handleAdminUpdateCurriculumItem(deps.Repo))
+				adminDictWrite.DELETE("/curriculum-items/:id", handleAdminDeleteCurriculumItem(deps.Repo))
+				adminDictWrite.PUT("/curriculum-items/:id/allocations", handleAdminUpsertCurriculumItemAllocations(deps.Repo))
 
 				adminDictWrite.POST("/subjects", handleAdminCreateSubject(deps.Repo))
 				adminDictWrite.PUT("/subjects/:id", handleAdminUpdateSubject(deps.Repo))
@@ -157,10 +181,17 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminScheduleWrite.PUT("/overrides/:id", handleAdminUpdateOverride(deps.Repo, deps.Push))
 				adminScheduleWrite.DELETE("/overrides/:id", handleAdminDeleteOverride(deps.Repo, deps.Push))
 
+				adminScheduleWrite.POST("/overrides/bulk", handleAdminBulkOverrides(deps.Repo))
+				adminScheduleWrite.POST("/override/move", handleAdminMovePair(deps.ScheduleSvc, deps.Repo))
+
 				adminScheduleWrite.POST("/overlay", handleAdminUpsertOverlay(deps.Repo, deps.Push))
 
 				adminScheduleWrite.POST("/calendar-exceptions", handleAdminUpsertCalendarException(deps.Repo, deps.Push))
 				adminScheduleWrite.DELETE("/calendar-exceptions/:date", handleAdminDeleteCalendarException(deps.Repo, deps.Push))
+
+				adminScheduleWrite.POST("/day-events", handleAdminCreateDayEvent(deps.Repo))
+				adminScheduleWrite.PUT("/day-events/:id", handleAdminUpdateDayEvent(deps.Repo))
+				adminScheduleWrite.DELETE("/day-events/:id", handleAdminDeleteDayEvent(deps.Repo))
 			}
 		}
 	}

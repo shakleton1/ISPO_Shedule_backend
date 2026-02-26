@@ -3,8 +3,10 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -14,6 +16,409 @@ import (
 	"ispo-schedule/internal/push"
 	"ispo-schedule/internal/schedule"
 )
+
+// Day events
+
+func handleAdminListDayEvents(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var filters schedule.DayEventFilters
+		if v := c.Query("group_id"); v != "" {
+			id, err := strconv.Atoi(v)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid group_id"})
+				return
+			}
+			filters.GroupID = &id
+		}
+		if v := c.Query("target_date"); v != "" {
+			d, err := time.Parse("2006-01-02", v)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "target_date must be YYYY-MM-DD"})
+				return
+			}
+			filters.TargetDate = &d
+		}
+		rows, err := repo.ListDayEvents(filters)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, rows)
+	}
+}
+
+func handleAdminCreateDayEvent(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req schedule.ScheduleDayEvent
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			return
+		}
+		if req.GroupID <= 0 || req.TargetDate.IsZero() || req.EventType == "" || req.Title == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id, target_date, event_type, title required"})
+			return
+		}
+		req.EventType = strings.ToUpper(strings.TrimSpace(req.EventType))
+		if err := repo.CreateDayEvent(&req); err != nil {
+			writeDBError(c, err)
+			return
+		}
+		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "create", "schedule_day_events", strconv.FormatInt(req.ID, 10), req)
+		c.JSON(http.StatusCreated, req)
+	}
+}
+
+func handleAdminUpdateDayEvent(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			return
+		}
+		var req schedule.ScheduleDayEvent
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			return
+		}
+		if req.GroupID <= 0 || req.TargetDate.IsZero() || req.EventType == "" || req.Title == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id, target_date, event_type, title required"})
+			return
+		}
+		req.EventType = strings.ToUpper(strings.TrimSpace(req.EventType))
+		row, err := repo.UpdateDayEvent(id, &req)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "update", "schedule_day_events", strconv.FormatInt(id, 10), row)
+		c.JSON(http.StatusOK, row)
+	}
+}
+
+func handleAdminDeleteDayEvent(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			return
+		}
+		if err := repo.DeleteDayEvent(id); err != nil {
+			writeDBError(c, err)
+			return
+		}
+		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "delete", "schedule_day_events", strconv.FormatInt(id, 10), nil)
+		c.Status(http.StatusNoContent)
+	}
+}
+
+// Bulk overrides
+
+type adminBulkOverridesRequest struct {
+	GroupID          int     `json:"group_id"`
+	StartDate        string  `json:"start_date"`
+	EndDate          string  `json:"end_date"`
+	DaysOfWeek       []int16 `json:"days_of_week"`
+	PairNumber       *int16  `json:"pair_number"`
+	PairNumbers      []int16 `json:"pair_numbers"`
+	ActionType       string  `json:"action_type"`
+	NewSubjectID     *int    `json:"new_subject_id"`
+	NewLocationID    *int    `json:"new_location_id"`
+	NewTeacherName   *string `json:"new_teacher_name"`
+	Comment          *string `json:"comment"`
+	Subgroup         *int16  `json:"subgroup"`
+	OnlyTeachingDays *bool   `json:"only_teaching_days"`
+	OnConflict       string  `json:"on_conflict"` // error|skip
+}
+
+func handleAdminBulkOverrides(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req adminBulkOverridesRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			return
+		}
+		if req.GroupID <= 0 || req.StartDate == "" || req.EndDate == "" || req.ActionType == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id, start_date, end_date, action_type required"})
+			return
+		}
+		start, err := time.Parse("2006-01-02", req.StartDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "start_date must be YYYY-MM-DD"})
+			return
+		}
+		end, err := time.Parse("2006-01-02", req.EndDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "end_date must be YYYY-MM-DD"})
+			return
+		}
+		if end.Before(start) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "end_date before start_date"})
+			return
+		}
+
+		pairNums := make([]int16, 0)
+		pairNums = append(pairNums, req.PairNumbers...)
+		if req.PairNumber != nil {
+			pairNums = append(pairNums, *req.PairNumber)
+		}
+		if len(pairNums) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "pair_number or pair_numbers required"})
+			return
+		}
+
+		onConflict := strings.ToLower(strings.TrimSpace(req.OnConflict))
+		if onConflict == "" {
+			onConflict = "error"
+		}
+		if onConflict != "error" && onConflict != "skip" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "on_conflict must be error or skip"})
+			return
+		}
+
+		onlyTeaching := true
+		if req.OnlyTeachingDays != nil {
+			onlyTeaching = *req.OnlyTeachingDays
+		}
+
+		created := 0
+		skipped := 0
+
+		// preload calendar exceptions for DoW mapping
+		exceptions, err := repo.ListCalendarExceptionsBetween(start, end)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		worksAs := map[string]int16{}
+		for _, e := range exceptions {
+			worksAs[e.TargetDate.Format("2006-01-02")] = e.WorksAsDay
+		}
+
+		teachingWeeks := map[string]bool{}
+		if onlyTeaching {
+			m, err := repo.ListTeachingWeeksForGroupBetween(req.GroupID, start, end)
+			if err != nil {
+				writeDBError(c, err)
+				return
+			}
+			teachingWeeks = m
+		}
+
+		dowAllowed := map[int16]bool{}
+		if len(req.DaysOfWeek) > 0 {
+			for _, d := range req.DaysOfWeek {
+				dowAllowed[d] = true
+			}
+		}
+
+		err = repo.DB().Transaction(func(tx *gorm.DB) error {
+			txRepo := schedule.NewRepository(tx)
+			for d := scheduleDateOnly(start); !d.After(end); d = d.AddDate(0, 0, 1) {
+				dayKey := d.Format("2006-01-02")
+				dow := scheduleDayOfWeekForDate(d, worksAs)
+				if len(dowAllowed) > 0 && !dowAllowed[dow] {
+					continue
+				}
+				if onlyTeaching {
+					wk := scheduleMondayOfWeek(d).Format("2006-01-02")
+					if v, ok := teachingWeeks[wk]; ok && !v {
+						continue
+					}
+				}
+
+				for _, pn := range pairNums {
+					exists, err := txRepo.HasAnyOverrideForSlot(req.GroupID, d, pn, req.Subgroup)
+					if err != nil {
+						return err
+					}
+					if exists {
+						if onConflict == "skip" {
+							skipped++
+							continue
+						}
+						return fmt.Errorf("override already exists for %s pair %d", dayKey, pn)
+					}
+					o := &schedule.ScheduleOverride{
+						TargetDate:     d,
+						GroupID:        req.GroupID,
+						PairNumber:     pn,
+						ActionType:     schedule.OverrideAction(strings.ToUpper(strings.TrimSpace(req.ActionType))),
+						NewSubjectID:   req.NewSubjectID,
+						NewLocationID:  req.NewLocationID,
+						NewTeacherName: req.NewTeacherName,
+						Comment:        req.Comment,
+						Subgroup:       req.Subgroup,
+					}
+					if err := txRepo.CreateOverride(o); err != nil {
+						return err
+					}
+					created++
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+
+		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "bulk_create", "schedule_overrides", strconv.Itoa(req.GroupID), gin.H{"created": created, "skipped": skipped})
+		c.JSON(http.StatusOK, gin.H{"created": created, "skipped": skipped})
+	}
+}
+
+// Move pair (atomically: CANCEL + ADD)
+
+type adminMovePairRequest struct {
+	GroupID    int     `json:"group_id"`
+	TargetDate string  `json:"target_date"`
+	FromPair   int16   `json:"from_pair_number"`
+	ToPair     int16   `json:"to_pair_number"`
+	Subgroup   *int16  `json:"subgroup"`
+	Comment    *string `json:"comment"`
+}
+
+func handleAdminMovePair(svc *schedule.Service, repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req adminMovePairRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			return
+		}
+		if req.GroupID <= 0 || req.TargetDate == "" || req.FromPair <= 0 || req.ToPair <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id, target_date, from_pair_number, to_pair_number required"})
+			return
+		}
+		date, err := time.Parse("2006-01-02", req.TargetDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "target_date must be YYYY-MM-DD"})
+			return
+		}
+		resp, err := svc.GetRange(req.GroupID, date, date)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		if len(resp.Days) != 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "no schedule for date"})
+			return
+		}
+		day := resp.Days[0]
+
+		var found *schedule.Lesson
+		for i := range day.Lessons {
+			l := day.Lessons[i]
+			if l.PairNumber != req.FromPair {
+				continue
+			}
+			if req.Subgroup != nil {
+				if l.Subgroup == nil || *l.Subgroup != *req.Subgroup {
+					continue
+				}
+			} else {
+				if l.Subgroup != nil {
+					continue
+				}
+			}
+			found = &l
+			break
+		}
+		if found == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "source lesson not found"})
+			return
+		}
+		if found.SubjectID == nil || found.LocationID == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "source lesson has no subject/location ids"})
+			return
+		}
+
+		// Be conservative: if any overrides already exist for these slots, refuse.
+		dateOnly := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
+		existsFrom, err := repo.HasAnyOverrideForSlot(req.GroupID, dateOnly, req.FromPair, req.Subgroup)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		existsTo, err := repo.HasAnyOverrideForSlot(req.GroupID, dateOnly, req.ToPair, req.Subgroup)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		if existsFrom || existsTo {
+			c.JSON(http.StatusConflict, gin.H{"error": "overrides already exist for from/to slot"})
+			return
+		}
+
+		err = repo.DB().Transaction(func(tx *gorm.DB) error {
+			txRepo := schedule.NewRepository(tx)
+			// CANCEL at source
+			cancel := &schedule.ScheduleOverride{
+				TargetDate: dateOnly,
+				GroupID:    req.GroupID,
+				PairNumber: req.FromPair,
+				ActionType: schedule.OverrideCancel,
+				Subgroup:   req.Subgroup,
+				Comment:    req.Comment,
+			}
+			if err := txRepo.CreateOverride(cancel); err != nil {
+				return err
+			}
+			// ADD at destination
+			add := &schedule.ScheduleOverride{
+				TargetDate:     dateOnly,
+				GroupID:        req.GroupID,
+				PairNumber:     req.ToPair,
+				ActionType:     schedule.OverrideAdd,
+				NewSubjectID:   found.SubjectID,
+				NewLocationID:  found.LocationID,
+				NewTeacherName: &found.TeacherName,
+				Subgroup:       req.Subgroup,
+				Comment:        req.Comment,
+			}
+			if strings.TrimSpace(found.TeacherName) == "" {
+				add.NewTeacherName = nil
+			}
+			if err := txRepo.CreateOverride(add); err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "move_pair", "schedule_overrides", strconv.Itoa(req.GroupID), req)
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	}
+}
+
+// helpers for bulk endpoint (keep local to httpapi)
+
+func scheduleDateOnly(t time.Time) time.Time {
+	y, m, d := t.Date()
+	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+}
+
+func scheduleMondayOfWeek(t time.Time) time.Time {
+	d := scheduleDateOnly(t)
+	wd := int(d.Weekday())
+	offset := (wd + 6) % 7
+	return d.AddDate(0, 0, -offset)
+}
+
+func scheduleDayOfWeekForDate(d time.Time, worksAs map[string]int16) int16 {
+	dayKey := scheduleDateOnly(d).Format("2006-01-02")
+	dayOfWeek := int16((int(d.Weekday()) + 6) % 7)
+	if v, ok := worksAs[dayKey]; ok {
+		return v
+	}
+	return dayOfWeek
+}
 
 func auditActorFromContext(c *gin.Context) (actorType string, actorID *int64, actorLogin *string, actorRole *string) {
 	if v, ok := c.Get(ctxUserKey); ok {

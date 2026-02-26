@@ -12,6 +12,21 @@ import (
 	"gorm.io/gorm"
 )
 
+func (r *Repository) HasAnyOverrideForSlot(groupID int, date time.Time, pairNumber int16, subgroup *int16) (bool, error) {
+	q := r.db.Table("schedule_overrides").
+		Where("group_id = ? AND target_date = ? AND pair_number = ?", groupID, dateOnly(date), pairNumber)
+	if subgroup == nil {
+		q = q.Where("subgroup IS NULL")
+	} else {
+		q = q.Where("subgroup = ?", *subgroup)
+	}
+	var cnt int64
+	if err := q.Count(&cnt).Error; err != nil {
+		return false, err
+	}
+	return cnt > 0, nil
+}
+
 func normalizeTeacherName(name string) string {
 	return strings.TrimSpace(name)
 }
@@ -61,6 +76,15 @@ func (r *Repository) UpdateGroup(id int, patch *Group) (*Group, error) {
 	}
 	row.Name = patch.Name
 	row.Course = patch.Course
+	if patch.CurriculumID != nil {
+		row.CurriculumID = patch.CurriculumID
+	}
+	if patch.AdmissionYear != nil {
+		row.AdmissionYear = patch.AdmissionYear
+	}
+	if patch.SpecialtyID != nil {
+		row.SpecialtyID = patch.SpecialtyID
+	}
 	if err := r.db.Save(&row).Error; err != nil {
 		return nil, err
 	}

@@ -27,31 +27,41 @@ func NewService(deps ServiceDeps) *Service {
 }
 
 type Lesson struct {
-	PairNumber  int16   `json:"pair_number"`
-	SubjectID   *int    `json:"subject_id"`
-	SubjectName string  `json:"subject_name"`
-	LocationID  *int    `json:"location_id"`
-	LocationName string `json:"location_name"`
-	TeacherName string  `json:"teacher_name"`
-	Subgroup    *int16  `json:"subgroup"` // nil/0=вся группа
-	IsChanged   bool    `json:"is_changed"`
-	IsAdded     bool    `json:"is_added"`
-	Comment     *string `json:"comment"`
+	PairNumber   int16   `json:"pair_number"`
+	SubjectID    *int    `json:"subject_id"`
+	SubjectName  string  `json:"subject_name"`
+	LocationID   *int    `json:"location_id"`
+	LocationName string  `json:"location_name"`
+	TeacherName  string  `json:"teacher_name"`
+	Subgroup     *int16  `json:"subgroup"` // nil/0=вся группа
+	IsChanged    bool    `json:"is_changed"`
+	IsAdded      bool    `json:"is_added"`
+	Comment      *string `json:"comment"`
 }
 
 type DaySchedule struct {
-	Date        string   `json:"date"` // YYYY-MM-DD
-	DayOfWeek   int16    `json:"day_of_week"` // 0=Пн
+	Date        string     `json:"date"`        // YYYY-MM-DD
+	DayOfWeek   int16      `json:"day_of_week"` // 0=Пн
 	WeekParity  WeekParity `json:"week_parity"`
-	OverlayText *string  `json:"overlay_text"`
-	Lessons     []Lesson `json:"lessons"`
+	OverlayText *string    `json:"overlay_text"`
+	Events      []DayEvent `json:"events"`
+	Lessons     []Lesson   `json:"lessons"`
+}
+
+type DayEvent struct {
+	ID           int64   `json:"id"`
+	EventType    string  `json:"event_type"`
+	Title        string  `json:"title"`
+	Details      *string `json:"details"`
+	LocationID   *int    `json:"location_id"`
+	LocationName *string `json:"location_name"`
 }
 
 type WeekScheduleResponse struct {
-	GroupID     int          `json:"group_id"`
-	DateStart   string       `json:"date_start"`
-	DateEnd     string       `json:"date_end"`
-	DataVersion string       `json:"data_version"`
+	GroupID     int           `json:"group_id"`
+	DateStart   string        `json:"date_start"`
+	DateEnd     string        `json:"date_end"`
+	DataVersion string        `json:"data_version"`
 	Days        []DaySchedule `json:"days"`
 }
 

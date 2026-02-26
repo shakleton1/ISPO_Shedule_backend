@@ -3,11 +3,14 @@ package schedule
 import "time"
 
 type Group struct {
-	ID        int       `gorm:"primaryKey" json:"id"`
-	Name      string    `gorm:"size:50;uniqueIndex;not null" json:"name"`
-	Course    int       `gorm:"not null" json:"course"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID            int       `gorm:"primaryKey" json:"id"`
+	Name          string    `gorm:"size:50;uniqueIndex;not null" json:"name"`
+	Course        int       `gorm:"not null" json:"course"`
+	CurriculumID  *int64    `gorm:"" json:"curriculum_id"`
+	AdmissionYear *int16    `gorm:"" json:"admission_year"`
+	SpecialtyID   *int      `gorm:"" json:"specialty_id"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 type Subject struct {
@@ -34,44 +37,44 @@ type Teacher struct {
 }
 
 type ScheduleTemplate struct {
-	ID        int64      `gorm:"primaryKey" json:"id"`
-	GroupID   int        `gorm:"not null;index:idx_tpl_query,priority:1" json:"group_id"`
-	DayOfWeek int16      `gorm:"not null;index:idx_tpl_query,priority:2" json:"day_of_week"`
-	WeekParity WeekParity `gorm:"type:text;not null;index:idx_tpl_query,priority:3" json:"week_parity"`
-	PairNumber int16     `gorm:"not null;index:idx_tpl_query,priority:4" json:"pair_number"`
-	SubjectID int        `gorm:"not null" json:"subject_id"`
-	LocationID int       `gorm:"not null" json:"location_id"`
-	TeacherID  *int      `gorm:"" json:"-"`
-	TeacherName string   `gorm:"column:teacher_name;->" json:"teacher_name"`
-	Subgroup  *int16     `gorm:"" json:"subgroup"` // nil = вся группа
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	ID          int64      `gorm:"primaryKey" json:"id"`
+	GroupID     int        `gorm:"not null;index:idx_tpl_query,priority:1" json:"group_id"`
+	DayOfWeek   int16      `gorm:"not null;index:idx_tpl_query,priority:2" json:"day_of_week"`
+	WeekParity  WeekParity `gorm:"type:text;not null;index:idx_tpl_query,priority:3" json:"week_parity"`
+	PairNumber  int16      `gorm:"not null;index:idx_tpl_query,priority:4" json:"pair_number"`
+	SubjectID   int        `gorm:"not null" json:"subject_id"`
+	LocationID  int        `gorm:"not null" json:"location_id"`
+	TeacherID   *int       `gorm:"" json:"-"`
+	TeacherName string     `gorm:"column:teacher_name;->" json:"teacher_name"`
+	Subgroup    *int16     `gorm:"" json:"subgroup"` // nil = вся группа
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 type ScheduleOverride struct {
-	ID            int64          `gorm:"primaryKey" json:"id"`
-	TargetDate    time.Time      `gorm:"type:date;not null;index:idx_ovr_query,priority:2" json:"target_date"`
-	GroupID       int            `gorm:"not null;index:idx_ovr_query,priority:1" json:"group_id"`
-	PairNumber    int16          `gorm:"not null" json:"pair_number"`
-	ActionType    OverrideAction `gorm:"type:text;not null" json:"action_type"`
-	NewSubjectID  *int           `json:"new_subject_id"`
-	NewLocationID *int           `json:"new_location_id"`
-	NewTeacherID  *int           `json:"-"`
-	NewTeacherName *string       `gorm:"column:new_teacher_name;->" json:"new_teacher_name"`
-	Comment       *string        `json:"comment"`
-	Subgroup      *int16         `json:"subgroup"` // nil = для всех
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
+	ID             int64          `gorm:"primaryKey" json:"id"`
+	TargetDate     time.Time      `gorm:"type:date;not null;index:idx_ovr_query,priority:2" json:"target_date"`
+	GroupID        int            `gorm:"not null;index:idx_ovr_query,priority:1" json:"group_id"`
+	PairNumber     int16          `gorm:"not null" json:"pair_number"`
+	ActionType     OverrideAction `gorm:"type:text;not null" json:"action_type"`
+	NewSubjectID   *int           `json:"new_subject_id"`
+	NewLocationID  *int           `json:"new_location_id"`
+	NewTeacherID   *int           `json:"-"`
+	NewTeacherName *string        `gorm:"column:new_teacher_name;->" json:"new_teacher_name"`
+	Comment        *string        `json:"comment"`
+	Subgroup       *int16         `json:"subgroup"` // nil = для всех
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
 }
 
 type ScheduleDayOverlay struct {
-	ID         int64     `gorm:"primaryKey" json:"id"`
-	TargetDate time.Time `gorm:"type:date;not null;uniqueIndex:uidx_overlay" json:"target_date"`
-	GroupID    int       `gorm:"not null;uniqueIndex:uidx_overlay" json:"group_id"`
-	Text       string    `gorm:"size:255;not null" json:"text"`
-	StylePreset string   `gorm:"size:30;not null;default:standard" json:"style_preset"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID          int64     `gorm:"primaryKey" json:"id"`
+	TargetDate  time.Time `gorm:"type:date;not null;uniqueIndex:uidx_overlay" json:"target_date"`
+	GroupID     int       `gorm:"not null;uniqueIndex:uidx_overlay" json:"group_id"`
+	Text        string    `gorm:"size:255;not null" json:"text"`
+	StylePreset string    `gorm:"size:30;not null;default:standard" json:"style_preset"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type CalendarException struct {
@@ -83,6 +86,18 @@ type CalendarException struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
+type ScheduleDayEvent struct {
+	ID         int64     `gorm:"primaryKey" json:"id"`
+	TargetDate time.Time `gorm:"type:date;not null;index:idx_day_events_lookup,priority:2" json:"target_date"`
+	GroupID    int       `gorm:"not null;index:idx_day_events_lookup,priority:1" json:"group_id"`
+	EventType  string    `gorm:"type:text;not null" json:"event_type"`
+	Title      string    `gorm:"size:200;not null" json:"title"`
+	Details    *string   `json:"details"`
+	LocationID *int      `json:"location_id"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
 type SystemState struct {
 	ID              int16     `gorm:"primaryKey" json:"id"`
 	ScheduleVersion time.Time `gorm:"not null" json:"schedule_version"`
@@ -90,3 +105,66 @@ type SystemState struct {
 
 func (SystemState) TableName() string { return "system_state" }
 
+type Specialty struct {
+	ID        int       `gorm:"primaryKey" json:"id"`
+	Code      string    `gorm:"size:20;uniqueIndex;not null" json:"code"`
+	Name      string    `gorm:"size:200;not null" json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type Curriculum struct {
+	ID            int64     `gorm:"primaryKey" json:"id"`
+	SpecialtyID   int       `gorm:"not null" json:"specialty_id"`
+	AdmissionYear int16     `gorm:"not null" json:"admission_year"`
+	Variant       string    `gorm:"size:50;not null;default:''" json:"variant"`
+	Title         string    `gorm:"size:200;not null;default:''" json:"title"`
+	Notes         *string   `json:"notes"`
+	IsActive      bool      `gorm:"not null;default:true" json:"is_active"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type AcademicCalendar struct {
+	ID                int64     `gorm:"primaryKey" json:"id"`
+	CurriculumID      int64     `gorm:"not null" json:"curriculum_id"`
+	AcademicYearStart time.Time `gorm:"type:date;not null" json:"academic_year_start"`
+	WeeksTotal        int16     `gorm:"not null;default:52" json:"weeks_total"`
+	Notes             *string   `json:"notes"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
+}
+
+type AcademicCalendarWeek struct {
+	ID            int64     `gorm:"primaryKey" json:"id"`
+	CalendarID    int64     `gorm:"not null" json:"calendar_id"`
+	WeekNumber    int16     `gorm:"not null" json:"week_number"`
+	WeekStartDate time.Time `gorm:"type:date;not null" json:"week_start_date"`
+	ActivityCode  string    `gorm:"size:10;not null" json:"activity_code"`
+	ActivityName  *string   `gorm:"size:100" json:"activity_name"`
+	IsTeaching    bool      `gorm:"not null;default:true" json:"is_teaching"`
+	Comment       *string   `json:"comment"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type CurriculumItem struct {
+	ID           int64     `gorm:"primaryKey" json:"id"`
+	CurriculumID int64     `gorm:"not null" json:"curriculum_id"`
+	ItemType     string    `gorm:"type:text;not null" json:"item_type"`
+	Name         string    `gorm:"size:200;not null" json:"name"`
+	SubjectID    *int      `json:"subject_id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+type CurriculumItemAllocation struct {
+	ID        int64     `gorm:"primaryKey" json:"id"`
+	ItemID    int64     `gorm:"not null" json:"item_id"`
+	Semester  int16     `gorm:"not null" json:"semester"`
+	Weeks     *int16    `json:"weeks"`
+	Hours     *int      `json:"hours"`
+	Comment   *string   `json:"comment"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
