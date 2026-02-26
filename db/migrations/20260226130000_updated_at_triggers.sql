@@ -1,5 +1,6 @@
 -- +goose Up
 
+-- +goose StatementBegin
 CREATE OR REPLACE FUNCTION ispo_set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -7,6 +8,7 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+-- +goose StatementEnd
 
 DROP TRIGGER IF EXISTS trg_groups_set_updated_at ON groups;
 CREATE TRIGGER trg_groups_set_updated_at

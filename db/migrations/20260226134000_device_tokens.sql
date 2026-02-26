@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS device_tokens (
 
 CREATE INDEX IF NOT EXISTS idx_device_tokens_group_id ON device_tokens(group_id);
 
+-- +goose StatementBegin
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'ispo_set_updated_at') THEN
@@ -17,6 +18,7 @@ BEGIN
     EXECUTE 'CREATE TRIGGER trg_device_tokens_set_updated_at BEFORE UPDATE ON device_tokens FOR EACH ROW EXECUTE FUNCTION ispo_set_updated_at()';
   END IF;
 END $$;
+-- +goose StatementEnd
 
 -- +goose Down
 
