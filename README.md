@@ -69,6 +69,7 @@ go run .\cmd\api
 
 - Health: `GET http://127.0.0.1:8080/api/v1/health`
 - OpenAPI: `GET http://127.0.0.1:8080/openapi.yaml`
+- Swagger UI: `GET http://127.0.0.1:8080/docs`
 
 ## Эндпоинты (кратко)
 
@@ -78,6 +79,7 @@ go run .\cmd\api
 - `GET /api/v1/metrics/health`
 - `GET /metrics` (Prometheus)
 - `GET /openapi.yaml`
+- `GET /docs` (Swagger UI)
 
 Расписание:
 
