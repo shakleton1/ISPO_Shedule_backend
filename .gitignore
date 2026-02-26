@@ -7,3 +7,7 @@ dist/
 *.log
 
 .env
+
+# Local planning + Go checksum file (per repo policy)
+BACKEND_PLAN.txt
+go.sum
