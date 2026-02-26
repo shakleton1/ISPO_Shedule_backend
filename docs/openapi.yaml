@@ -1325,6 +1325,8 @@ components:
       properties:
         id: { type: integer, format: int64 }
         curriculum_id: { type: integer, format: int64 }
+        parent_id: { type: integer, format: int64, nullable: true }
+        index_code: { type: string, nullable: true, maxLength: 30 }
         item_type:
           type: string
           enum: [DISCIPLINE, PRACTICE, ATTESTATION, GIA, VACATION, OTHER]
@@ -1341,7 +1343,16 @@ components:
         item_id: { type: integer, format: int64 }
         semester: { type: integer }
         weeks: { type: integer, nullable: true }
-        hours: { type: integer, nullable: true }
+        hours_total: { type: integer, nullable: true }
+        hours_lectures: { type: integer, nullable: true }
+        hours_practice: { type: integer, nullable: true }
+        hours_lab: { type: integer, nullable: true }
+        hours_independent: { type: integer, nullable: true }
+        hours_exam: { type: integer, nullable: true }
+        assessment_type:
+          type: string
+          nullable: true
+          enum: [EXAM, CREDIT, GRADED_CREDIT, MODULE_EXAM]
         comment: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }

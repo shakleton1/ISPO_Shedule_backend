@@ -169,6 +169,8 @@ func (r *Repository) UpdateCurriculumItem(id int64, patch *CurriculumItem) (*Cur
 	if err := r.db.First(&row, id).Error; err != nil {
 		return nil, err
 	}
+	row.ParentID = patch.ParentID
+	row.IndexCode = patch.IndexCode
 	row.ItemType = patch.ItemType
 	row.Name = patch.Name
 	row.SubjectID = patch.SubjectID
@@ -203,15 +205,21 @@ func (r *Repository) UpsertCurriculumItemAllocations(itemID int64, allocs []Curr
 		for _, a := range allocs {
 			if err := tx.Exec(`
 INSERT INTO curriculum_item_allocations
-  (item_id, semester, weeks, hours, comment)
+	(item_id, semester, weeks, hours_total, hours_lectures, hours_practice, hours_lab, hours_independent, hours_exam, assessment_type, comment)
 VALUES
-  (?, ?, ?, ?, ?)
+	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT (item_id, semester)
 DO UPDATE SET
   weeks = EXCLUDED.weeks,
-  hours = EXCLUDED.hours,
+	hours_total = EXCLUDED.hours_total,
+	hours_lectures = EXCLUDED.hours_lectures,
+	hours_practice = EXCLUDED.hours_practice,
+	hours_lab = EXCLUDED.hours_lab,
+	hours_independent = EXCLUDED.hours_independent,
+	hours_exam = EXCLUDED.hours_exam,
+	assessment_type = EXCLUDED.assessment_type,
   comment = EXCLUDED.comment`,
-				a.ItemID, a.Semester, a.Weeks, a.Hours, a.Comment,
+				a.ItemID, a.Semester, a.Weeks, a.HoursTotal, a.HoursLectures, a.HoursPractice, a.HoursLab, a.HoursIndependent, a.HoursExam, a.AssessmentType, a.Comment,
 			).Error; err != nil {
 				return err
 			}

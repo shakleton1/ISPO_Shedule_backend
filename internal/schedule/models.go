@@ -151,6 +151,8 @@ type AcademicCalendarWeek struct {
 type CurriculumItem struct {
 	ID           int64     `gorm:"primaryKey" json:"id"`
 	CurriculumID int64     `gorm:"not null" json:"curriculum_id"`
+	ParentID     *int64    `json:"parent_id"`
+	IndexCode    *string   `gorm:"size:30" json:"index_code"`
 	ItemType     string    `gorm:"type:text;not null" json:"item_type"`
 	Name         string    `gorm:"size:200;not null" json:"name"`
 	SubjectID    *int      `json:"subject_id"`
@@ -159,12 +161,18 @@ type CurriculumItem struct {
 }
 
 type CurriculumItemAllocation struct {
-	ID        int64     `gorm:"primaryKey" json:"id"`
-	ItemID    int64     `gorm:"not null" json:"item_id"`
-	Semester  int16     `gorm:"not null" json:"semester"`
-	Weeks     *int16    `json:"weeks"`
-	Hours     *int      `json:"hours"`
-	Comment   *string   `json:"comment"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID               int64     `gorm:"primaryKey" json:"id"`
+	ItemID           int64     `gorm:"not null" json:"item_id"`
+	Semester         int16     `gorm:"not null" json:"semester"`
+	Weeks            *int16    `json:"weeks"`
+	HoursTotal       *int      `json:"hours_total"`
+	HoursLectures    *int      `json:"hours_lectures"`
+	HoursPractice    *int      `json:"hours_practice"`
+	HoursLab         *int      `json:"hours_lab"`
+	HoursIndependent *int      `json:"hours_independent"`
+	HoursExam        *int      `json:"hours_exam"`
+	AssessmentType   *string   `gorm:"type:text" json:"assessment_type"`
+	Comment          *string   `json:"comment"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
