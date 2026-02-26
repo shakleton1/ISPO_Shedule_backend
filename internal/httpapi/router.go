@@ -120,6 +120,8 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminRead.GET("/subjects", handleAdminListSubjects(deps.Repo))
 				adminRead.GET("/locations", handleAdminListLocations(deps.Repo))
 
+				adminRead.GET("/db/schema", handleAdminDBSchema(deps.Repo.DB()))
+
 				adminRead.GET("/templates", handleAdminListTemplates(deps.Repo))
 				adminRead.GET("/overrides", handleAdminListOverrides(deps.Repo))
 				adminRead.GET("/calendar-exceptions", handleAdminListCalendarExceptions(deps.Repo))

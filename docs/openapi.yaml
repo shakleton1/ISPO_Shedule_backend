@@ -23,7 +23,7 @@ paths:
       tags: [Observability]
       summary: Prometheus metrics
       responses:
-        '200':
+        "200":
           description: Prometheus metrics text
           content:
             text/plain:
@@ -35,7 +35,7 @@ paths:
       tags: [Observability]
       summary: OpenAPI specification (YAML)
       responses:
-        '200':
+        "200":
           description: OpenAPI YAML
           content:
             application/yaml:
@@ -47,19 +47,19 @@ paths:
       tags: [Health]
       summary: Service health
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
+                $ref: "#/components/schemas/HealthResponse"
 
   /api/v1/metrics/health:
     get:
       tags: [Observability]
       summary: Metrics/DB health
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -76,18 +76,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/LoginRequest"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /api/v1/auth/me:
     get:
@@ -96,14 +96,14 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MeResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/MeResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /api/v1/schedule/current:
     get:
@@ -120,14 +120,14 @@ paths:
           description: "Reference date (YYYY-MM-DD). Default: today (UTC)"
           schema: { type: string, format: date }
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WeekScheduleResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/WeekScheduleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   /api/v1/schedule/range:
     get:
@@ -147,21 +147,21 @@ paths:
           required: true
           schema: { type: string, format: date }
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WeekScheduleResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/WeekScheduleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   /api/v1/schedule/version:
     get:
       tags: [Schedule]
       summary: Current schedule data version
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -188,15 +188,15 @@ paths:
           description: Any date in week1 (YYYY-MM-DD)
           schema: { type: string, format: date }
       responses:
-        '200':
+        "200":
           description: PDF document
           content:
             application/pdf:
               schema:
                 type: string
                 format: binary
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   /api/v1/push/register:
     post:
@@ -207,12 +207,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PushRegisterRequest'
+              $ref: "#/components/schemas/PushRegisterRequest"
       responses:
-        '201':
+        "201":
           description: Registered
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   /api/v1/push/unregister:
     post:
@@ -223,86 +223,86 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PushUnregisterRequest'
+              $ref: "#/components/schemas/PushUnregisterRequest"
       responses:
-        '204':
+        "204":
           description: Unregistered
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   /api/v1/groups:
     get:
       tags: [Dictionaries]
       summary: List groups (public)
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/Group' }
+                items: { $ref: "#/components/schemas/Group" }
 
   /api/v1/subjects:
     get:
       tags: [Dictionaries]
       summary: List subjects (public)
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/Subject' }
+                items: { $ref: "#/components/schemas/Subject" }
 
   /api/v1/locations:
     get:
       tags: [Dictionaries]
       summary: List locations (public)
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/Location' }
+                items: { $ref: "#/components/schemas/Location" }
 
   /api/v1/admin/groups:
     get:
       tags: [Admin]
       summary: List groups
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/Group' }
+                items: { $ref: "#/components/schemas/Group" }
     post:
       tags: [Admin]
       summary: Create group (admin only)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/Group' }
+            schema: { $ref: "#/components/schemas/Group" }
       responses:
-        '201':
+        "201":
           description: Created
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Group' }
+              schema: { $ref: "#/components/schemas/Group" }
 
   /api/v1/admin/groups/{id}:
     put:
       tags: [Admin]
       summary: Update group (admin only)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
           name: id
@@ -312,59 +312,59 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/Group' }
+            schema: { $ref: "#/components/schemas/Group" }
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Group' }
+              schema: { $ref: "#/components/schemas/Group" }
     delete:
       tags: [Admin]
       summary: Delete group (admin only)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
           name: id
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        '204': { description: Deleted }
+        "204": { description: Deleted }
 
   /api/v1/admin/subjects:
     get:
       tags: [Admin]
       summary: List subjects
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/Subject' }
+                items: { $ref: "#/components/schemas/Subject" }
     post:
       tags: [Admin]
       summary: Create subject (admin only)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/Subject' }
+            schema: { $ref: "#/components/schemas/Subject" }
       responses:
-        '201':
+        "201":
           description: Created
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Subject' }
+              schema: { $ref: "#/components/schemas/Subject" }
 
   /api/v1/admin/subjects/{id}:
     put:
       tags: [Admin]
       summary: Update subject (admin only)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
           name: id
@@ -374,59 +374,59 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/Subject' }
+            schema: { $ref: "#/components/schemas/Subject" }
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Subject' }
+              schema: { $ref: "#/components/schemas/Subject" }
     delete:
       tags: [Admin]
       summary: Delete subject (admin only)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
           name: id
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        '204': { description: Deleted }
+        "204": { description: Deleted }
 
   /api/v1/admin/locations:
     get:
       tags: [Admin]
       summary: List locations
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/Location' }
+                items: { $ref: "#/components/schemas/Location" }
     post:
       tags: [Admin]
       summary: Create location (admin only)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/Location' }
+            schema: { $ref: "#/components/schemas/Location" }
       responses:
-        '201':
+        "201":
           description: Created
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Location' }
+              schema: { $ref: "#/components/schemas/Location" }
 
   /api/v1/admin/locations/{id}:
     put:
       tags: [Admin]
       summary: Update location (admin only)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
           name: id
@@ -436,64 +436,64 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/Location' }
+            schema: { $ref: "#/components/schemas/Location" }
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Location' }
+              schema: { $ref: "#/components/schemas/Location" }
     delete:
       tags: [Admin]
       summary: Delete location (admin only)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
           name: id
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        '204': { description: Deleted }
+        "204": { description: Deleted }
 
   /api/v1/admin/templates:
     get:
       tags: [Admin]
       summary: List templates
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
           name: group_id
           required: false
           schema: { type: integer, minimum: 1 }
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/ScheduleTemplate' }
+                items: { $ref: "#/components/schemas/ScheduleTemplate" }
     post:
       tags: [Admin]
       summary: Create template (dispatcher/admin)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ScheduleTemplate' }
+            schema: { $ref: "#/components/schemas/ScheduleTemplate" }
       responses:
-        '201':
+        "201":
           description: Created
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ScheduleTemplate' }
+              schema: { $ref: "#/components/schemas/ScheduleTemplate" }
 
   /api/v1/admin/templates/{id}:
     put:
       tags: [Admin]
       summary: Update template (dispatcher/admin)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
           name: id
@@ -503,30 +503,30 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ScheduleTemplate' }
+            schema: { $ref: "#/components/schemas/ScheduleTemplate" }
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ScheduleTemplate' }
+              schema: { $ref: "#/components/schemas/ScheduleTemplate" }
     delete:
       tags: [Admin]
       summary: Delete template (dispatcher/admin)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
           name: id
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
-        '204': { description: Deleted }
+        "204": { description: Deleted }
 
   /api/v1/admin/overrides:
     get:
       tags: [Admin]
       summary: List overrides
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
           name: group_id
@@ -537,19 +537,19 @@ paths:
           required: false
           schema: { type: string, format: date }
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/ScheduleOverride' }
+                items: { $ref: "#/components/schemas/ScheduleOverride" }
 
   /api/v1/admin/overrides/{id}:
     put:
       tags: [Admin]
       summary: Update override (dispatcher/admin)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
           name: id
@@ -559,106 +559,107 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ScheduleOverride' }
+            schema: { $ref: "#/components/schemas/ScheduleOverride" }
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ScheduleOverride' }
+              schema: { $ref: "#/components/schemas/ScheduleOverride" }
     delete:
       tags: [Admin]
       summary: Delete override (dispatcher/admin)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
           name: id
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
-        '204': { description: Deleted }
+        "204": { description: Deleted }
 
   /api/v1/admin/override:
     post:
       tags: [Admin]
       summary: Create override (dispatcher/admin)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/AdminOverrideRequest' }
+            schema: { $ref: "#/components/schemas/AdminOverrideRequest" }
       responses:
-        '201':
+        "201":
           description: Created
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ScheduleOverride' }
+              schema: { $ref: "#/components/schemas/ScheduleOverride" }
 
   /api/v1/admin/overlay:
     post:
       tags: [Admin]
       summary: Upsert day overlay (dispatcher/admin)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/AdminOverlayRequest' }
+            schema: { $ref: "#/components/schemas/AdminOverlayRequest" }
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ScheduleDayOverlay' }
+              schema: { $ref: "#/components/schemas/ScheduleDayOverlay" }
 
   /api/v1/admin/calendar-exceptions:
     get:
       tags: [Admin]
       summary: List calendar exceptions
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/CalendarException' }
+                items: { $ref: "#/components/schemas/CalendarException" }
     post:
       tags: [Admin]
       summary: Upsert calendar exception (dispatcher/admin)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/AdminCalendarExceptionRequest' }
+            schema:
+              { $ref: "#/components/schemas/AdminCalendarExceptionRequest" }
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/CalendarException' }
+              schema: { $ref: "#/components/schemas/CalendarException" }
 
   /api/v1/admin/calendar-exceptions/{date}:
     delete:
       tags: [Admin]
       summary: Delete calendar exception (dispatcher/admin)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
           name: date
           required: true
           schema: { type: string, format: date }
       responses:
-        '204': { description: Deleted }
+        "204": { description: Deleted }
 
   /api/v1/admin/import/templates/csv:
     post:
       tags: [Admin]
       summary: Import templates from CSV (replace by group)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
         content:
@@ -674,18 +675,18 @@ paths:
                   type: string
                   format: binary
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ImportResponse'
+                $ref: "#/components/schemas/ImportResponse"
 
   /api/v1/admin/import/templates/xlsx:
     post:
       tags: [Admin]
       summary: Import templates from XLSX (replace by group)
-      security: [ { bearerAuth: [] }, { adminKey: [] } ]
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
         content:
@@ -701,12 +702,12 @@ paths:
                   type: string
                   format: binary
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ImportResponse'
+                $ref: "#/components/schemas/ImportResponse"
 
 components:
   securitySchemes:
@@ -725,13 +726,13 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     Unauthorized:
       description: Unauthorized
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
     ErrorResponse:
@@ -809,7 +810,15 @@ components:
 
     Lesson:
       type: object
-      required: [pair_number, subject_name, location_name, teacher_name, is_changed, is_added]
+      required:
+        [
+          pair_number,
+          subject_name,
+          location_name,
+          teacher_name,
+          is_changed,
+          is_added,
+        ]
       properties:
         pair_number: { type: integer }
         subject_id: { type: integer, nullable: true }
@@ -834,7 +843,7 @@ components:
         overlay_text: { type: string, nullable: true }
         lessons:
           type: array
-          items: { $ref: '#/components/schemas/Lesson' }
+          items: { $ref: "#/components/schemas/Lesson" }
 
     WeekScheduleResponse:
       type: object
@@ -846,7 +855,7 @@ components:
         data_version: { type: string }
         days:
           type: array
-          items: { $ref: '#/components/schemas/DaySchedule' }
+          items: { $ref: "#/components/schemas/DaySchedule" }
 
     PushRegisterRequest:
       type: object
@@ -863,7 +872,16 @@ components:
 
     ScheduleTemplate:
       type: object
-      required: [group_id, day_of_week, week_parity, pair_number, subject_id, location_id, teacher_name]
+      required:
+        [
+          group_id,
+          day_of_week,
+          week_parity,
+          pair_number,
+          subject_id,
+          location_id,
+          teacher_name,
+        ]
       properties:
         id: { type: integer, format: int64 }
         group_id: { type: integer }
@@ -922,7 +940,13 @@ components:
       required: [id, target_date, group_id, text, style_preset]
       properties:
         id: { type: integer, format: int64 }
-        target_date: { type: string, format: date-time, description: Stored as DATE in DB, serialized as time }
+        target_date:
+          {
+            type: string,
+            format: date-time,
+            description: Stored as DATE in DB,
+            serialized as time,
+          }
         group_id: { type: integer }
         text: { type: string }
         style_preset: { type: string }
@@ -934,7 +958,13 @@ components:
       required: [id, target_date, works_as_day]
       properties:
         id: { type: integer, format: int64 }
-        target_date: { type: string, format: date-time, description: Stored as DATE in DB, serialized as time }
+        target_date:
+          {
+            type: string,
+            format: date-time,
+            description: Stored as DATE in DB,
+            serialized as time,
+          }
         works_as_day: { type: integer, minimum: 0, maximum: 6 }
         comment: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
