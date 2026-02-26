@@ -57,6 +57,28 @@ $env:GOOSE_DBSTRING = "host=localhost port=5432 user=postgres password=postgres 
 goose -dir .\db\migrations up
 ```
 
+### 3.5) Seed (минимальные данные для dev)
+
+Создаёт минимальный набор: специальность/учебный план/академ. календарь + несколько недель, 2–3 предмета, 2 локации, 1 группа, базовые пользователи.
+
+```powershell
+go run .\cmd\seed
+```
+
+По умолчанию создаются пользователи (dev):
+
+- `admin` / `admin`
+- `dispatcher` / `dispatcher`
+- `viewer` / `viewer`
+- `student1` / `student1`
+
+Пароли можно переопределить через env:
+
+- `ISPO_SEED_ADMIN_PASSWORD`
+- `ISPO_SEED_DISPATCHER_PASSWORD`
+- `ISPO_SEED_VIEWER_PASSWORD`
+- `ISPO_SEED_STUDENT_PASSWORD`
+
 ### 4) Запуск API
 
 ```powershell
