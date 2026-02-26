@@ -13,7 +13,7 @@ Workspace: ИСПО Расписание
 [x] Алгоритм генерации расписания: шаблон недели + overrides + calendar exceptions.
 [x] Offline-first поддержан контрактом (data_version + range endpoint).
 [x] PDF генерируется через headless Chrome (chromedp), HTML/CSS.
-[ ] Полноценная аутентификация пользователей/ролей (пока только X-Admin-Key).
+[x] Полноценная аутентификация пользователей/ролей (JWT + bcrypt, роли admin/dispatcher/student).
 [ ] Push-уведомления (FCM/APNS) — не в этом релизе.
 
 ======================================================================
@@ -43,6 +43,7 @@ Workspace: ИСПО Расписание
 [x] Таблица переносов дней: calendar_exceptions
 [x] Таблица состояния системы: system_state (schedule_version)
 [x] (Задел) students (логин/хэш/группа/подгруппа)
+[x] Роли пользователей: migration 20260226103000_auth_roles.sql (role: student/dispatcher/admin)
 [x] Индексы для основных запросов (templates/overrides)
 [ ] Триггеры updated_at (сейчас обновление делается ORM/кодом; можно усилить)
 [ ] Аудит-лог изменений (кто/когда/что) — позже
@@ -101,7 +102,7 @@ Workspace: ИСПО Расписание
 - internal/schedule/repository_admin.go
 
 Защита:
-[x] Если admin.api_key задан, требуется заголовок X-Admin-Key.
+[x] JWT auth + role-based access (admin/dispatcher). Опционально X-Admin-Key как обход.
 
 CRUD справочников:
 [x] GET/POST/PUT/DELETE /api/v1/admin/groups

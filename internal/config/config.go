@@ -13,6 +13,7 @@ type Config struct {
 	DB       DBConfig       `mapstructure:"db"`
 	Schedule ScheduleConfig `mapstructure:"schedule"`
 	Admin    AdminConfig    `mapstructure:"admin"`
+	Auth     AuthConfig     `mapstructure:"auth"`
 	PDF      PDFConfig      `mapstructure:"pdf"`
 }
 
@@ -37,6 +38,13 @@ type ScheduleConfig struct {
 
 type AdminConfig struct {
 	APIKey string `mapstructure:"api_key"`
+}
+
+type AuthConfig struct {
+	JWTSecret              string        `mapstructure:"jwt_secret"`
+	AccessTokenTTL         time.Duration `mapstructure:"access_token_ttl"`
+	BootstrapAdminLogin    string        `mapstructure:"bootstrap_admin_login"`
+	BootstrapAdminPassword string        `mapstructure:"bootstrap_admin_password"`
 }
 
 type PDFConfig struct {
@@ -81,6 +89,9 @@ func Load(opts LoadOptions) (*Config, error) {
 	}
 	if cfg.PDF.Timeout == 0 {
 		cfg.PDF.Timeout = 20 * time.Second
+	}
+	if cfg.Auth.AccessTokenTTL == 0 {
+		cfg.Auth.AccessTokenTTL = 12 * time.Hour
 	}
 
 	return &cfg, nil

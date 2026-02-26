@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"ispo-schedule/internal/auth"
 	"ispo-schedule/internal/config"
 	"ispo-schedule/internal/db"
 	"ispo-schedule/internal/httpapi"
@@ -32,6 +33,15 @@ func Run() error {
 	}
 
 	scheduleRepo := schedule.NewRepository(gormDB)
+
+	tokens, err := auth.NewTokenManager(cfg.Auth.JWTSecret, cfg.Auth.AccessTokenTTL)
+	if err != nil {
+		return err
+	}
+
+	if err := bootstrapAdminIfNeeded(cfg, scheduleRepo); err != nil {
+		return err
+	}
 	scheduleSvc := schedule.NewService(schedule.ServiceDeps{
 		Repo:              scheduleRepo,
 		SemesterStartDate: cfg.Schedule.SemesterStartDate,
@@ -48,6 +58,7 @@ func Run() error {
 		ScheduleSvc: scheduleSvc,
 		Repo:        scheduleRepo,
 		PDF:         pdfEngine,
+		Tokens:      tokens,
 	})
 
 	srv := &http.Server{
@@ -77,4 +88,34 @@ func Run() error {
 		}
 		return fmt.Errorf("http server: %w", err)
 	}
+}
+
+func bootstrapAdminIfNeeded(cfg *config.Config, repo *schedule.Repository) error {
+	login := cfg.Auth.BootstrapAdminLogin
+	pass := cfg.Auth.BootstrapAdminPassword
+	if login == "" || pass == "" {
+		return nil
+	}
+	_, err := repo.GetUserByLogin(login)
+	if err == nil {
+		return nil
+	}
+
+	hash, err := auth.HashPassword(pass)
+	if err != nil {
+		return err
+	}
+
+	u := auth.User{
+		Login:        login,
+		PasswordHash: hash,
+		Role:         auth.RoleAdmin,
+		GroupID:      nil,
+		Subgroup:     nil,
+	}
+	// Create user; if record exists concurrently, ignore error.
+	if err := repo.CreateUser(&u); err != nil {
+		return err
+	}
+	return nil
 }

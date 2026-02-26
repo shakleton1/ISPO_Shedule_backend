@@ -7,6 +7,7 @@ import (
 )
 
 func adminAuthMiddleware(apiKey string) gin.HandlerFunc {
+	// Deprecated: kept for backward compatibility in case older code references it.
 	if apiKey == "" {
 		return func(c *gin.Context) { c.Next() }
 	}

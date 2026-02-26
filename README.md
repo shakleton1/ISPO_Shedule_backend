@@ -43,9 +43,25 @@ go run .\cmd\api
 
 - `GET /api/v1/health`
 - `GET /api/v1/schedule/current?group_id=1&date=2026-02-26`
+- `GET /api/v1/schedule/version`
+- `GET /api/v1/schedule/range?group_id=1&date_start=2026-02-24&date_end=2026-03-07`
 - `GET /api/v1/schedule/pdf?group_id=1&date_start=2026-02-24`
 
-Admin (если задан `admin.api_key` в конфиге — нужен заголовок `X-Admin-Key`):
+## Аутентификация
+
+Auth endpoints:
+
+- `POST /api/v1/auth/login` → `{ "access_token": "..." }`
+- `GET /api/v1/auth/me` (нужен заголовок `Authorization: Bearer <token>`)
+
+Bootstrap admin (dev): в `configs/config.example.yaml` есть `auth.bootstrap_admin_login/password`.
+
+## Admin API
+
+Admin защищен одним из способов:
+
+1. JWT (рекомендуется): `Authorization: Bearer <token>` и роль `admin` или `dispatcher`.
+2. (Опционально) Если задан `admin.api_key`, можно передать `X-Admin-Key` как аварийный обход.
 
 - `POST /api/v1/admin/override`
 - `POST /api/v1/admin/overlay`

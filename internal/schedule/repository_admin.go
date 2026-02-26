@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"ispo-schedule/internal/auth"
+
 	"gorm.io/gorm"
 )
 
@@ -272,4 +274,32 @@ func (r *Repository) DeleteCalendarExceptionByDate(dateStr string) error {
 
 func ParseInt64Param(v string) (int64, error) {
 	return strconv.ParseInt(v, 10, 64)
+}
+
+// Users (auth)
+
+func (r *Repository) GetUserByLogin(login string) (*auth.User, error) {
+	var u auth.User
+	if err := r.db.Where("login = ?", login).First(&u).Error; err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (r *Repository) GetUserByID(id int64) (*auth.User, error) {
+	var u auth.User
+	if err := r.db.First(&u, id).Error; err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (r *Repository) CreateUser(u *auth.User) error {
+	return r.db.Create(u).Error
+}
+
+func (r *Repository) CountAdmins() (int64, error) {
+	var cnt int64
+	err := r.db.Model(&auth.User{}).Where("role = ?", auth.RoleAdmin).Count(&cnt).Error
+	return cnt, err
 }

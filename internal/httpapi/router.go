@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"ispo-schedule/internal/auth"
 	"ispo-schedule/internal/config"
 	"ispo-schedule/internal/pdf"
 	"ispo-schedule/internal/schedule"
@@ -16,6 +17,7 @@ type RouterDeps struct {
 	ScheduleSvc *schedule.Service
 	Repo        *schedule.Repository
 	PDF         *pdf.Engine
+	Tokens      *auth.TokenManager
 }
 
 func NewRouter(deps RouterDeps) http.Handler {
@@ -28,6 +30,13 @@ func NewRouter(deps RouterDeps) http.Handler {
 			c.JSON(http.StatusOK, gin.H{"status": "ok", "time": time.Now().UTC().Format(time.RFC3339)})
 		})
 
+		authGroup := v1.Group("/auth")
+		{
+			authGroup.POST("/login", handleLogin(deps.Tokens, deps.Repo))
+			// /me requires JWT
+			authGroup.GET("/me", authMiddleware(deps.Tokens, deps.Repo), handleMe(deps.Repo))
+		}
+
 		client := v1.Group("/schedule")
 		{
 			client.GET("/current", handleGetCurrentSchedule(deps.ScheduleSvc, deps.Repo))
@@ -37,7 +46,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 		}
 
 		admin := v1.Group("/admin")
-		admin.Use(adminAuthMiddleware(deps.Config.Admin.APIKey))
+		admin.Use(adminGateMiddleware(deps.Config.Admin.APIKey, deps.Tokens, deps.Repo))
 		{
 			admin.GET("/groups", handleAdminListGroups(deps.Repo))
 			admin.POST("/groups", handleAdminCreateGroup(deps.Repo))
