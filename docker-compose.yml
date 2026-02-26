@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: ispo_schedule_postgres
+    environment:
+      POSTGRES_DB: ispo_schedule
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ispo_schedule_pgdata:/var/lib/postgresql/data
+
+volumes:
+  ispo_schedule_pgdata:

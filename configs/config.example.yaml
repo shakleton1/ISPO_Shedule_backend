@@ -1,0 +1,26 @@
+server:
+  addr: "127.0.0.1:8080"
+  read_timeout: "10s"
+  write_timeout: "10s"
+
+db:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "postgres"
+  name: "ispo_schedule"
+  sslmode: "disable"
+
+schedule:
+  # Дата начала семестра. От нее считается четность недель.
+  # ВНИМАНИЕ: по спецификации week_diff=0 считается "denominator".
+  semester_start_date: "2026-02-09"
+
+admin:
+  # Если пусто, админ-эндпоинты не защищены ключом (dev).
+  api_key: ""
+
+pdf:
+  # Опционально: путь к chrome.exe, если chromedp не находит браузер.
+  chrome_executable_path: ""
+  timeout: "20s"
