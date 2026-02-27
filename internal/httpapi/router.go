@@ -119,6 +119,9 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminRead.GET("/groups", handleAdminListGroups(deps.Repo))
 				adminRead.GET("/subjects", handleAdminListSubjects(deps.Repo))
 				adminRead.GET("/locations", handleAdminListLocations(deps.Repo))
+				adminRead.GET("/teachers", handleAdminListTeachers(deps.Repo))
+				adminRead.GET("/teacher-subjects", handleAdminListTeacherSubjects(deps.Repo))
+				adminRead.GET("/course-assignments", handleAdminListCourseAssignments(deps.Repo))
 
 				adminRead.GET("/db/schema", handleAdminDBSchema(deps.Repo.DB()))
 				adminRead.GET("/specialties", handleAdminListSpecialties(deps.Repo))
@@ -140,6 +143,17 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminDictWrite.POST("/groups", handleAdminCreateGroup(deps.Repo))
 				adminDictWrite.PUT("/groups/:id", handleAdminUpdateGroup(deps.Repo))
 				adminDictWrite.DELETE("/groups/:id", handleAdminDeleteGroup(deps.Repo))
+
+				adminDictWrite.POST("/teachers", handleAdminCreateTeacher(deps.Repo))
+				adminDictWrite.PUT("/teachers/:id", handleAdminUpdateTeacher(deps.Repo))
+				adminDictWrite.DELETE("/teachers/:id", handleAdminDeleteTeacher(deps.Repo))
+
+				adminDictWrite.POST("/teacher-subjects", handleAdminCreateTeacherSubject(deps.Repo))
+				adminDictWrite.DELETE("/teacher-subjects/:teacher_id/:subject_id", handleAdminDeleteTeacherSubject(deps.Repo))
+
+				adminDictWrite.POST("/course-assignments", handleAdminCreateCourseAssignment(deps.Repo))
+				adminDictWrite.PUT("/course-assignments/:id", handleAdminUpdateCourseAssignment(deps.Repo))
+				adminDictWrite.DELETE("/course-assignments/:id", handleAdminDeleteCourseAssignment(deps.Repo))
 
 				adminDictWrite.POST("/specialties", handleAdminCreateSpecialty(deps.Repo))
 				adminDictWrite.PUT("/specialties/:id", handleAdminUpdateSpecialty(deps.Repo))
