@@ -23,8 +23,8 @@ func parseLimitOffset(c *gin.Context, defaultLimit *int, maxLimit int) (limitOff
 		out.Limit = defaultLimit
 	} else {
 		v, err := strconv.Atoi(limitStr)
-		if err != nil || v < 0 {
-			writeError(c, http.StatusBadRequest, "validation_error", "limit", "limit must be a non-negative integer")
+		if err != nil || v <= 0 {
+			writeError(c, http.StatusBadRequest, "validation_error", "limit", "limit must be a positive integer")
 			return limitOffset{}, false
 		}
 		if maxLimit > 0 && v > maxLimit {
@@ -49,6 +49,7 @@ func parseLimitOffset(c *gin.Context, defaultLimit *int, maxLimit int) (limitOff
 
 	if out.Limit == nil {
 		// pagination disabled: ignore offset if provided
+		out.Offset = nil
 		return out, true
 	}
 	if out.Offset == nil {
