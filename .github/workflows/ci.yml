@@ -17,8 +17,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          check-latest: true
+          go-version: '1.24.0'
           cache: true
 
       - name: Go toolchain info
@@ -27,6 +26,11 @@ jobs:
         run: |
           go version
           go env GOTOOLCHAIN
+
+      - name: Go version (pre-lint)
+        run: |
+          which go
+          go version
 
       - name: Lint
         uses: golangci/golangci-lint-action@v6
