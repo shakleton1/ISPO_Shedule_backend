@@ -58,6 +58,9 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 		return nil, err
 	}
 
+	startDate = dateOnly(startDate)
+	endDate = dateOnly(endDate)
+
 	assignmentRows := make([]CourseAssignmentTeacherView, 0)
 	// Process leaf->base so this group's assignments win.
 	for i := len(chainIDs) - 1; i >= 0; i-- {
@@ -145,6 +148,83 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 		return nil, err
 	}
 
+	// Precompute parity per date and set of parities used in the range.
+	parityByDay := map[string]WeekParity{}
+	paritySet := map[WeekParity]bool{}
+	for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
+		k := d.Format("2006-01-02")
+		p := s.weekParityForDate(d)
+		parityByDay[k] = p
+		paritySet[p] = true
+	}
+	parities := make([]WeekParity, 0, len(paritySet))
+	for p := range paritySet {
+		parities = append(parities, p)
+	}
+
+	// Batch load templates (per group in chain, per parity used).
+	tplByGroupParityDay := map[int]map[WeekParity]map[int16][]TemplateView{}
+	for _, gid := range chainIDs {
+		pm := map[WeekParity]map[int16][]TemplateView{}
+		for _, p := range parities {
+			rows, err := s.repo.ListTemplatesForWeekStatus(gid, p, StatusPublished)
+			if err != nil {
+				return nil, err
+			}
+			byDay := map[int16][]TemplateView{}
+			for _, r := range rows {
+				byDay[r.DayOfWeek] = append(byDay[r.DayOfWeek], TemplateView{
+					PairNumber:      r.PairNumber,
+					SubjectID:       r.SubjectID,
+					SubjectName:     r.SubjectName,
+					LocationID:      r.LocationID,
+					LocationName:    r.LocationName,
+					TeacherName:     r.TeacherName,
+					TeacherManual:   r.TeacherManual,
+					LocationManual:  r.LocationManual,
+					Subgroup:        r.Subgroup,
+				})
+			}
+			pm[p] = byDay
+		}
+		tplByGroupParityDay[gid] = pm
+	}
+
+	// Batch load overrides (per group in chain, whole range), then resolve inheritance base->leaf.
+	overridesByDay := map[string]map[overrideKey]OverrideView{}
+	for _, gid := range chainIDs {
+		rows, err := s.repo.ListOverridesBetween(gid, startDate, endDate)
+		if err != nil {
+			return nil, err
+		}
+		for _, r := range rows {
+			dayKey := dateOnly(r.TargetDate).Format("2006-01-02")
+			m, ok := overridesByDay[dayKey]
+			if !ok {
+				m = map[overrideKey]OverrideView{}
+				overridesByDay[dayKey] = m
+			}
+			k := overrideKey{PairNumber: r.PairNumber, Subgroup: -1}
+			if r.Subgroup != nil {
+				k.Subgroup = *r.Subgroup
+			}
+			m[k] = OverrideView{
+				ID:               r.ID,
+				PairNumber:       r.PairNumber,
+				ActionType:       r.ActionType,
+				NewSubjectID:     r.NewSubjectID,
+				NewSubjectName:   r.NewSubjectName,
+				NewLocationID:    r.NewLocationID,
+				NewLocationName:  r.NewLocationName,
+				NewTeacherManual: r.NewTeacherManual,
+				NewTeacherName:   r.NewTeacherName,
+				Comment:          r.Comment,
+				Subgroup:         r.Subgroup,
+				UpdatedAt:        r.UpdatedAt,
+			}
+		}
+	}
+
 	var out []DaySchedule
 	for d := dateOnly(startDate); !d.After(endDate); d = d.AddDate(0, 0, 1) {
 		dayKey := d.Format("2006-01-02")
@@ -156,16 +236,15 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 			nonTeaching = true
 		}
 
-		parity := s.weekParityForDate(d)
+		parity := parityByDay[dayKey]
 
 		var tpls []TemplateView
 		if !nonTeaching {
 			tplByKey := map[slotKey]TemplateView{}
 			for _, gid := range chainIDs {
-				rows, err := s.repo.ListTemplatesFor(gid, dayOfWeek, parity)
-				if err != nil {
-					return nil, err
-				}
+				byParity := tplByGroupParityDay[gid]
+				byDay := byParity[parity]
+				rows := byDay[dayOfWeek]
 				for _, t := range rows {
 					tplByKey[slotKey{PairNumber: t.PairNumber, Subgroup: subgroupKey(t.Subgroup)}] = t
 				}
@@ -176,20 +255,7 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 			}
 		}
 
-		ovrByKey := map[overrideKey]OverrideView{}
-		for _, gid := range chainIDs {
-			rows, err := s.repo.ListOverridesForDate(gid, d)
-			if err != nil {
-				return nil, err
-			}
-			for _, o := range rows {
-				k := overrideKey{PairNumber: o.PairNumber, Subgroup: -1}
-				if o.Subgroup != nil {
-					k.Subgroup = *o.Subgroup
-				}
-				ovrByKey[k] = o
-			}
-		}
+		ovrByKey := overridesByDay[dayKey]
 		ovrs := make([]OverrideView, 0, len(ovrByKey))
 		for _, v := range ovrByKey {
 			ovrs = append(ovrs, v)

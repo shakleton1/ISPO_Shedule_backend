@@ -15,6 +15,7 @@ type Service struct {
 	repo              *Repository
 	semesterStartDate time.Time
 	now               func() time.Time
+	weekCache         *weekCache
 }
 
 func NewService(deps ServiceDeps) *Service {
@@ -23,6 +24,7 @@ func NewService(deps ServiceDeps) *Service {
 		repo:              deps.Repo,
 		semesterStartDate: start,
 		now:               deps.Now,
+		weekCache:         newWeekCache(256),
 	}
 }
 
@@ -75,6 +77,8 @@ func (s *Service) GetRange(groupID int, startDate, endDate time.Time) (*WeekSche
 	if groupID <= 0 {
 		return nil, fmt.Errorf("group_id required")
 	}
+	startDate = dateOnly(startDate)
+	endDate = dateOnly(endDate)
 	if endDate.Before(startDate) {
 		return nil, fmt.Errorf("date_end before date_start")
 	}
@@ -83,17 +87,37 @@ func (s *Service) GetRange(groupID int, startDate, endDate time.Time) (*WeekSche
 	if err != nil {
 		return nil, err
 	}
+	dataVersion := state.ScheduleVersion.UTC().Format(time.RFC3339)
+
+	// Week cache: only for canonical Mon..Sat weeks.
+	weekStart := mondayOfWeek(startDate)
+	if startDate.Equal(weekStart) && endDate.Equal(weekStart.AddDate(0, 0, 5)) {
+		k := weekCacheKey{groupID: groupID, weekStart: weekStart.Format("2006-01-02"), dataVersion: dataVersion}
+		if cached, ok := s.weekCache.get(k); ok {
+			clone := cloneWeekScheduleResponse(cached)
+			return &clone, nil
+		}
+	}
 
 	days, err := s.buildDays(groupID, startDate, endDate)
 	if err != nil {
 		return nil, err
 	}
 
-	return &WeekScheduleResponse{
+	resp := WeekScheduleResponse{
 		GroupID:     groupID,
 		DateStart:   startDate.Format("2006-01-02"),
 		DateEnd:     endDate.Format("2006-01-02"),
-		DataVersion: state.ScheduleVersion.UTC().Format(time.RFC3339),
+		DataVersion: dataVersion,
 		Days:        days,
-	}, nil
+	}
+
+	// Save to cache for canonical Mon..Sat weeks.
+	weekStart = mondayOfWeek(startDate)
+	if startDate.Equal(weekStart) && endDate.Equal(weekStart.AddDate(0, 0, 5)) {
+		k := weekCacheKey{groupID: groupID, weekStart: weekStart.Format("2006-01-02"), dataVersion: dataVersion}
+		s.weekCache.set(k, cloneWeekScheduleResponse(resp))
+	}
+
+	return &resp, nil
 }
