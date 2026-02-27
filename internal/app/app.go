@@ -89,10 +89,13 @@ func Run() error {
 	})
 
 	srv := &http.Server{
-		Addr:         cfg.Server.Addr,
-		Handler:      router,
-		ReadTimeout:  cfg.Server.ReadTimeout,
-		WriteTimeout: cfg.Server.WriteTimeout,
+		Addr:              cfg.Server.Addr,
+		Handler:           router,
+		ReadTimeout:       cfg.Server.ReadTimeout,
+		WriteTimeout:      cfg.Server.WriteTimeout,
+		ReadHeaderTimeout: cfg.Server.ReadHeaderTimeout,
+		IdleTimeout:       cfg.Server.IdleTimeout,
+		MaxHeaderBytes:    cfg.Server.MaxHeaderBytes,
 	}
 
 	shutdownCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

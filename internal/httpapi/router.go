@@ -219,11 +219,13 @@ func NewRouter(deps RouterDeps) http.Handler {
 				{
 					adminImport.POST(
 						"/import/templates/csv",
+						maxBodyBytesMiddleware(deps.Config.Server.AdminImportMaxBodyBytes),
 						rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
 						handleAdminImportTemplatesCSV(deps.Repo, deps.Push),
 					)
 					adminImport.POST(
 						"/import/templates/xlsx",
+						maxBodyBytesMiddleware(deps.Config.Server.AdminImportMaxBodyBytes),
 						rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
 						handleAdminImportTemplatesXLSX(deps.Repo, deps.Push),
 					)

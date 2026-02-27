@@ -20,10 +20,14 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Addr         string          `mapstructure:"addr"`
-	ReadTimeout  time.Duration   `mapstructure:"read_timeout"`
-	WriteTimeout time.Duration   `mapstructure:"write_timeout"`
-	RateLimit    RateLimitConfig `mapstructure:"rate_limit"`
+	Addr                    string          `mapstructure:"addr"`
+	ReadTimeout             time.Duration   `mapstructure:"read_timeout"`
+	WriteTimeout            time.Duration   `mapstructure:"write_timeout"`
+	ReadHeaderTimeout       time.Duration   `mapstructure:"read_header_timeout"`
+	IdleTimeout             time.Duration   `mapstructure:"idle_timeout"`
+	MaxHeaderBytes          int             `mapstructure:"max_header_bytes"`
+	AdminImportMaxBodyBytes int64           `mapstructure:"admin_import_max_body_bytes"`
+	RateLimit               RateLimitConfig `mapstructure:"rate_limit"`
 }
 
 type RateLimitConfig struct {
@@ -116,6 +120,18 @@ func Load(opts LoadOptions) (*Config, error) {
 
 	if cfg.Server.Addr == "" {
 		cfg.Server.Addr = "127.0.0.1:8080"
+	}
+	if cfg.Server.ReadHeaderTimeout == 0 {
+		cfg.Server.ReadHeaderTimeout = 5 * time.Second
+	}
+	if cfg.Server.IdleTimeout == 0 {
+		cfg.Server.IdleTimeout = 60 * time.Second
+	}
+	if cfg.Server.MaxHeaderBytes == 0 {
+		cfg.Server.MaxHeaderBytes = 1 << 20 // 1 MiB
+	}
+	if cfg.Server.AdminImportMaxBodyBytes == 0 {
+		cfg.Server.AdminImportMaxBodyBytes = 25 << 20 // 25 MiB
 	}
 	if cfg.Log.Level == "" {
 		cfg.Log.Level = "info"

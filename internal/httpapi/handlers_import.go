@@ -47,6 +47,10 @@ func handleAdminImportTemplatesCSV(repo *schedule.Repository, pushSvc *push.Serv
 
 		f, err := getUploadedFile(c, "file")
 		if err != nil {
+			if errors.Is(err, errRequestBodyTooLarge) {
+				writeError(c, http.StatusRequestEntityTooLarge, "payload_too_large", "file", "upload too large")
+				return
+			}
 			writeValidationError(c, "file", err.Error())
 			return
 		}
@@ -89,6 +93,10 @@ func handleAdminImportTemplatesXLSX(repo *schedule.Repository, pushSvc *push.Ser
 
 		f, err := getUploadedFile(c, "file")
 		if err != nil {
+			if errors.Is(err, errRequestBodyTooLarge) {
+				writeError(c, http.StatusRequestEntityTooLarge, "payload_too_large", "file", "upload too large")
+				return
+			}
 			writeValidationError(c, "file", err.Error())
 			return
 		}
@@ -138,6 +146,9 @@ func parseGroupIDFromRequest(c *gin.Context) (int, bool) {
 func getUploadedFile(c *gin.Context, field string) (io.ReadCloser, error) {
 	fh, err := c.FormFile(field)
 	if err != nil {
+		if isRequestBodyTooLarge(err) {
+			return nil, errRequestBodyTooLarge
+		}
 		return nil, fmt.Errorf("missing %s file", field)
 	}
 	file, err := fh.Open()
