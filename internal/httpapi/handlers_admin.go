@@ -722,6 +722,10 @@ func handleAdminListTemplates(repo *schedule.Repository) gin.HandlerFunc {
 			p := schedule.WeekParity(v)
 			filters.WeekParity = &p
 		}
+		if v := c.Query("status"); v != "" {
+			s := schedule.EntityStatus(v)
+			filters.Status = &s
+		}
 		rows, err := repo.ListTemplates(filters)
 		if err != nil {
 			writeDBError(c, err)
@@ -746,9 +750,11 @@ func handleAdminCreateTemplate(repo *schedule.Repository, pushSvc *push.Service)
 			writeDBError(c, err)
 			return
 		}
-		ver, _ := bumpScheduleVersionAndGet(repo)
-		if pushSvc != nil {
-			pushSvc.NotifyScheduleUpdatedAsync(req.GroupID, ver)
+		if req.Status == schedule.StatusPublished {
+			ver, _ := bumpScheduleVersionAndGet(repo)
+			if pushSvc != nil {
+				pushSvc.NotifyScheduleUpdatedAsync(req.GroupID, ver)
+			}
 		}
 		writeAudit(c, repo, "create", "schedule_templates", strconv.FormatInt(req.ID, 10), req)
 		c.JSON(http.StatusCreated, req)
@@ -772,9 +778,11 @@ func handleAdminUpdateTemplate(repo *schedule.Repository, pushSvc *push.Service)
 			writeDBError(c, err)
 			return
 		}
-		ver, _ := bumpScheduleVersionAndGet(repo)
-		if pushSvc != nil {
-			pushSvc.NotifyScheduleUpdatedAsync(row.GroupID, ver)
+		if row.Status == schedule.StatusPublished {
+			ver, _ := bumpScheduleVersionAndGet(repo)
+			if pushSvc != nil {
+				pushSvc.NotifyScheduleUpdatedAsync(row.GroupID, ver)
+			}
 		}
 		writeAudit(c, repo, "update", "schedule_templates", strconv.FormatInt(id, 10), row)
 		c.JSON(http.StatusOK, row)
@@ -797,12 +805,55 @@ func handleAdminDeleteTemplate(repo *schedule.Repository, pushSvc *push.Service)
 			writeDBError(c, err)
 			return
 		}
-		ver, _ := bumpScheduleVersionAndGet(repo)
-		if pushSvc != nil {
-			pushSvc.NotifyScheduleUpdatedAsync(tpl.GroupID, ver)
+		if tpl.Status == schedule.StatusPublished {
+			ver, _ := bumpScheduleVersionAndGet(repo)
+			if pushSvc != nil {
+				pushSvc.NotifyScheduleUpdatedAsync(tpl.GroupID, ver)
+			}
 		}
 		writeAudit(c, repo, "delete", "schedule_templates", strconv.FormatInt(id, 10), nil)
 		c.Status(http.StatusNoContent)
+	}
+}
+
+func handleAdminPublishDraftTemplates(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		groupID, err := strconv.Atoi(c.Query("group_id"))
+		if err != nil || groupID <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id required"})
+			return
+		}
+		moved, err := repo.PublishDraftTemplates(groupID)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		var ver time.Time
+		if moved > 0 {
+			ver, _ = bumpScheduleVersionAndGet(repo)
+			if pushSvc != nil {
+				pushSvc.NotifyScheduleUpdatedAsync(groupID, ver)
+			}
+		}
+		writeAudit(c, repo, "publish", "schedule_templates", strconv.Itoa(groupID), gin.H{"group_id": groupID, "moved": moved})
+		c.JSON(http.StatusOK, gin.H{"group_id": groupID, "moved": moved, "data_version": ver.UTC().Format(time.RFC3339)})
+	}
+}
+
+func handleAdminDiscardDraftTemplates(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		groupID, err := strconv.Atoi(c.Query("group_id"))
+		if err != nil || groupID <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id required"})
+			return
+		}
+		deleted, err := repo.DiscardDraftTemplates(groupID)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		writeAudit(c, repo, "discard_drafts", "schedule_templates", strconv.Itoa(groupID), gin.H{"group_id": groupID, "deleted": deleted})
+		c.JSON(http.StatusOK, gin.H{"group_id": groupID, "deleted": deleted})
 	}
 }
 

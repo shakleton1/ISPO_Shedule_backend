@@ -36,6 +36,15 @@ func handleAdminImportTemplatesCSV(repo *schedule.Repository, pushSvc *push.Serv
 			return
 		}
 
+		status := schedule.StatusPublished
+		if v := strings.TrimSpace(c.Query("status")); v != "" {
+			status = schedule.EntityStatus(v)
+		}
+		if status != schedule.StatusDraft && status != schedule.StatusPublished {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
+			return
+		}
+
 		f, err := getUploadedFile(c, "file")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -49,16 +58,16 @@ func handleAdminImportTemplatesCSV(repo *schedule.Repository, pushSvc *push.Serv
 			return
 		}
 
-		inserted, ver, err := importTemplatesReplace(c, repo, groupID, rows)
+		inserted, ver, err := importTemplatesReplace(c, repo, groupID, status, rows)
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		if pushSvc != nil {
+		if pushSvc != nil && status == schedule.StatusPublished {
 			pushSvc.NotifyScheduleUpdatedAsync(groupID, ver)
 		}
 		writeAudit(c, repo, "import", "schedule_templates", fmt.Sprintf("group:%d", groupID), gin.H{"inserted": inserted})
-		c.JSON(http.StatusOK, gin.H{"inserted": inserted, "schedule_version": ver.UTC().Format(time.RFC3339Nano)})
+		c.JSON(http.StatusOK, gin.H{"inserted": inserted, "status": status, "schedule_version": ver.UTC().Format(time.RFC3339Nano)})
 	}
 }
 
@@ -66,6 +75,15 @@ func handleAdminImportTemplatesXLSX(repo *schedule.Repository, pushSvc *push.Ser
 	return func(c *gin.Context) {
 		groupID, ok := parseGroupIDFromRequest(c)
 		if !ok {
+			return
+		}
+
+		status := schedule.StatusPublished
+		if v := strings.TrimSpace(c.Query("status")); v != "" {
+			status = schedule.EntityStatus(v)
+		}
+		if status != schedule.StatusDraft && status != schedule.StatusPublished {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
 			return
 		}
 
@@ -82,16 +100,16 @@ func handleAdminImportTemplatesXLSX(repo *schedule.Repository, pushSvc *push.Ser
 			return
 		}
 
-		inserted, ver, err := importTemplatesReplace(c, repo, groupID, rows)
+		inserted, ver, err := importTemplatesReplace(c, repo, groupID, status, rows)
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		if pushSvc != nil {
+		if pushSvc != nil && status == schedule.StatusPublished {
 			pushSvc.NotifyScheduleUpdatedAsync(groupID, ver)
 		}
 		writeAudit(c, repo, "import", "schedule_templates", fmt.Sprintf("group:%d", groupID), gin.H{"inserted": inserted})
-		c.JSON(http.StatusOK, gin.H{"inserted": inserted, "schedule_version": ver.UTC().Format(time.RFC3339Nano)})
+		c.JSON(http.StatusOK, gin.H{"inserted": inserted, "status": status, "schedule_version": ver.UTC().Format(time.RFC3339Nano)})
 	}
 }
 
@@ -129,7 +147,7 @@ func getUploadedFile(c *gin.Context, field string) (io.ReadCloser, error) {
 	return file, nil
 }
 
-func importTemplatesReplace(c *gin.Context, repo *schedule.Repository, groupID int, rows []importTemplateRow) (int, time.Time, error) {
+func importTemplatesReplace(c *gin.Context, repo *schedule.Repository, groupID int, status schedule.EntityStatus, rows []importTemplateRow) (int, time.Time, error) {
 	if len(rows) == 0 {
 		return 0, time.Time{}, fmt.Errorf("empty file")
 	}
@@ -142,7 +160,7 @@ func importTemplatesReplace(c *gin.Context, repo *schedule.Repository, groupID i
 			return err
 		}
 
-		if err := tx.Where("group_id = ?", groupID).Delete(&schedule.ScheduleTemplate{}).Error; err != nil {
+		if err := tx.Where("group_id = ? AND status = ?", groupID, status).Delete(&schedule.ScheduleTemplate{}).Error; err != nil {
 			return err
 		}
 
@@ -167,6 +185,7 @@ func importTemplatesReplace(c *gin.Context, repo *schedule.Repository, groupID i
 				PairNumber: r.PairNumber,
 				SubjectID:  subID,
 				LocationID: locID,
+				Status:     status,
 				TeacherID:  teacherID,
 				Subgroup:   r.Subgroup,
 				CreatedAt:  time.Now().UTC(),
@@ -182,7 +201,14 @@ func importTemplatesReplace(c *gin.Context, repo *schedule.Repository, groupID i
 	if err != nil {
 		return 0, time.Time{}, err
 	}
-
+	if status != schedule.StatusPublished {
+		// Draft import must not affect clients; return current version.
+		state, err := repo.GetSystemState()
+		if err != nil {
+			return inserted, time.Time{}, err
+		}
+		return inserted, state.ScheduleVersion, nil
+	}
 	ver, err := bumpScheduleVersionAndGet(repo)
 	if err != nil {
 		return inserted, time.Time{}, err

@@ -150,6 +150,23 @@ go run .\cmd\api
 - События дня (структурированные, не только текст): `GET/POST /api/v1/admin/day-events`, `PUT/DELETE /api/v1/admin/day-events/:id`
 - Calendar exceptions: `GET/POST /api/v1/admin/calendar-exceptions`, `DELETE /api/v1/admin/calendar-exceptions/:date`
 
+Жизненный цикл и “источник истины” (policy):
+
+- `schedule_templates` (status=`published`) — базовый источник расписания по неделе.
+- `course_assignments` (status=`published`) — вспомогательный источник: используется для автозаполнения преподавателя (и далее аудитории) если в шаблоне поле пустое.
+- `schedule_overrides` — самый высокий приоритет на конкретную дату (CANCEL/REPLACE/ADD) и перекрывает шаблоны/автозаполнение.
+- Импорт — это способ записать шаблоны (в published или draft), но не отдельный “источник истины”.
+
+Draft/publish:
+
+- Для `schedule_templates` и `course_assignments` есть `status: draft|published`.
+- Любые изменения со статусом `draft` не bump’ают `system_state.schedule_version` и не отправляют push.
+- Публикация черновиков делает изменения “видимыми” клиентам: bump’ает `schedule_version` и (если включено) шлёт push.
+
+Полезно для дебага:
+
+- `GET /api/v1/admin/schedule/explain?group_id=1&date=2026-02-26&pair_number=2&subgroup=1` — показывает, какие шаблоны/оверрайды/авторезолв участвовали в результате.
+
 Учебные планы и календарный учебный график:
 
 - Специальности: `GET/POST/PUT/DELETE /api/v1/admin/specialties`
@@ -169,11 +186,17 @@ go run .\cmd\api
 
 ## Импорт шаблонов CSV/XLSX
 
-Импорт работает в режиме "заменить всё для группы":
+Импорт работает в режиме "заменить всё для группы" в рамках выбранного статуса:
 
-- сначала удаляются все `schedule_templates` для `group_id`
+- сначала удаляются все `schedule_templates` для `group_id` и `status`
 - затем вставляются строки из файла
-- после успешного импорта увеличивается `system_state.schedule_version` и (если включено) отправляется push
+- если импорт в `status=published`: после успеха увеличивается `system_state.schedule_version` и (если включено) отправляется push
+- если импорт в `status=draft`: версия не меняется и push не отправляется
+
+Параметры:
+
+- `group_id` — обязателен
+- `status` — опционально, `published` (по умолчанию) или `draft`
 
 Обязательные колонки (CSV):
 

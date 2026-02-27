@@ -159,11 +159,12 @@ type TemplateFilters struct {
 	GroupID    *int
 	DayOfWeek  *int16
 	WeekParity *WeekParity
+	Status     *EntityStatus
 }
 
 func (r *Repository) ListTemplates(filters TemplateFilters) ([]ScheduleTemplate, error) {
 	q := r.db.Table("schedule_templates st").
-		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.created_at, st.updated_at").
+		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, st.status, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.created_at, st.updated_at").
 		Joins("LEFT JOIN teachers t ON t.id = st.teacher_id").
 		Order("st.group_id asc, st.day_of_week asc, st.week_parity asc, st.pair_number asc, st.subgroup asc")
 	if filters.GroupID != nil {
@@ -175,6 +176,11 @@ func (r *Repository) ListTemplates(filters TemplateFilters) ([]ScheduleTemplate,
 	if filters.WeekParity != nil {
 		q = q.Where("st.week_parity = ?", *filters.WeekParity)
 	}
+	if filters.Status != nil {
+		q = q.Where("st.status = ?", *filters.Status)
+	} else {
+		q = q.Where("st.status = ?", StatusPublished)
+	}
 	var rows []ScheduleTemplate
 	err := q.Scan(&rows).Error
 	return rows, err
@@ -183,6 +189,12 @@ func (r *Repository) ListTemplates(filters TemplateFilters) ([]ScheduleTemplate,
 func (r *Repository) CreateTemplate(tpl *ScheduleTemplate) error {
 	if tpl == nil {
 		return fmt.Errorf("template is nil")
+	}
+	if tpl.Status == "" {
+		tpl.Status = StatusPublished
+	}
+	if tpl.Status != StatusDraft && tpl.Status != StatusPublished {
+		return fmt.Errorf("invalid status: %s", tpl.Status)
 	}
 	teacherID, err := ensureTeacherID(r.db, tpl.TeacherName)
 	if err != nil {
@@ -201,12 +213,19 @@ func (r *Repository) UpdateTemplate(id int64, patch *ScheduleTemplate) (*Schedul
 	if err != nil {
 		return nil, err
 	}
+	if patch.Status == "" {
+		patch.Status = row.Status
+	}
+	if patch.Status != StatusDraft && patch.Status != StatusPublished {
+		return nil, fmt.Errorf("invalid status: %s", patch.Status)
+	}
 	row.GroupID = patch.GroupID
 	row.DayOfWeek = patch.DayOfWeek
 	row.WeekParity = patch.WeekParity
 	row.PairNumber = patch.PairNumber
 	row.SubjectID = patch.SubjectID
 	row.LocationID = patch.LocationID
+	row.Status = patch.Status
 	row.TeacherID = teacherID
 	row.Subgroup = patch.Subgroup
 	if err := r.db.Omit("TeacherName").Save(&row).Error; err != nil {
@@ -222,13 +241,63 @@ func (r *Repository) DeleteTemplate(id int64) error {
 func (r *Repository) GetTemplateByID(id int64) (*ScheduleTemplate, error) {
 	var row ScheduleTemplate
 	if err := r.db.Table("schedule_templates st").
-		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.created_at, st.updated_at").
+		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, st.status, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.created_at, st.updated_at").
 		Joins("LEFT JOIN teachers t ON t.id = st.teacher_id").
 		Where("st.id = ?", id).
 		Scan(&row).Error; err != nil {
 		return nil, err
 	}
 	return &row, nil
+}
+
+func (r *Repository) PublishDraftTemplates(groupID int) (int64, error) {
+	if groupID <= 0 {
+		return 0, fmt.Errorf("group_id required")
+	}
+	var moved int64
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		// Replace matching published rows for each draft slot.
+		if err := tx.Exec(`
+			DELETE FROM schedule_templates p
+			USING schedule_templates d
+			WHERE d.group_id = ?
+			  AND d.status = 'draft'
+			  AND p.group_id = d.group_id
+			  AND p.day_of_week = d.day_of_week
+			  AND p.week_parity = d.week_parity
+			  AND p.pair_number = d.pair_number
+			  AND COALESCE(p.subgroup, 0) = COALESCE(d.subgroup, 0)
+			  AND p.status = 'published'
+		`, groupID).Error; err != nil {
+			return err
+		}
+
+		res := tx.Exec(`
+			INSERT INTO schedule_templates (group_id, day_of_week, week_parity, pair_number, subject_id, location_id, status, teacher_id, subgroup, created_at, updated_at)
+			SELECT group_id, day_of_week, week_parity, pair_number, subject_id, location_id, 'published', teacher_id, subgroup, now(), now()
+			FROM schedule_templates
+			WHERE group_id = ? AND status = 'draft'
+		`, groupID)
+		if res.Error != nil {
+			return res.Error
+		}
+		moved = res.RowsAffected
+
+		// Remove drafts after publish.
+		if err := tx.Exec(`DELETE FROM schedule_templates WHERE group_id = ? AND status = 'draft'`, groupID).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	return moved, err
+}
+
+func (r *Repository) DiscardDraftTemplates(groupID int) (int64, error) {
+	if groupID <= 0 {
+		return 0, fmt.Errorf("group_id required")
+	}
+	res := r.db.Exec(`DELETE FROM schedule_templates WHERE group_id = ? AND status = 'draft'`, groupID)
+	return res.RowsAffected, res.Error
 }
 
 // Overrides

@@ -132,6 +132,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminRead.GET("/curriculum-items/:id/allocations", handleAdminListCurriculumItemAllocations(deps.Repo))
 
 				adminRead.GET("/templates", handleAdminListTemplates(deps.Repo))
+				adminRead.GET("/schedule/explain", handleAdminExplainScheduleSlot(deps.ScheduleSvc, deps.Repo))
 				adminRead.GET("/overrides", handleAdminListOverrides(deps.Repo))
 				adminRead.GET("/calendar-exceptions", handleAdminListCalendarExceptions(deps.Repo))
 				adminRead.GET("/day-events", handleAdminListDayEvents(deps.Repo))
@@ -150,10 +151,6 @@ func NewRouter(deps RouterDeps) http.Handler {
 
 				adminDictWrite.POST("/teacher-subjects", handleAdminCreateTeacherSubject(deps.Repo))
 				adminDictWrite.DELETE("/teacher-subjects/:teacher_id/:subject_id", handleAdminDeleteTeacherSubject(deps.Repo))
-
-				adminDictWrite.POST("/course-assignments", handleAdminCreateCourseAssignment(deps.Repo))
-				adminDictWrite.PUT("/course-assignments/:id", handleAdminUpdateCourseAssignment(deps.Repo))
-				adminDictWrite.DELETE("/course-assignments/:id", handleAdminDeleteCourseAssignment(deps.Repo))
 
 				adminDictWrite.POST("/specialties", handleAdminCreateSpecialty(deps.Repo))
 				adminDictWrite.PUT("/specialties/:id", handleAdminUpdateSpecialty(deps.Repo))
@@ -190,6 +187,14 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminScheduleWrite.POST("/templates", handleAdminCreateTemplate(deps.Repo, deps.Push))
 				adminScheduleWrite.PUT("/templates/:id", handleAdminUpdateTemplate(deps.Repo, deps.Push))
 				adminScheduleWrite.DELETE("/templates/:id", handleAdminDeleteTemplate(deps.Repo, deps.Push))
+				adminScheduleWrite.POST("/templates/publish", handleAdminPublishDraftTemplates(deps.Repo, deps.Push))
+				adminScheduleWrite.POST("/templates/discard-drafts", handleAdminDiscardDraftTemplates(deps.Repo))
+
+				adminScheduleWrite.POST("/course-assignments", handleAdminCreateCourseAssignment(deps.Repo, deps.Push))
+				adminScheduleWrite.PUT("/course-assignments/:id", handleAdminUpdateCourseAssignment(deps.Repo, deps.Push))
+				adminScheduleWrite.DELETE("/course-assignments/:id", handleAdminDeleteCourseAssignment(deps.Repo, deps.Push))
+				adminScheduleWrite.POST("/course-assignments/publish", handleAdminPublishDraftCourseAssignments(deps.Repo, deps.Push))
+				adminScheduleWrite.POST("/course-assignments/discard-drafts", handleAdminDiscardDraftCourseAssignments(deps.Repo))
 
 				adminScheduleWrite.POST("/override", handleAdminCreateOverride(deps.Repo, deps.Push))
 				adminScheduleWrite.PUT("/overrides/:id", handleAdminUpdateOverride(deps.Repo, deps.Push))

@@ -3,9 +3,11 @@ package httpapi
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
+	"ispo-schedule/internal/push"
 	"ispo-schedule/internal/schedule"
 )
 
@@ -193,6 +195,10 @@ func handleAdminListCourseAssignments(repo *schedule.Repository) gin.HandlerFunc
 			}
 			filters.TeacherID = &id
 		}
+		if v := c.Query("status"); v != "" {
+			s := schedule.EntityStatus(v)
+			filters.Status = &s
+		}
 
 		rows, err := repo.ListCourseAssignments(filters)
 		if err != nil {
@@ -203,7 +209,7 @@ func handleAdminListCourseAssignments(repo *schedule.Repository) gin.HandlerFunc
 	}
 }
 
-func handleAdminCreateCourseAssignment(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminCreateCourseAssignment(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req schedule.CourseAssignment
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -224,12 +230,18 @@ func handleAdminCreateCourseAssignment(repo *schedule.Repository) gin.HandlerFun
 			writeDBError(c, err)
 			return
 		}
+		if req.Status == schedule.StatusPublished {
+			ver, _ := bumpScheduleVersionAndGet(repo)
+			if pushSvc != nil {
+				pushSvc.NotifyScheduleUpdatedAsync(req.GroupID, ver)
+			}
+		}
 		writeAudit(c, repo, "create", "course_assignments", strconv.FormatInt(req.ID, 10), req)
 		c.JSON(http.StatusCreated, req)
 	}
 }
 
-func handleAdminUpdateCourseAssignment(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminUpdateCourseAssignment(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
@@ -257,23 +269,101 @@ func handleAdminUpdateCourseAssignment(repo *schedule.Repository) gin.HandlerFun
 			writeDBError(c, err)
 			return
 		}
+		if row.Status == schedule.StatusPublished {
+			ver, _ := bumpScheduleVersionAndGet(repo)
+			if pushSvc != nil {
+				pushSvc.NotifyScheduleUpdatedAsync(row.GroupID, ver)
+			}
+		}
 		writeAudit(c, repo, "update", "course_assignments", strconv.FormatInt(id, 10), req)
 		c.JSON(http.StatusOK, row)
 	}
 }
 
-func handleAdminDeleteCourseAssignment(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminDeleteCourseAssignment(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 			return
 		}
+		row, err := repo.GetCourseAssignmentByID(id)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
 		if err := repo.DeleteCourseAssignment(id); err != nil {
 			writeDBError(c, err)
 			return
 		}
+		if row.Status == schedule.StatusPublished {
+			ver, _ := bumpScheduleVersionAndGet(repo)
+			if pushSvc != nil {
+				pushSvc.NotifyScheduleUpdatedAsync(row.GroupID, ver)
+			}
+		}
 		writeAudit(c, repo, "delete", "course_assignments", strconv.FormatInt(id, 10), gin.H{"id": id})
 		c.Status(http.StatusNoContent)
+	}
+}
+
+func handleAdminPublishDraftCourseAssignments(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		groupID, err := strconv.Atoi(c.Query("group_id"))
+		if err != nil || groupID <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id required"})
+			return
+		}
+		var semPtr *int16
+		if v := c.Query("semester"); v != "" {
+			i, err := strconv.Atoi(v)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid semester"})
+				return
+			}
+			s := int16(i)
+			semPtr = &s
+		}
+		moved, err := repo.PublishDraftCourseAssignments(groupID, semPtr)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		var ver time.Time
+		if moved > 0 {
+			ver, _ = bumpScheduleVersionAndGet(repo)
+			if pushSvc != nil {
+				pushSvc.NotifyScheduleUpdatedAsync(groupID, ver)
+			}
+		}
+		writeAudit(c, repo, "publish", "course_assignments", strconv.Itoa(groupID), gin.H{"group_id": groupID, "semester": semPtr, "moved": moved})
+		c.JSON(http.StatusOK, gin.H{"group_id": groupID, "semester": semPtr, "moved": moved, "data_version": ver.UTC().Format(time.RFC3339)})
+	}
+}
+
+func handleAdminDiscardDraftCourseAssignments(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		groupID, err := strconv.Atoi(c.Query("group_id"))
+		if err != nil || groupID <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id required"})
+			return
+		}
+		var semPtr *int16
+		if v := c.Query("semester"); v != "" {
+			i, err := strconv.Atoi(v)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid semester"})
+				return
+			}
+			s := int16(i)
+			semPtr = &s
+		}
+		deleted, err := repo.DiscardDraftCourseAssignments(groupID, semPtr)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		writeAudit(c, repo, "discard_drafts", "course_assignments", strconv.Itoa(groupID), gin.H{"group_id": groupID, "semester": semPtr, "deleted": deleted})
+		c.JSON(http.StatusOK, gin.H{"group_id": groupID, "semester": semPtr, "deleted": deleted})
 	}
 }

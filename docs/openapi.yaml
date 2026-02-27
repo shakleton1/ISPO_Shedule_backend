@@ -594,6 +594,10 @@ paths:
           name: teacher_id
           required: false
           schema: { type: integer, minimum: 1 }
+        - in: query
+          name: status
+          required: false
+          schema: { type: string, enum: [draft, published] }
       responses:
         "200":
           description: OK
@@ -604,7 +608,7 @@ paths:
                 items: { $ref: "#/components/schemas/CourseAssignment" }
     post:
       tags: [Admin]
-      summary: Create course assignment (admin only)
+      summary: Create course assignment (dispatcher/admin)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -618,10 +622,44 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/CourseAssignment" }
 
+  /api/v1/admin/course-assignments/publish:
+    post:
+      tags: [Admin]
+      summary: Publish draft course assignments (dispatcher/admin)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: semester
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 12 }
+      responses:
+        "200": { description: OK }
+
+  /api/v1/admin/course-assignments/discard-drafts:
+    post:
+      tags: [Admin]
+      summary: Discard draft course assignments (dispatcher/admin)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: semester
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 12 }
+      responses:
+        "200": { description: OK }
+
   /api/v1/admin/course-assignments/{id}:
     put:
       tags: [Admin]
-      summary: Update course assignment (admin only)
+      summary: Update course assignment (dispatcher/admin)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -641,7 +679,7 @@ paths:
               schema: { $ref: "#/components/schemas/CourseAssignment" }
     delete:
       tags: [Admin]
-      summary: Delete course assignment (admin only)
+      summary: Delete course assignment (dispatcher/admin)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1030,6 +1068,18 @@ paths:
           name: group_id
           required: false
           schema: { type: integer, minimum: 1 }
+        - in: query
+          name: day_of_week
+          required: false
+          schema: { type: integer, minimum: 0, maximum: 5 }
+        - in: query
+          name: week_parity
+          required: false
+          schema: { type: string, enum: [numerator, denominator, both] }
+        - in: query
+          name: status
+          required: false
+          schema: { type: string, enum: [draft, published] }
       responses:
         "200":
           description: OK
@@ -1086,6 +1136,61 @@ paths:
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
         "204": { description: Deleted }
+
+  /api/v1/admin/templates/publish:
+    post:
+      tags: [Admin]
+      summary: Publish draft templates for group (dispatcher/admin)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200": { description: OK }
+
+  /api/v1/admin/templates/discard-drafts:
+    post:
+      tags: [Admin]
+      summary: Discard draft templates for group (dispatcher/admin)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200": { description: OK }
+
+  /api/v1/admin/schedule/explain:
+    get:
+      tags: [Admin]
+      summary: Explain how a schedule slot was built
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: date
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: pair_number
+          required: true
+          schema: { type: integer, minimum: 1, maximum: 8 }
+        - in: query
+          name: subgroup
+          required: false
+          schema: { type: integer, nullable: true, enum: [1, 2] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExplainSlotResponse" }
 
   /api/v1/admin/overrides:
     get:
@@ -1616,12 +1721,51 @@ components:
         group_id: { type: integer }
         semester: { type: integer, minimum: 1, maximum: 12 }
         subject_id: { type: integer }
+        status: { type: string, enum: [draft, published] }
         teacher_id: { type: integer, nullable: true }
         location_id: { type: integer, nullable: true }
         curriculum_item_id: { type: integer, format: int64, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
         notes: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    TemplateView:
+      type: object
+      required:
+        [
+          pair_number,
+          subject_id,
+          subject_name,
+          location_id,
+          location_name,
+          teacher_name,
+        ]
+      properties:
+        pair_number: { type: integer }
+        subject_id: { type: integer }
+        subject_name: { type: string }
+        location_id: { type: integer }
+        location_name: { type: string }
+        teacher_name: { type: string }
+        subgroup: { type: integer, nullable: true, enum: [1, 2] }
+
+    OverrideView:
+      type: object
+      required: [id, pair_number, action_type, updated_at]
+      properties:
+        id: { type: integer, format: int64 }
+        pair_number: { type: integer }
+        action_type:
+          type: string
+          enum: [CANCEL, REPLACE, ADD]
+        new_subject_id: { type: integer, nullable: true }
+        new_subject_name: { type: string }
+        new_location_id: { type: integer, nullable: true }
+        new_location_name: { type: string }
+        new_teacher_name: { type: string, nullable: true }
+        comment: { type: string, nullable: true }
+        subgroup: { type: integer, nullable: true, enum: [1, 2] }
         updated_at: { type: string, format: date-time }
 
     Lesson:
@@ -1712,7 +1856,6 @@ components:
           pair_number,
           subject_id,
           location_id,
-          teacher_name,
         ]
       properties:
         id: { type: integer, format: int64 }
@@ -1724,10 +1867,58 @@ components:
         pair_number: { type: integer, minimum: 1, maximum: 8 }
         subject_id: { type: integer }
         location_id: { type: integer }
+        status: { type: string, enum: [draft, published] }
         teacher_name: { type: string }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+
+    ExplainSlotResponse:
+      type: object
+      required:
+        [
+          group_id,
+          date,
+          day_of_week,
+          week_parity,
+          data_version,
+          pair_number,
+          templates_published,
+          templates_draft,
+          overrides_raw,
+          overrides_normalized,
+          lessons,
+          decision,
+        ]
+      properties:
+        group_id: { type: integer }
+        date: { type: string, format: date }
+        day_of_week: { type: integer, minimum: 0, maximum: 6 }
+        week_parity: { type: string, enum: [numerator, denominator, both] }
+        data_version: { type: string }
+        pair_number: { type: integer }
+        subgroup: { type: integer, nullable: true }
+        templates_published:
+          type: array
+          items: { $ref: "#/components/schemas/TemplateView" }
+        templates_draft:
+          type: array
+          items: { $ref: "#/components/schemas/TemplateView" }
+        overrides_raw:
+          type: array
+          items: { $ref: "#/components/schemas/OverrideView" }
+        overrides_normalized:
+          type: array
+          items: { $ref: "#/components/schemas/OverrideView" }
+        lessons:
+          type: array
+          items: { $ref: "#/components/schemas/Lesson" }
+        decision:
+          type: object
+          required: [non_teaching]
+          properties:
+            semester_inferred: { type: integer, nullable: true }
+            non_teaching: { type: boolean }
 
     ScheduleOverride:
       type: object

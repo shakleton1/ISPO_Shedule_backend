@@ -5,13 +5,17 @@ import (
 )
 
 func (r *Repository) ListTemplatesFor(groupID int, dayOfWeek int16, parity WeekParity) ([]TemplateView, error) {
+	return r.ListTemplatesForStatus(groupID, dayOfWeek, parity, StatusPublished)
+}
+
+func (r *Repository) ListTemplatesForStatus(groupID int, dayOfWeek int16, parity WeekParity, status EntityStatus) ([]TemplateView, error) {
 	var rows []TemplateView
 	err := r.db.Table("schedule_templates st").
 		Select(`st.pair_number, st.subject_id, s.name AS subject_name, st.location_id, l.name AS location_name, COALESCE(t.name, '') AS teacher_name, st.subgroup`).
 		Joins("JOIN subjects s ON s.id = st.subject_id").
 		Joins("JOIN locations l ON l.id = st.location_id").
 		Joins("LEFT JOIN teachers t ON t.id = st.teacher_id").
-		Where("st.group_id = ? AND st.day_of_week = ? AND st.week_parity IN (?, ?)", groupID, dayOfWeek, parity, WeekParityBoth).
+		Where("st.group_id = ? AND st.day_of_week = ? AND st.week_parity IN (?, ?) AND st.status = ?", groupID, dayOfWeek, parity, WeekParityBoth, status).
 		Scan(&rows).Error
 	return rows, err
 }

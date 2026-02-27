@@ -2,6 +2,13 @@ package schedule
 
 import "time"
 
+type EntityStatus string
+
+const (
+	StatusDraft     EntityStatus = "draft"
+	StatusPublished EntityStatus = "published"
+)
+
 type Group struct {
 	ID            int       `gorm:"primaryKey" json:"id"`
 	Name          string    `gorm:"size:50;uniqueIndex;not null" json:"name"`
@@ -37,41 +44,43 @@ type Teacher struct {
 }
 
 type TeacherSubject struct {
-	TeacherID int       `gorm:"primaryKey" json:"teacher_id"`
-	SubjectID int       `gorm:"primaryKey" json:"subject_id"`
+	TeacherID int `gorm:"primaryKey" json:"teacher_id"`
+	SubjectID int `gorm:"primaryKey" json:"subject_id"`
 }
 
 func (TeacherSubject) TableName() string { return "teacher_subjects" }
 
 type CourseAssignment struct {
-	ID              int64     `gorm:"primaryKey" json:"id"`
-	GroupID          int       `gorm:"not null" json:"group_id"`
-	Semester         int16     `gorm:"not null" json:"semester"`
-	SubjectID        int       `gorm:"not null" json:"subject_id"`
-	TeacherID        *int      `json:"teacher_id"`
-	LocationID       *int      `json:"location_id"`
-	CurriculumItemID *int64    `json:"curriculum_item_id"`
-	Subgroup         *int16    `json:"subgroup"`
-	Notes            *string   `json:"notes"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
+	ID               int64        `gorm:"primaryKey" json:"id"`
+	GroupID          int          `gorm:"not null" json:"group_id"`
+	Semester         int16        `gorm:"not null" json:"semester"`
+	SubjectID        int          `gorm:"not null" json:"subject_id"`
+	Status           EntityStatus `gorm:"type:text;not null;default:'published'" json:"status"`
+	TeacherID        *int         `json:"teacher_id"`
+	LocationID       *int         `json:"location_id"`
+	CurriculumItemID *int64       `json:"curriculum_item_id"`
+	Subgroup         *int16       `json:"subgroup"`
+	Notes            *string      `json:"notes"`
+	CreatedAt        time.Time    `json:"created_at"`
+	UpdatedAt        time.Time    `json:"updated_at"`
 }
 
 func (CourseAssignment) TableName() string { return "course_assignments" }
 
 type ScheduleTemplate struct {
-	ID          int64      `gorm:"primaryKey" json:"id"`
-	GroupID     int        `gorm:"not null;index:idx_tpl_query,priority:1" json:"group_id"`
-	DayOfWeek   int16      `gorm:"not null;index:idx_tpl_query,priority:2" json:"day_of_week"`
-	WeekParity  WeekParity `gorm:"type:text;not null;index:idx_tpl_query,priority:3" json:"week_parity"`
-	PairNumber  int16      `gorm:"not null;index:idx_tpl_query,priority:4" json:"pair_number"`
-	SubjectID   int        `gorm:"not null" json:"subject_id"`
-	LocationID  int        `gorm:"not null" json:"location_id"`
-	TeacherID   *int       `gorm:"" json:"-"`
-	TeacherName string     `gorm:"column:teacher_name;->" json:"teacher_name"`
-	Subgroup    *int16     `gorm:"" json:"subgroup"` // nil = вся группа
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
+	ID          int64        `gorm:"primaryKey" json:"id"`
+	GroupID     int          `gorm:"not null;index:idx_tpl_query,priority:1" json:"group_id"`
+	DayOfWeek   int16        `gorm:"not null;index:idx_tpl_query,priority:2" json:"day_of_week"`
+	WeekParity  WeekParity   `gorm:"type:text;not null;index:idx_tpl_query,priority:3" json:"week_parity"`
+	PairNumber  int16        `gorm:"not null;index:idx_tpl_query,priority:4" json:"pair_number"`
+	SubjectID   int          `gorm:"not null" json:"subject_id"`
+	LocationID  int          `gorm:"not null" json:"location_id"`
+	Status      EntityStatus `gorm:"type:text;not null;default:'published'" json:"status"`
+	TeacherID   *int         `gorm:"" json:"-"`
+	TeacherName string       `gorm:"column:teacher_name;->" json:"teacher_name"`
+	Subgroup    *int16       `gorm:"" json:"subgroup"` // nil = вся группа
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
 }
 
 type ScheduleOverride struct {
