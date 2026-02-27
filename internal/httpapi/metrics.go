@@ -127,7 +127,7 @@ func metricsHealthHandler(dbPing func(context.Context) error) gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 500*time.Millisecond)
 		defer cancel()
 		if err := ping(ctx); err != nil {
-			c.JSON(http.StatusServiceUnavailable, gin.H{"metrics": "ok", "db": "down"})
+			writeError(c, http.StatusServiceUnavailable, "service_unavailable", "db", "db down")
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"metrics": "ok", "db": "ok"})

@@ -41,20 +41,20 @@ func handleAdminImportTemplatesCSV(repo *schedule.Repository, pushSvc *push.Serv
 			status = schedule.EntityStatus(v)
 		}
 		if status != schedule.StatusDraft && status != schedule.StatusPublished {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
+			writeValidationError(c, "status", "invalid status")
 			return
 		}
 
 		f, err := getUploadedFile(c, "file")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			writeValidationError(c, "file", err.Error())
 			return
 		}
 		defer f.Close()
 
 		rows, err := parseTemplatesCSV(f)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			writeValidationError(c, "file", err.Error())
 			return
 		}
 
@@ -83,20 +83,20 @@ func handleAdminImportTemplatesXLSX(repo *schedule.Repository, pushSvc *push.Ser
 			status = schedule.EntityStatus(v)
 		}
 		if status != schedule.StatusDraft && status != schedule.StatusPublished {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
+			writeValidationError(c, "status", "invalid status")
 			return
 		}
 
 		f, err := getUploadedFile(c, "file")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			writeValidationError(c, "file", err.Error())
 			return
 		}
 		defer f.Close()
 
 		rows, err := parseTemplatesXLSX(f)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			writeValidationError(c, "file", err.Error())
 			return
 		}
 
@@ -117,19 +117,19 @@ func parseGroupIDFromRequest(c *gin.Context) (int, bool) {
 	if q := strings.TrimSpace(c.Query("group_id")); q != "" {
 		gid, err := strconv.Atoi(q)
 		if err != nil || gid <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid group_id"})
+			writeValidationError(c, "group_id", "invalid group_id")
 			return 0, false
 		}
 		return gid, true
 	}
 	gidStr := strings.TrimSpace(c.PostForm("group_id"))
 	if gidStr == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "group_id required"})
+		writeValidationError(c, "group_id", "group_id required")
 		return 0, false
 	}
 	gid, err := strconv.Atoi(gidStr)
 	if err != nil || gid <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid group_id"})
+		writeValidationError(c, "group_id", "invalid group_id")
 		return 0, false
 	}
 	return gid, true

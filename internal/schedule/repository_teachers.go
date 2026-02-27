@@ -15,6 +15,14 @@ func (r *Repository) ListTeachers() ([]Teacher, error) {
 	return rows, err
 }
 
+func (r *Repository) ListTeachersPaged(limit, offset *int) ([]Teacher, error) {
+	var rows []Teacher
+	q := r.db.Where("deleted_at IS NULL").Order("id asc")
+	q = applyLimitOffset(q, limit, offset)
+	err := q.Find(&rows).Error
+	return rows, err
+}
+
 func (r *Repository) CreateTeacher(t *Teacher) error {
 	if t == nil {
 		return fmt.Errorf("teacher is nil")
@@ -80,6 +88,20 @@ func (r *Repository) ListTeacherSubjects(filters TeacherSubjectFilters) ([]Teach
 	return rows, err
 }
 
+func (r *Repository) ListTeacherSubjectsPaged(filters TeacherSubjectFilters, limit, offset *int) ([]TeacherSubject, error) {
+	q := r.db.Model(&TeacherSubject{}).Order("teacher_id asc, subject_id asc")
+	if filters.TeacherID != nil {
+		q = q.Where("teacher_id = ?", *filters.TeacherID)
+	}
+	if filters.SubjectID != nil {
+		q = q.Where("subject_id = ?", *filters.SubjectID)
+	}
+	q = applyLimitOffset(q, limit, offset)
+	var rows []TeacherSubject
+	err := q.Find(&rows).Error
+	return rows, err
+}
+
 func (r *Repository) CreateTeacherSubject(ts *TeacherSubject) error {
 	if ts == nil {
 		return fmt.Errorf("teacher_subject is nil")
@@ -134,6 +156,31 @@ func (r *Repository) ListCourseAssignments(filters CourseAssignmentFilters) ([]C
 	} else {
 		q = q.Where("status = ?", StatusPublished)
 	}
+	var rows []CourseAssignment
+	err := q.Find(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) ListCourseAssignmentsPaged(filters CourseAssignmentFilters, limit, offset *int) ([]CourseAssignment, error) {
+	q := r.db.Model(&CourseAssignment{}).Order("group_id asc, semester asc, subject_id asc, COALESCE(subgroup, 0) asc, id asc")
+	if filters.GroupID != nil {
+		q = q.Where("group_id = ?", *filters.GroupID)
+	}
+	if filters.Semester != nil {
+		q = q.Where("semester = ?", *filters.Semester)
+	}
+	if filters.SubjectID != nil {
+		q = q.Where("subject_id = ?", *filters.SubjectID)
+	}
+	if filters.TeacherID != nil {
+		q = q.Where("teacher_id = ?", *filters.TeacherID)
+	}
+	if filters.Status != nil {
+		q = q.Where("status = ?", *filters.Status)
+	} else {
+		q = q.Where("status = ?", StatusPublished)
+	}
+	q = applyLimitOffset(q, limit, offset)
 	var rows []CourseAssignment
 	err := q.Find(&rows).Error
 	return rows, err

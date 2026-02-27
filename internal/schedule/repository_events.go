@@ -41,6 +41,20 @@ func (r *Repository) ListDayEvents(filters DayEventFilters) ([]ScheduleDayEvent,
 	return rows, err
 }
 
+func (r *Repository) ListDayEventsPaged(filters DayEventFilters, limit, offset *int) ([]ScheduleDayEvent, error) {
+	q := r.db.Table("schedule_day_events").Order("target_date asc, id asc")
+	if filters.GroupID != nil {
+		q = q.Where("group_id = ?", *filters.GroupID)
+	}
+	if filters.TargetDate != nil {
+		q = q.Where("target_date = ?", dateOnly(*filters.TargetDate))
+	}
+	q = applyLimitOffset(q, limit, offset)
+	var rows []ScheduleDayEvent
+	err := q.Find(&rows).Error
+	return rows, err
+}
+
 func (r *Repository) CreateDayEvent(e *ScheduleDayEvent) error {
 	e.TargetDate = dateOnly(e.TargetDate)
 	return r.db.Create(e).Error

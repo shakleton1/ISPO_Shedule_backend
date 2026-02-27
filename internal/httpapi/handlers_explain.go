@@ -14,29 +14,29 @@ func handleAdminExplainScheduleSlot(svc *schedule.Service, repo *schedule.Reposi
 	return func(c *gin.Context) {
 		groupID, err := strconv.Atoi(c.Query("group_id"))
 		if err != nil || groupID <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id required"})
+			writeValidationError(c, "group_id", "group_id required")
 			return
 		}
 		dateStr := c.Query("date")
 		if dateStr == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "date required"})
+			writeValidationError(c, "date", "date required")
 			return
 		}
 		d, err := time.Parse("2006-01-02", dateStr)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date"})
+			writeValidationError(c, "date", "invalid date")
 			return
 		}
 		pair, err := strconv.Atoi(c.Query("pair_number"))
 		if err != nil || pair <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "pair_number required"})
+			writeValidationError(c, "pair_number", "pair_number required")
 			return
 		}
 		var subgroup *int16
 		if v := c.Query("subgroup"); v != "" {
 			i, err := strconv.Atoi(v)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid subgroup"})
+				writeValidationError(c, "subgroup", "invalid subgroup")
 				return
 			}
 			sg := int16(i)
@@ -46,7 +46,7 @@ func handleAdminExplainScheduleSlot(svc *schedule.Service, repo *schedule.Reposi
 		out, err := svc.ExplainSlot(groupID, d, int16(pair), subgroup)
 		if err != nil {
 			// Service methods already return friendly errors.
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			writeError(c, http.StatusBadRequest, "bad_request", "", err.Error())
 			return
 		}
 		// include repo in signature to keep handler patterns consistent (and allow future additions)

@@ -16,23 +16,23 @@ func authMiddleware(tokens *auth.TokenManager, repo *schedule.Repository) gin.Ha
 	return func(c *gin.Context) {
 		ah := c.GetHeader("Authorization")
 		if ah == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing Authorization header"})
+			abortWithError(c, http.StatusUnauthorized, "unauthorized", "Authorization", "missing Authorization header")
 			return
 		}
 		parts := strings.SplitN(ah, " ", 2)
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization header"})
+			abortWithError(c, http.StatusUnauthorized, "unauthorized", "Authorization", "invalid Authorization header")
 			return
 		}
 		claims, err := tokens.Parse(parts[1])
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			abortWithError(c, http.StatusUnauthorized, "unauthorized", "", "invalid token")
 			return
 		}
 		// Load user for existence check (and future revocation).
 		u, err := repo.GetUserByID(parseSubjectID(claims.Subject))
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unknown user"})
+			abortWithError(c, http.StatusUnauthorized, "unauthorized", "", "unknown user")
 			return
 		}
 		c.Set(ctxUserKey, u)
@@ -48,16 +48,16 @@ func requireAnyRole(roles ...auth.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		v, ok := c.Get(ctxUserKey)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			abortWithError(c, http.StatusUnauthorized, "unauthorized", "", "unauthorized")
 			return
 		}
 		u, ok := v.(*auth.User)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			abortWithError(c, http.StatusUnauthorized, "unauthorized", "", "unauthorized")
 			return
 		}
 		if _, ok := allowed[u.Role]; !ok {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			abortWithError(c, http.StatusForbidden, "forbidden", "", "forbidden")
 			return
 		}
 		c.Next()

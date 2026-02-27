@@ -20,11 +20,16 @@ import (
 
 func handleAdminListDayEvents(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		page, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
+			return
+		}
+
 		var filters schedule.DayEventFilters
 		if v := c.Query("group_id"); v != "" {
 			id, err := strconv.Atoi(v)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid group_id"})
+				writeValidationError(c, "group_id", "invalid group_id")
 				return
 			}
 			filters.GroupID = &id
@@ -32,17 +37,27 @@ func handleAdminListDayEvents(repo *schedule.Repository) gin.HandlerFunc {
 		if v := c.Query("target_date"); v != "" {
 			d, err := time.Parse("2006-01-02", v)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "target_date must be YYYY-MM-DD"})
+				writeValidationError(c, "target_date", "target_date must be YYYY-MM-DD")
 				return
 			}
 			filters.TargetDate = &d
 		}
-		rows, err := repo.ListDayEvents(filters)
+		var rows []schedule.ScheduleDayEvent
+		var err error
+		if page.Limit != nil {
+			rows, err = repo.ListDayEventsPaged(filters, page.Limit, page.Offset)
+		} else {
+			rows, err = repo.ListDayEvents(filters)
+		}
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, rows)
+		out := make([]scheduleDayEventDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toScheduleDayEventDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
@@ -50,11 +65,11 @@ func handleAdminCreateDayEvent(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req schedule.ScheduleDayEvent
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.GroupID <= 0 || req.TargetDate.IsZero() || req.EventType == "" || req.Title == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id, target_date, event_type, title required"})
+			writeValidationError(c, "", "group_id, target_date, event_type, title required")
 			return
 		}
 		req.EventType = strings.ToUpper(strings.TrimSpace(req.EventType))
@@ -64,7 +79,7 @@ func handleAdminCreateDayEvent(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "create", "schedule_day_events", strconv.FormatInt(req.ID, 10), req)
-		c.JSON(http.StatusCreated, req)
+		c.JSON(http.StatusCreated, toScheduleDayEventDTO(req))
 	}
 }
 
@@ -72,16 +87,16 @@ func handleAdminUpdateDayEvent(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		var req schedule.ScheduleDayEvent
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.GroupID <= 0 || req.TargetDate.IsZero() || req.EventType == "" || req.Title == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id, target_date, event_type, title required"})
+			writeValidationError(c, "", "group_id, target_date, event_type, title required")
 			return
 		}
 		req.EventType = strings.ToUpper(strings.TrimSpace(req.EventType))
@@ -92,7 +107,7 @@ func handleAdminUpdateDayEvent(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "update", "schedule_day_events", strconv.FormatInt(id, 10), row)
-		c.JSON(http.StatusOK, row)
+		c.JSON(http.StatusOK, toScheduleDayEventDTO(*row))
 	}
 }
 
@@ -100,7 +115,7 @@ func handleAdminDeleteDayEvent(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		if err := repo.DeleteDayEvent(id); err != nil {
@@ -136,25 +151,25 @@ func handleAdminBulkOverrides(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req adminBulkOverridesRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.GroupID <= 0 || req.StartDate == "" || req.EndDate == "" || req.ActionType == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id, start_date, end_date, action_type required"})
+			writeValidationError(c, "", "group_id, start_date, end_date, action_type required")
 			return
 		}
 		start, err := time.Parse("2006-01-02", req.StartDate)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "start_date must be YYYY-MM-DD"})
+			writeValidationError(c, "start_date", "start_date must be YYYY-MM-DD")
 			return
 		}
 		end, err := time.Parse("2006-01-02", req.EndDate)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "end_date must be YYYY-MM-DD"})
+			writeValidationError(c, "end_date", "end_date must be YYYY-MM-DD")
 			return
 		}
 		if end.Before(start) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "end_date before start_date"})
+			writeValidationError(c, "end_date", "end_date before start_date")
 			return
 		}
 
@@ -164,7 +179,7 @@ func handleAdminBulkOverrides(repo *schedule.Repository) gin.HandlerFunc {
 			pairNums = append(pairNums, *req.PairNumber)
 		}
 		if len(pairNums) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "pair_number or pair_numbers required"})
+			writeValidationError(c, "", "pair_number or pair_numbers required")
 			return
 		}
 
@@ -173,7 +188,7 @@ func handleAdminBulkOverrides(repo *schedule.Repository) gin.HandlerFunc {
 			onConflict = "error"
 		}
 		if onConflict != "error" && onConflict != "skip" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "on_conflict must be error or skip"})
+			writeValidationError(c, "on_conflict", "on_conflict must be error or skip")
 			return
 		}
 
@@ -285,16 +300,16 @@ func handleAdminMovePair(svc *schedule.Service, repo *schedule.Repository) gin.H
 	return func(c *gin.Context) {
 		var req adminMovePairRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.GroupID <= 0 || req.TargetDate == "" || req.FromPair <= 0 || req.ToPair <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id, target_date, from_pair_number, to_pair_number required"})
+			writeValidationError(c, "", "group_id, target_date, from_pair_number, to_pair_number required")
 			return
 		}
 		date, err := time.Parse("2006-01-02", req.TargetDate)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "target_date must be YYYY-MM-DD"})
+			writeValidationError(c, "target_date", "target_date must be YYYY-MM-DD")
 			return
 		}
 		resp, err := svc.GetRange(req.GroupID, date, date)
@@ -303,7 +318,7 @@ func handleAdminMovePair(svc *schedule.Service, repo *schedule.Repository) gin.H
 			return
 		}
 		if len(resp.Days) != 1 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "no schedule for date"})
+			writeError(c, http.StatusBadRequest, "bad_request", "", "no schedule for date")
 			return
 		}
 		day := resp.Days[0]
@@ -327,11 +342,11 @@ func handleAdminMovePair(svc *schedule.Service, repo *schedule.Repository) gin.H
 			break
 		}
 		if found == nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "source lesson not found"})
+			writeError(c, http.StatusBadRequest, "bad_request", "", "source lesson not found")
 			return
 		}
 		if found.SubjectID == nil || found.LocationID == nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "source lesson has no subject/location ids"})
+			writeError(c, http.StatusBadRequest, "bad_request", "", "source lesson has no subject/location ids")
 			return
 		}
 
@@ -348,7 +363,7 @@ func handleAdminMovePair(svc *schedule.Service, repo *schedule.Repository) gin.H
 			return
 		}
 		if existsFrom || existsTo {
-			c.JSON(http.StatusConflict, gin.H{"error": "overrides already exist for from/to slot"})
+			writeError(c, http.StatusConflict, "conflict", "", "overrides already exist for from/to slot")
 			return
 		}
 
@@ -471,14 +486,6 @@ func writeAudit(c *gin.Context, repo *schedule.Repository, action, entityType, e
 	})
 }
 
-func writeDBError(c *gin.Context, err error) {
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
-		return
-	}
-	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-}
-
 func bumpScheduleVersionAndGet(repo *schedule.Repository) (time.Time, error) {
 	if err := repo.BumpScheduleVersion(); err != nil {
 		return time.Time{}, err
@@ -494,12 +501,26 @@ func bumpScheduleVersionAndGet(repo *schedule.Repository) (time.Time, error) {
 
 func handleAdminListGroups(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rows, err := repo.ListGroups()
+		page, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
+			return
+		}
+		var rows []schedule.Group
+		var err error
+		if page.Limit != nil {
+			rows, err = repo.ListGroupsPaged(page.Limit, page.Offset)
+		} else {
+			rows, err = repo.ListGroups()
+		}
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, rows)
+		out := make([]groupDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toGroupDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
@@ -507,11 +528,11 @@ func handleAdminCreateGroup(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req schedule.Group
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.Name == "" || req.Course <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "name and course required"})
+			writeValidationError(c, "", "name and course required")
 			return
 		}
 		if err := repo.CreateGroup(&req); err != nil {
@@ -520,7 +541,7 @@ func handleAdminCreateGroup(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "create", "groups", strconv.Itoa(req.ID), req)
-		c.JSON(http.StatusCreated, req)
+		c.JSON(http.StatusCreated, toGroupDTO(req))
 	}
 }
 
@@ -528,12 +549,12 @@ func handleAdminUpdateGroup(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		var req schedule.Group
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		row, err := repo.UpdateGroup(id, &req)
@@ -543,7 +564,7 @@ func handleAdminUpdateGroup(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "update", "groups", strconv.Itoa(id), row)
-		c.JSON(http.StatusOK, row)
+		c.JSON(http.StatusOK, toGroupDTO(*row))
 	}
 }
 
@@ -551,7 +572,7 @@ func handleAdminDeleteGroup(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		if err := repo.DeleteGroup(id); err != nil {
@@ -568,12 +589,26 @@ func handleAdminDeleteGroup(repo *schedule.Repository) gin.HandlerFunc {
 
 func handleAdminListSubjects(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rows, err := repo.ListSubjects()
+		page, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
+			return
+		}
+		var rows []schedule.Subject
+		var err error
+		if page.Limit != nil {
+			rows, err = repo.ListSubjectsPaged(page.Limit, page.Offset)
+		} else {
+			rows, err = repo.ListSubjects()
+		}
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, rows)
+		out := make([]subjectDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toSubjectDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
@@ -581,11 +616,11 @@ func handleAdminCreateSubject(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req schedule.Subject
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.Name == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "name required"})
+			writeValidationError(c, "name", "name required")
 			return
 		}
 		if err := repo.CreateSubject(&req); err != nil {
@@ -594,7 +629,7 @@ func handleAdminCreateSubject(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "create", "subjects", strconv.Itoa(req.ID), req)
-		c.JSON(http.StatusCreated, req)
+		c.JSON(http.StatusCreated, toSubjectDTO(req))
 	}
 }
 
@@ -602,12 +637,12 @@ func handleAdminUpdateSubject(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		var req schedule.Subject
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		row, err := repo.UpdateSubject(id, &req)
@@ -617,7 +652,7 @@ func handleAdminUpdateSubject(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "update", "subjects", strconv.Itoa(id), row)
-		c.JSON(http.StatusOK, row)
+		c.JSON(http.StatusOK, toSubjectDTO(*row))
 	}
 }
 
@@ -625,7 +660,7 @@ func handleAdminDeleteSubject(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		if err := repo.DeleteSubject(id); err != nil {
@@ -642,12 +677,26 @@ func handleAdminDeleteSubject(repo *schedule.Repository) gin.HandlerFunc {
 
 func handleAdminListLocations(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rows, err := repo.ListLocations()
+		page, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
+			return
+		}
+		var rows []schedule.Location
+		var err error
+		if page.Limit != nil {
+			rows, err = repo.ListLocationsPaged(page.Limit, page.Offset)
+		} else {
+			rows, err = repo.ListLocations()
+		}
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, rows)
+		out := make([]locationDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toLocationDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
@@ -655,11 +704,11 @@ func handleAdminCreateLocation(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req schedule.Location
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.Name == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "name required"})
+			writeValidationError(c, "name", "name required")
 			return
 		}
 		if err := repo.CreateLocation(&req); err != nil {
@@ -668,7 +717,7 @@ func handleAdminCreateLocation(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "create", "locations", strconv.Itoa(req.ID), req)
-		c.JSON(http.StatusCreated, req)
+		c.JSON(http.StatusCreated, toLocationDTO(req))
 	}
 }
 
@@ -676,12 +725,12 @@ func handleAdminUpdateLocation(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		var req schedule.Location
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		row, err := repo.UpdateLocation(id, &req)
@@ -691,7 +740,7 @@ func handleAdminUpdateLocation(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "update", "locations", strconv.Itoa(id), row)
-		c.JSON(http.StatusOK, row)
+		c.JSON(http.StatusOK, toLocationDTO(*row))
 	}
 }
 
@@ -699,7 +748,7 @@ func handleAdminDeleteLocation(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		if err := repo.DeleteLocation(id); err != nil {
@@ -716,19 +765,28 @@ func handleAdminDeleteLocation(repo *schedule.Repository) gin.HandlerFunc {
 
 func handleAdminListTemplates(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		page, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
+			return
+		}
+
 		var filters schedule.TemplateFilters
 		if v := c.Query("group_id"); v != "" {
 			i, err := strconv.Atoi(v)
-			if err == nil {
-				filters.GroupID = &i
+			if err != nil {
+				writeValidationError(c, "group_id", "invalid group_id")
+				return
 			}
+			filters.GroupID = &i
 		}
 		if v := c.Query("day_of_week"); v != "" {
 			i, err := strconv.Atoi(v)
-			if err == nil {
-				d := int16(i)
-				filters.DayOfWeek = &d
+			if err != nil {
+				writeValidationError(c, "day_of_week", "invalid day_of_week")
+				return
 			}
+			d := int16(i)
+			filters.DayOfWeek = &d
 		}
 		if v := c.Query("week_parity"); v != "" {
 			p := schedule.WeekParity(v)
@@ -738,12 +796,22 @@ func handleAdminListTemplates(repo *schedule.Repository) gin.HandlerFunc {
 			s := schedule.EntityStatus(v)
 			filters.Status = &s
 		}
-		rows, err := repo.ListTemplates(filters)
+		var rows []schedule.ScheduleTemplate
+		var err error
+		if page.Limit != nil {
+			rows, err = repo.ListTemplatesPaged(filters, page.Limit, page.Offset)
+		} else {
+			rows, err = repo.ListTemplates(filters)
+		}
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, rows)
+		out := make([]scheduleTemplateDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toScheduleTemplateDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
@@ -751,11 +819,11 @@ func handleAdminCreateTemplate(repo *schedule.Repository, pushSvc *push.Service)
 	return func(c *gin.Context) {
 		var req schedule.ScheduleTemplate
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.GroupID <= 0 || req.SubjectID <= 0 || req.LocationID <= 0 || req.PairNumber <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id, subject_id, location_id, pair_number required"})
+			writeValidationError(c, "", "group_id, subject_id, location_id, pair_number required")
 			return
 		}
 		if err := repo.CreateTemplate(&req); err != nil {
@@ -769,7 +837,7 @@ func handleAdminCreateTemplate(repo *schedule.Repository, pushSvc *push.Service)
 			}
 		}
 		writeAudit(c, repo, "create", "schedule_templates", strconv.FormatInt(req.ID, 10), req)
-		c.JSON(http.StatusCreated, req)
+		c.JSON(http.StatusCreated, toScheduleTemplateDTO(req))
 	}
 }
 
@@ -777,12 +845,12 @@ func handleAdminUpdateTemplate(repo *schedule.Repository, pushSvc *push.Service)
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		var req schedule.ScheduleTemplate
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		row, err := repo.UpdateTemplate(id, &req)
@@ -797,7 +865,7 @@ func handleAdminUpdateTemplate(repo *schedule.Repository, pushSvc *push.Service)
 			}
 		}
 		writeAudit(c, repo, "update", "schedule_templates", strconv.FormatInt(id, 10), row)
-		c.JSON(http.StatusOK, row)
+		c.JSON(http.StatusOK, toScheduleTemplateDTO(*row))
 	}
 }
 
@@ -805,7 +873,7 @@ func handleAdminDeleteTemplate(repo *schedule.Repository, pushSvc *push.Service)
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		tpl, err := repo.GetTemplateByID(id)
@@ -832,7 +900,7 @@ func handleAdminPublishDraftTemplates(repo *schedule.Repository, pushSvc *push.S
 	return func(c *gin.Context) {
 		groupID, err := strconv.Atoi(c.Query("group_id"))
 		if err != nil || groupID <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id required"})
+			writeValidationError(c, "group_id", "group_id required")
 			return
 		}
 		moved, err := repo.PublishDraftTemplates(groupID)
@@ -856,7 +924,7 @@ func handleAdminDiscardDraftTemplates(repo *schedule.Repository) gin.HandlerFunc
 	return func(c *gin.Context) {
 		groupID, err := strconv.Atoi(c.Query("group_id"))
 		if err != nil || groupID <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id required"})
+			writeValidationError(c, "group_id", "group_id required")
 			return
 		}
 		deleted, err := repo.DiscardDraftTemplates(groupID)
@@ -873,25 +941,44 @@ func handleAdminDiscardDraftTemplates(repo *schedule.Repository) gin.HandlerFunc
 
 func handleAdminListOverrides(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		page, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
+			return
+		}
+
 		var filters schedule.OverrideFilters
 		if v := c.Query("group_id"); v != "" {
 			i, err := strconv.Atoi(v)
-			if err == nil {
-				filters.GroupID = &i
+			if err != nil {
+				writeValidationError(c, "group_id", "invalid group_id")
+				return
 			}
+			filters.GroupID = &i
 		}
 		if v := c.Query("date"); v != "" {
 			d, err := time.Parse("2006-01-02", v)
-			if err == nil {
-				filters.TargetDate = &d
+			if err != nil {
+				writeValidationError(c, "date", "invalid date")
+				return
 			}
+			filters.TargetDate = &d
 		}
-		rows, err := repo.ListOverrides(filters)
+		var rows []schedule.ScheduleOverride
+		var err error
+		if page.Limit != nil {
+			rows, err = repo.ListOverridesPaged(filters, page.Limit, page.Offset)
+		} else {
+			rows, err = repo.ListOverrides(filters)
+		}
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, rows)
+		out := make([]scheduleOverrideDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toScheduleOverrideDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
@@ -941,12 +1028,12 @@ func handleAdminCreateOverride(repo *schedule.Repository, pushSvc *push.Service)
 	return func(c *gin.Context) {
 		var req adminOverrideRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		d, err := time.Parse("2006-01-02", req.Date)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date"})
+			writeValidationError(c, "date", "invalid date")
 			return
 		}
 		o := schedule.ScheduleOverride{
@@ -962,7 +1049,7 @@ func handleAdminCreateOverride(repo *schedule.Repository, pushSvc *push.Service)
 			Subgroup:         req.Subgroup,
 		}
 		if err := validateOverrideRequest(o); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			writeValidationError(c, "", err.Error())
 			return
 		}
 		if err := repo.CreateOverride(&o); err != nil {
@@ -974,7 +1061,7 @@ func handleAdminCreateOverride(repo *schedule.Repository, pushSvc *push.Service)
 			pushSvc.NotifyScheduleUpdatedAsync(o.GroupID, ver)
 		}
 		writeAudit(c, repo, "create", "schedule_overrides", strconv.FormatInt(o.ID, 10), o)
-		c.JSON(http.StatusCreated, o)
+		c.JSON(http.StatusCreated, toScheduleOverrideDTO(o))
 	}
 }
 
@@ -982,16 +1069,16 @@ func handleAdminUpdateOverride(repo *schedule.Repository, pushSvc *push.Service)
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		var req schedule.ScheduleOverride
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if err := validateOverrideRequest(req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			writeValidationError(c, "", err.Error())
 			return
 		}
 		row, err := repo.UpdateOverride(id, &req)
@@ -1004,7 +1091,7 @@ func handleAdminUpdateOverride(repo *schedule.Repository, pushSvc *push.Service)
 			pushSvc.NotifyScheduleUpdatedAsync(row.GroupID, ver)
 		}
 		writeAudit(c, repo, "update", "schedule_overrides", strconv.FormatInt(id, 10), row)
-		c.JSON(http.StatusOK, row)
+		c.JSON(http.StatusOK, toScheduleOverrideDTO(*row))
 	}
 }
 
@@ -1012,7 +1099,7 @@ func handleAdminDeleteOverride(repo *schedule.Repository, pushSvc *push.Service)
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		o, err := repo.GetOverrideByID(id)
@@ -1036,32 +1123,32 @@ func handleAdminDeleteOverride(repo *schedule.Repository, pushSvc *push.Service)
 func handleAdminValidateSchedule(svc *schedule.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if svc == nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "schedule service not configured"})
+			writeError(c, http.StatusInternalServerError, "internal_error", "", "schedule service not configured")
 			return
 		}
 		groupID, err := strconv.Atoi(strings.TrimSpace(c.Query("group_id")))
 		if err != nil || groupID <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id required"})
+			writeValidationError(c, "group_id", "group_id required")
 			return
 		}
 		startStr := strings.TrimSpace(c.Query("start_date"))
 		endStr := strings.TrimSpace(c.Query("end_date"))
 		if startStr == "" || endStr == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "start_date and end_date required"})
+			writeValidationError(c, "", "start_date and end_date required")
 			return
 		}
 		start, err := time.Parse("2006-01-02", startStr)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid start_date"})
+			writeValidationError(c, "start_date", "invalid start_date")
 			return
 		}
 		end, err := time.Parse("2006-01-02", endStr)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid end_date"})
+			writeValidationError(c, "end_date", "invalid end_date")
 			return
 		}
 		if end.Before(start) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "end_date must be >= start_date"})
+			writeValidationError(c, "end_date", "end_date must be >= start_date")
 			return
 		}
 
@@ -1087,16 +1174,16 @@ func handleAdminUpsertOverlay(repo *schedule.Repository, pushSvc *push.Service) 
 	return func(c *gin.Context) {
 		var req adminOverlayRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		d, err := time.Parse("2006-01-02", req.Date)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date"})
+			writeValidationError(c, "date", "invalid date")
 			return
 		}
 		if req.GroupID <= 0 || req.Text == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id and text required"})
+			writeValidationError(c, "", "group_id and text required")
 			return
 		}
 		row, err := repo.UpsertOverlay(req.GroupID, d, req.Text, req.StylePreset)
@@ -1109,7 +1196,7 @@ func handleAdminUpsertOverlay(repo *schedule.Repository, pushSvc *push.Service) 
 			pushSvc.NotifyScheduleUpdatedAsync(req.GroupID, ver)
 		}
 		writeAudit(c, repo, "upsert", "schedule_day_overlays", strconv.FormatInt(row.ID, 10), row)
-		c.JSON(http.StatusOK, row)
+		c.JSON(http.StatusOK, toScheduleDayOverlayDTO(*row))
 	}
 }
 
@@ -1117,12 +1204,26 @@ func handleAdminUpsertOverlay(repo *schedule.Repository, pushSvc *push.Service) 
 
 func handleAdminListCalendarExceptions(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rows, err := repo.ListCalendarExceptions()
+		page, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
+			return
+		}
+		var rows []schedule.CalendarException
+		var err error
+		if page.Limit != nil {
+			rows, err = repo.ListCalendarExceptionsPaged(page.Limit, page.Offset)
+		} else {
+			rows, err = repo.ListCalendarExceptions()
+		}
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, rows)
+		out := make([]calendarExceptionDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toCalendarExceptionDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
@@ -1136,12 +1237,12 @@ func handleAdminUpsertCalendarException(repo *schedule.Repository, pushSvc *push
 	return func(c *gin.Context) {
 		var req adminCalendarExceptionRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		d, err := time.Parse("2006-01-02", req.Date)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date"})
+			writeValidationError(c, "date", "invalid date")
 			return
 		}
 		row, err := repo.UpsertCalendarException(d, req.WorksAsDay, req.Comment)
@@ -1154,7 +1255,7 @@ func handleAdminUpsertCalendarException(repo *schedule.Repository, pushSvc *push
 			pushSvc.NotifyScheduleUpdatedAllAsync(ver)
 		}
 		writeAudit(c, repo, "upsert", "calendar_exceptions", strconv.FormatInt(row.ID, 10), row)
-		c.JSON(http.StatusOK, row)
+		c.JSON(http.StatusOK, toCalendarExceptionDTO(*row))
 	}
 }
 
@@ -1162,7 +1263,7 @@ func handleAdminDeleteCalendarException(repo *schedule.Repository, pushSvc *push
 	return func(c *gin.Context) {
 		dateStr := c.Param("date")
 		if dateStr == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "date required"})
+			writeValidationError(c, "date", "date required")
 			return
 		}
 		if err := repo.DeleteCalendarExceptionByDate(dateStr); err != nil {

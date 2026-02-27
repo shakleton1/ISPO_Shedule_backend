@@ -21,11 +21,11 @@ func handlePushRegister(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req pushRegisterRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if err := repo.UpsertDeviceToken(req.GroupID, req.Token); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			writeError(c, http.StatusBadRequest, "bad_request", "", err.Error())
 			return
 		}
 		c.Status(http.StatusCreated)
@@ -36,11 +36,11 @@ func handlePushUnregister(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req pushUnregisterRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if err := repo.DeleteDeviceToken(req.Token); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			writeError(c, http.StatusBadRequest, "bad_request", "", err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)

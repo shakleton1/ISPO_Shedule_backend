@@ -14,7 +14,7 @@ func adminAuthMiddleware(apiKey string) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		if c.GetHeader("X-Admin-Key") != apiKey {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			abortWithError(c, http.StatusUnauthorized, "unauthorized", "X-Admin-Key", "unauthorized")
 			return
 		}
 		c.Next()

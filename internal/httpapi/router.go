@@ -26,10 +26,21 @@ type RouterDeps struct {
 
 func NewRouter(deps RouterDeps) http.Handler {
 	r := gin.New()
-	r.Use(gin.Recovery())
+	r.Use(gin.CustomRecovery(func(c *gin.Context, recovered any) {
+		// Do not leak panic details to clients.
+		_ = recovered
+		abortWithError(c, http.StatusInternalServerError, "internal_error", "", "internal server error")
+	}))
 	r.Use(requestIDMiddleware())
 	r.Use(requestLoggingMiddleware())
 	r.Use(metricsMiddleware(deps.DBPing))
+
+	r.NoRoute(func(c *gin.Context) {
+		abortWithError(c, http.StatusNotFound, "not_found", "", "not found")
+	})
+	r.NoMethod(func(c *gin.Context) {
+		abortWithError(c, http.StatusMethodNotAllowed, "method_not_allowed", "", "method not allowed")
+	})
 
 	rlStore := newRateLimitStore(10 * time.Minute)
 

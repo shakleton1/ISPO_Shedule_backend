@@ -16,12 +16,28 @@ import (
 
 func handleAdminListSpecialties(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rows, err := repo.ListSpecialties()
+		p, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
+			return
+		}
+		var (
+			rows []schedule.Specialty
+			err  error
+		)
+		if p.Limit != nil {
+			rows, err = repo.ListSpecialtiesPaged(p.Limit, p.Offset)
+		} else {
+			rows, err = repo.ListSpecialties()
+		}
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, rows)
+		out := make([]specialtyDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toSpecialtyDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
@@ -29,11 +45,11 @@ func handleAdminCreateSpecialty(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req schedule.Specialty
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.Code == "" || req.Name == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "code and name required"})
+			writeValidationError(c, "", "code and name required")
 			return
 		}
 		if err := repo.CreateSpecialty(&req); err != nil {
@@ -41,7 +57,7 @@ func handleAdminCreateSpecialty(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		writeAudit(c, repo, "create", "specialties", strconv.Itoa(req.ID), req)
-		c.JSON(http.StatusCreated, req)
+		c.JSON(http.StatusCreated, toSpecialtyDTO(req))
 	}
 }
 
@@ -49,16 +65,16 @@ func handleAdminUpdateSpecialty(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		var req schedule.Specialty
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.Code == "" || req.Name == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "code and name required"})
+			writeValidationError(c, "", "code and name required")
 			return
 		}
 		row, err := repo.UpdateSpecialty(id, &req)
@@ -67,7 +83,7 @@ func handleAdminUpdateSpecialty(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		writeAudit(c, repo, "update", "specialties", strconv.Itoa(id), row)
-		c.JSON(http.StatusOK, row)
+		c.JSON(http.StatusOK, toSpecialtyDTO(*row))
 	}
 }
 
@@ -75,7 +91,7 @@ func handleAdminDeleteSpecialty(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		if err := repo.DeleteSpecialty(id); err != nil {
@@ -91,11 +107,15 @@ func handleAdminDeleteSpecialty(repo *schedule.Repository) gin.HandlerFunc {
 
 func handleAdminListCurricula(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		p, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
+			return
+		}
 		var filters schedule.CurriculumFilters
 		if v := c.Query("specialty_id"); v != "" {
 			id, err := strconv.Atoi(v)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid specialty_id"})
+				writeValidationError(c, "specialty_id", "invalid specialty_id")
 				return
 			}
 			filters.SpecialtyID = &id
@@ -103,7 +123,7 @@ func handleAdminListCurricula(repo *schedule.Repository) gin.HandlerFunc {
 		if v := c.Query("admission_year"); v != "" {
 			y, err := strconv.Atoi(v)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid admission_year"})
+				writeValidationError(c, "admission_year", "invalid admission_year")
 				return
 			}
 			y16 := int16(y)
@@ -112,18 +132,29 @@ func handleAdminListCurricula(repo *schedule.Repository) gin.HandlerFunc {
 		if v := c.Query("is_active"); v != "" {
 			b, err := strconv.ParseBool(v)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid is_active"})
+				writeValidationError(c, "is_active", "invalid is_active")
 				return
 			}
 			filters.IsActive = &b
 		}
-
-		rows, err := repo.ListCurricula(filters)
+		var (
+			rows []schedule.Curriculum
+			err  error
+		)
+		if p.Limit != nil {
+			rows, err = repo.ListCurriculaPaged(filters, p.Limit, p.Offset)
+		} else {
+			rows, err = repo.ListCurricula(filters)
+		}
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, rows)
+		out := make([]curriculumDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toCurriculumDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
@@ -131,11 +162,11 @@ func handleAdminCreateCurriculum(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req schedule.Curriculum
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.SpecialtyID <= 0 || req.AdmissionYear <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "specialty_id and admission_year required"})
+			writeValidationError(c, "", "specialty_id and admission_year required")
 			return
 		}
 		if err := repo.CreateCurriculum(&req); err != nil {
@@ -144,7 +175,7 @@ func handleAdminCreateCurriculum(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "create", "curricula", strconv.FormatInt(req.ID, 10), req)
-		c.JSON(http.StatusCreated, req)
+		c.JSON(http.StatusCreated, toCurriculumDTO(req))
 	}
 }
 
@@ -152,16 +183,16 @@ func handleAdminUpdateCurriculum(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		var req schedule.Curriculum
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.SpecialtyID <= 0 || req.AdmissionYear <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "specialty_id and admission_year required"})
+			writeValidationError(c, "", "specialty_id and admission_year required")
 			return
 		}
 		row, err := repo.UpdateCurriculum(id, &req)
@@ -171,7 +202,7 @@ func handleAdminUpdateCurriculum(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "update", "curricula", strconv.FormatInt(id, 10), row)
-		c.JSON(http.StatusOK, row)
+		c.JSON(http.StatusOK, toCurriculumDTO(*row))
 	}
 }
 
@@ -179,7 +210,7 @@ func handleAdminDeleteCurriculum(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		if err := repo.DeleteCurriculum(id); err != nil {
@@ -202,17 +233,30 @@ type createAcademicCalendarReq struct {
 
 func handleAdminListAcademicCalendars(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		currID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid curriculum id"})
+		p, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
 			return
 		}
-		rows, err := repo.ListAcademicCalendars(currID)
+		currID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			writeValidationError(c, "id", "invalid curriculum id")
+			return
+		}
+		var rows []schedule.AcademicCalendar
+		if p.Limit != nil {
+			rows, err = repo.ListAcademicCalendarsPaged(currID, p.Limit, p.Offset)
+		} else {
+			rows, err = repo.ListAcademicCalendars(currID)
+		}
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, rows)
+		out := make([]academicCalendarDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toAcademicCalendarDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
@@ -220,21 +264,21 @@ func handleAdminCreateAcademicCalendar(repo *schedule.Repository) gin.HandlerFun
 	return func(c *gin.Context) {
 		currID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid curriculum id"})
+			writeValidationError(c, "id", "invalid curriculum id")
 			return
 		}
 		var req createAcademicCalendarReq
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.AcademicYearStart == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "academic_year_start required"})
+			writeValidationError(c, "academic_year_start", "academic_year_start required")
 			return
 		}
 		start, err := time.Parse("2006-01-02", req.AcademicYearStart)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "academic_year_start must be YYYY-MM-DD"})
+			writeValidationError(c, "academic_year_start", "academic_year_start must be YYYY-MM-DD")
 			return
 		}
 		weeksTotal := int16(52)
@@ -248,7 +292,7 @@ func handleAdminCreateAcademicCalendar(repo *schedule.Repository) gin.HandlerFun
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "create", "academic_calendars", strconv.FormatInt(row.ID, 10), row)
-		c.JSON(http.StatusCreated, row)
+		c.JSON(http.StatusCreated, toAcademicCalendarDTO(row))
 	}
 }
 
@@ -256,7 +300,7 @@ func handleAdminDeleteAcademicCalendar(repo *schedule.Repository) gin.HandlerFun
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		if err := repo.DeleteAcademicCalendar(id); err != nil {
@@ -271,17 +315,30 @@ func handleAdminDeleteAcademicCalendar(repo *schedule.Repository) gin.HandlerFun
 
 func handleAdminListAcademicCalendarWeeks(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		p, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
 			return
 		}
-		rows, err := repo.ListAcademicCalendarWeeks(id)
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			writeValidationError(c, "id", "invalid id")
+			return
+		}
+		var rows []schedule.AcademicCalendarWeek
+		if p.Limit != nil {
+			rows, err = repo.ListAcademicCalendarWeeksPaged(id, p.Limit, p.Offset)
+		} else {
+			rows, err = repo.ListAcademicCalendarWeeks(id)
+		}
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, rows)
+		out := make([]academicCalendarWeekDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toAcademicCalendarWeekDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
@@ -289,12 +346,12 @@ func handleAdminUpsertAcademicCalendarWeeks(repo *schedule.Repository) gin.Handl
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		var req []schedule.AcademicCalendarWeek
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		rows, err := repo.UpsertAcademicCalendarWeeks(id, req)
@@ -304,14 +361,18 @@ func handleAdminUpsertAcademicCalendarWeeks(repo *schedule.Repository) gin.Handl
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "upsert", "academic_calendar_weeks", strconv.FormatInt(id, 10), gin.H{"count": len(req)})
-		c.JSON(http.StatusOK, rows)
+		out := make([]academicCalendarWeekDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toAcademicCalendarWeekDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
 // Curriculum items + allocations
 
 type curriculumItemTreeNode struct {
-	schedule.CurriculumItem
+	curriculumItemDTO
 	Children []*curriculumItemTreeNode `json:"children"`
 }
 
@@ -320,8 +381,8 @@ func buildCurriculumItemTree(items []schedule.CurriculumItem) []*curriculumItemT
 	for i := range items {
 		it := items[i]
 		nodesByID[it.ID] = &curriculumItemTreeNode{
-			CurriculumItem: it,
-			Children:       []*curriculumItemTreeNode{},
+			curriculumItemDTO: toCurriculumItemDTO(it),
+			Children:          []*curriculumItemTreeNode{},
 		}
 	}
 
@@ -380,12 +441,21 @@ func buildCurriculumItemTree(items []schedule.CurriculumItem) []*curriculumItemT
 
 func handleAdminListCurriculumItems(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		currID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid curriculum id"})
+		p, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
 			return
 		}
-		rows, err := repo.ListCurriculumItems(currID)
+		currID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			writeValidationError(c, "id", "invalid curriculum id")
+			return
+		}
+		var rows []schedule.CurriculumItem
+		if p.Limit != nil {
+			rows, err = repo.ListCurriculumItemsPaged(currID, p.Limit, p.Offset)
+		} else {
+			rows, err = repo.ListCurriculumItems(currID)
+		}
 		if err != nil {
 			writeDBError(c, err)
 			return
@@ -396,7 +466,11 @@ func handleAdminListCurriculumItems(repo *schedule.Repository) gin.HandlerFunc {
 			c.JSON(http.StatusOK, buildCurriculumItemTree(rows))
 			return
 		}
-		c.JSON(http.StatusOK, rows)
+		out := make([]curriculumItemDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toCurriculumItemDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
@@ -404,17 +478,17 @@ func handleAdminCreateCurriculumItem(repo *schedule.Repository) gin.HandlerFunc 
 	return func(c *gin.Context) {
 		currID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid curriculum id"})
+			writeValidationError(c, "id", "invalid curriculum id")
 			return
 		}
 		var req schedule.CurriculumItem
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		req.CurriculumID = currID
 		if req.ItemType == "" || req.Name == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "item_type and name required"})
+			writeValidationError(c, "", "item_type and name required")
 			return
 		}
 		if err := repo.CreateCurriculumItem(&req); err != nil {
@@ -423,7 +497,7 @@ func handleAdminCreateCurriculumItem(repo *schedule.Repository) gin.HandlerFunc 
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "create", "curriculum_items", strconv.FormatInt(req.ID, 10), req)
-		c.JSON(http.StatusCreated, req)
+		c.JSON(http.StatusCreated, toCurriculumItemDTO(req))
 	}
 }
 
@@ -431,16 +505,16 @@ func handleAdminUpdateCurriculumItem(repo *schedule.Repository) gin.HandlerFunc 
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		var req schedule.CurriculumItem
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		if req.ItemType == "" || req.Name == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "item_type and name required"})
+			writeValidationError(c, "", "item_type and name required")
 			return
 		}
 		row, err := repo.UpdateCurriculumItem(id, &req)
@@ -450,7 +524,7 @@ func handleAdminUpdateCurriculumItem(repo *schedule.Repository) gin.HandlerFunc 
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "update", "curriculum_items", strconv.FormatInt(id, 10), row)
-		c.JSON(http.StatusOK, row)
+		c.JSON(http.StatusOK, toCurriculumItemDTO(*row))
 	}
 }
 
@@ -458,7 +532,7 @@ func handleAdminDeleteCurriculumItem(repo *schedule.Repository) gin.HandlerFunc 
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		if err := repo.DeleteCurriculumItem(id); err != nil {
@@ -473,17 +547,30 @@ func handleAdminDeleteCurriculumItem(repo *schedule.Repository) gin.HandlerFunc 
 
 func handleAdminListCurriculumItemAllocations(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		p, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
 			return
 		}
-		rows, err := repo.ListCurriculumItemAllocations(id)
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			writeValidationError(c, "id", "invalid id")
+			return
+		}
+		var rows []schedule.CurriculumItemAllocation
+		if p.Limit != nil {
+			rows, err = repo.ListCurriculumItemAllocationsPaged(id, p.Limit, p.Offset)
+		} else {
+			rows, err = repo.ListCurriculumItemAllocations(id)
+		}
 		if err != nil {
 			writeDBError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, rows)
+		out := make([]curriculumItemAllocationDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toCurriculumItemAllocationDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }
 
@@ -491,12 +578,12 @@ func handleAdminUpsertCurriculumItemAllocations(repo *schedule.Repository) gin.H
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+			writeValidationError(c, "id", "invalid id")
 			return
 		}
 		var req []schedule.CurriculumItemAllocation
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
+			writeInvalidJSON(c)
 			return
 		}
 		rows, err := repo.UpsertCurriculumItemAllocations(id, req)
@@ -506,6 +593,10 @@ func handleAdminUpsertCurriculumItemAllocations(repo *schedule.Repository) gin.H
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "upsert", "curriculum_item_allocations", strconv.FormatInt(id, 10), gin.H{"count": len(req)})
-		c.JSON(http.StatusOK, rows)
+		out := make([]curriculumItemAllocationDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toCurriculumItemAllocationDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
 	}
 }

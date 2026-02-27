@@ -69,7 +69,7 @@ func rateLimitMiddleware(store *rateLimitStore, rule config.RateLimitRuleConfig,
 		key := bucketName + "|" + c.ClientIP()
 		lim := store.get(key, rule.RPS, rule.Burst)
 		if !lim.Allow() {
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "rate limit exceeded"})
+			abortWithError(c, http.StatusTooManyRequests, "rate_limited", "", "rate limit exceeded")
 			return
 		}
 		c.Next()

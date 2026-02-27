@@ -14,7 +14,7 @@ func handleGetCurrentSchedule(svc *schedule.Service, repo *schedule.Repository) 
 	return func(c *gin.Context) {
 		groupID, err := strconv.Atoi(c.Query("group_id"))
 		if err != nil || groupID <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id required"})
+			writeValidationError(c, "group_id", "group_id required")
 			return
 		}
 
@@ -22,7 +22,7 @@ func handleGetCurrentSchedule(svc *schedule.Service, repo *schedule.Repository) 
 		if ds := c.Query("date"); ds != "" {
 			parsed, err := time.Parse("2006-01-02", ds)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date (YYYY-MM-DD)"})
+				writeValidationError(c, "date", "invalid date (YYYY-MM-DD)")
 				return
 			}
 			ref = parsed
@@ -30,7 +30,7 @@ func handleGetCurrentSchedule(svc *schedule.Service, repo *schedule.Repository) 
 
 		resp, err := svc.GetCurrentWeek(groupID, ref)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			writeError(c, http.StatusBadRequest, "bad_request", "", err.Error())
 			return
 		}
 		_ = repo // reserved for future (e.g. group name)
@@ -43,17 +43,17 @@ func handleGetSchedulePDF(svc *schedule.Service, repo *schedule.Repository, engi
 	return func(c *gin.Context) {
 		groupID, err := strconv.Atoi(c.Query("group_id"))
 		if err != nil || groupID <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id required"})
+			writeValidationError(c, "group_id", "group_id required")
 			return
 		}
 		ds := c.Query("date_start")
 		if ds == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "date_start required"})
+			writeValidationError(c, "date_start", "date_start required")
 			return
 		}
 		start, err := time.Parse("2006-01-02", ds)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date_start (YYYY-MM-DD)"})
+			writeValidationError(c, "date_start", "invalid date_start (YYYY-MM-DD)")
 			return
 		}
 
@@ -64,30 +64,30 @@ func handleGetSchedulePDF(svc *schedule.Service, repo *schedule.Repository, engi
 
 		week1, err := svc.GetRange(groupID, week1Start, week1End)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			writeError(c, http.StatusBadRequest, "bad_request", "", err.Error())
 			return
 		}
 		week2, err := svc.GetRange(groupID, week2Start, week2End)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			writeError(c, http.StatusBadRequest, "bad_request", "", err.Error())
 			return
 		}
 
 		group, err := repo.GetGroup(groupID)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "unknown group"})
+			writeDBError(c, err)
 			return
 		}
 
 		html, err := buildSchedulePDFHTML(group.Name, week1.Days, week2.Days)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			writeError(c, http.StatusInternalServerError, "internal", "", err.Error())
 			return
 		}
 
 		pdfBytes, err := engine.RenderHTMLToPDF(c.Request.Context(), html)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			writeError(c, http.StatusInternalServerError, "internal", "", err.Error())
 			return
 		}
 
@@ -102,28 +102,28 @@ func handleGetScheduleRange(svc *schedule.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		groupID, err := strconv.Atoi(c.Query("group_id"))
 		if err != nil || groupID <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id required"})
+			writeValidationError(c, "group_id", "group_id required")
 			return
 		}
 		startStr := c.Query("date_start")
 		endStr := c.Query("date_end")
 		if startStr == "" || endStr == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "date_start and date_end required"})
+			writeValidationError(c, "", "date_start and date_end required")
 			return
 		}
 		start, err := time.Parse("2006-01-02", startStr)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date_start (YYYY-MM-DD)"})
+			writeValidationError(c, "date_start", "invalid date_start (YYYY-MM-DD)")
 			return
 		}
 		end, err := time.Parse("2006-01-02", endStr)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date_end (YYYY-MM-DD)"})
+			writeValidationError(c, "date_end", "invalid date_end (YYYY-MM-DD)")
 			return
 		}
 		resp, err := svc.GetRange(groupID, start, end)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			writeError(c, http.StatusBadRequest, "bad_request", "", err.Error())
 			return
 		}
 		c.JSON(http.StatusOK, resp)
@@ -134,7 +134,7 @@ func handleGetScheduleVersion(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		st, err := repo.GetSystemState()
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			writeError(c, http.StatusInternalServerError, "db_error", "", err.Error())
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"data_version": st.ScheduleVersion.UTC().Format(time.RFC3339)})

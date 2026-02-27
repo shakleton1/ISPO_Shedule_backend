@@ -47,12 +47,12 @@ func requireAnyPermission(perms ...Permission) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		v, ok := c.Get(ctxUserKey)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			abortWithError(c, http.StatusUnauthorized, "unauthorized", "", "unauthorized")
 			return
 		}
 		u, ok := v.(*auth.User)
 		if !ok || u == nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			abortWithError(c, http.StatusUnauthorized, "unauthorized", "", "unauthorized")
 			return
 		}
 		userPerms := rolePermissions(u.Role)
@@ -62,6 +62,6 @@ func requireAnyPermission(perms ...Permission) gin.HandlerFunc {
 				return
 			}
 		}
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		abortWithError(c, http.StatusForbidden, "forbidden", "", "forbidden")
 	}
 }

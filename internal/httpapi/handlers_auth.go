@@ -28,44 +28,44 @@ func handleLogin(tokens *auth.TokenManager, repo *schedule.Repository, refreshTT
 	return func(c *gin.Context) {
 		var req loginRequest
 		if err := c.ShouldBindJSON(&req); err != nil || req.Login == "" || req.Password == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "login and password required"})
+			writeError(c, http.StatusBadRequest, "validation_error", "", "login and password required")
 			return
 		}
 
 		u, err := repo.GetUserByLogin(req.Login)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+				writeError(c, http.StatusUnauthorized, "unauthorized", "", "invalid credentials")
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+			writeError(c, http.StatusInternalServerError, "db_error", "", "db error")
 			return
 		}
 		if !auth.VerifyPassword(u.PasswordHash, req.Password) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+			writeError(c, http.StatusUnauthorized, "unauthorized", "", "invalid credentials")
 			return
 		}
 
 		now := time.Now().UTC()
 		tok, exp, err := tokens.IssueAccessToken(u, now)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "token error"})
+			writeError(c, http.StatusInternalServerError, "token_error", "", "token error")
 			return
 		}
 
 		refreshRaw, err := auth.GenerateRefreshToken()
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "token error"})
+			writeError(c, http.StatusInternalServerError, "token_error", "", "token error")
 			return
 		}
 		h, err := auth.HashRefreshToken(refreshRaw)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "token error"})
+			writeError(c, http.StatusInternalServerError, "token_error", "", "token error")
 			return
 		}
 		refreshExp := now.Add(refreshTTL)
 		if _, err := repo.CreateRefreshToken(u.ID, h, refreshExp); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+			writeError(c, http.StatusInternalServerError, "db_error", "", "db error")
 			return
 		}
 
@@ -90,22 +90,22 @@ func handleRefresh(tokens *auth.TokenManager, repo *schedule.Repository, refresh
 	return func(c *gin.Context) {
 		var req refreshRequest
 		if err := c.ShouldBindJSON(&req); err != nil || req.RefreshToken == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "refresh_token required"})
+			writeValidationError(c, "refresh_token", "refresh_token required")
 			return
 		}
 		h, err := auth.HashRefreshToken(req.RefreshToken)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid refresh_token"})
+			writeValidationError(c, "refresh_token", "invalid refresh_token")
 			return
 		}
 
 		row, err := repo.GetRefreshTokenByHash(h)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh_token"})
+				writeError(c, http.StatusUnauthorized, "unauthorized", "refresh_token", "invalid refresh_token")
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+			writeError(c, http.StatusInternalServerError, "db_error", "", "db error")
 			return
 		}
 
@@ -113,40 +113,40 @@ func handleRefresh(tokens *auth.TokenManager, repo *schedule.Repository, refresh
 		if row.RevokedAt != nil {
 			// Reuse detection: a revoked token being presented again -> revoke all active tokens.
 			_ = repo.RevokeAllRefreshTokensForUser(row.UserID)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh_token"})
+			writeError(c, http.StatusUnauthorized, "unauthorized", "refresh_token", "invalid refresh_token")
 			return
 		}
 		if now.After(row.ExpiresAt) {
 			_ = repo.RevokeRefreshToken(row.ID, nil)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh_token expired"})
+			writeError(c, http.StatusUnauthorized, "unauthorized", "refresh_token", "refresh_token expired")
 			return
 		}
 
 		u, err := repo.GetUserByID(row.UserID)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unknown user"})
+			writeError(c, http.StatusUnauthorized, "unauthorized", "", "unknown user")
 			return
 		}
 
 		access, accessExp, err := tokens.IssueAccessToken(u, now)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "token error"})
+			writeError(c, http.StatusInternalServerError, "token_error", "", "token error")
 			return
 		}
 		newRaw, err := auth.GenerateRefreshToken()
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "token error"})
+			writeError(c, http.StatusInternalServerError, "token_error", "", "token error")
 			return
 		}
 		newHash, err := auth.HashRefreshToken(newRaw)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "token error"})
+			writeError(c, http.StatusInternalServerError, "token_error", "", "token error")
 			return
 		}
 		newExp := now.Add(refreshTTL)
 		newRow, err := repo.CreateRefreshToken(u.ID, newHash, newExp)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+			writeError(c, http.StatusInternalServerError, "db_error", "", "db error")
 			return
 		}
 		_ = repo.RevokeRefreshToken(row.ID, &newRow.ID)
@@ -160,12 +160,12 @@ func handleLogout(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req refreshRequest
 		if err := c.ShouldBindJSON(&req); err != nil || req.RefreshToken == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "refresh_token required"})
+			writeValidationError(c, "refresh_token", "refresh_token required")
 			return
 		}
 		h, err := auth.HashRefreshToken(req.RefreshToken)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid refresh_token"})
+			writeValidationError(c, "refresh_token", "invalid refresh_token")
 			return
 		}
 		row, err := repo.GetRefreshTokenByHash(h)
@@ -184,14 +184,14 @@ func handleMe(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		v, ok := c.Get(ctxUserKey)
 		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			writeUnauthorized(c, "unauthorized")
 			return
 		}
 		u := v.(*auth.User)
 		// refresh from DB for latest role/group assignment
 		fresh, err := repo.GetUserByID(u.ID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+			writeError(c, http.StatusInternalServerError, "db_error", "", "db error")
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{

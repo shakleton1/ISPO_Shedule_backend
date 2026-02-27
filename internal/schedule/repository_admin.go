@@ -57,6 +57,14 @@ func (r *Repository) ListGroups() ([]Group, error) {
 	return rows, err
 }
 
+func (r *Repository) ListGroupsPaged(limit, offset *int) ([]Group, error) {
+	var rows []Group
+	q := r.db.Order("id asc")
+	q = applyLimitOffset(q, limit, offset)
+	err := q.Find(&rows).Error
+	return rows, err
+}
+
 func (r *Repository) GetGroup(id int) (*Group, error) {
 	var row Group
 	if err := r.db.First(&row, id).Error; err != nil {
@@ -129,6 +137,14 @@ func (r *Repository) ListSubjects() ([]Subject, error) {
 	return rows, err
 }
 
+func (r *Repository) ListSubjectsPaged(limit, offset *int) ([]Subject, error) {
+	var rows []Subject
+	q := r.db.Where("deleted_at IS NULL").Order("id asc")
+	q = applyLimitOffset(q, limit, offset)
+	err := q.Find(&rows).Error
+	return rows, err
+}
+
 func (r *Repository) CreateSubject(s *Subject) error {
 	return r.db.Create(s).Error
 }
@@ -160,6 +176,14 @@ func (r *Repository) DeleteSubject(id int) error {
 func (r *Repository) ListLocations() ([]Location, error) {
 	var rows []Location
 	err := r.db.Order("id asc").Find(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) ListLocationsPaged(limit, offset *int) ([]Location, error) {
+	var rows []Location
+	q := r.db.Order("id asc")
+	q = applyLimitOffset(q, limit, offset)
+	err := q.Find(&rows).Error
 	return rows, err
 }
 
@@ -212,6 +236,31 @@ func (r *Repository) ListTemplates(filters TemplateFilters) ([]ScheduleTemplate,
 	} else {
 		q = q.Where("st.status = ?", StatusPublished)
 	}
+	var rows []ScheduleTemplate
+	err := q.Scan(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) ListTemplatesPaged(filters TemplateFilters, limit, offset *int) ([]ScheduleTemplate, error) {
+	q := r.db.Table("schedule_templates st").
+		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, st.status, st.teacher_manual, st.location_manual, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.created_at, st.updated_at").
+		Joins("LEFT JOIN teachers t ON t.id = st.teacher_id").
+		Order("st.group_id asc, st.day_of_week asc, st.week_parity asc, st.pair_number asc, st.subgroup asc")
+	if filters.GroupID != nil {
+		q = q.Where("st.group_id = ?", *filters.GroupID)
+	}
+	if filters.DayOfWeek != nil {
+		q = q.Where("st.day_of_week = ?", *filters.DayOfWeek)
+	}
+	if filters.WeekParity != nil {
+		q = q.Where("st.week_parity = ?", *filters.WeekParity)
+	}
+	if filters.Status != nil {
+		q = q.Where("st.status = ?", *filters.Status)
+	} else {
+		q = q.Where("st.status = ?", StatusPublished)
+	}
+	q = applyLimitOffset(q, limit, offset)
 	var rows []ScheduleTemplate
 	err := q.Scan(&rows).Error
 	return rows, err
@@ -351,6 +400,23 @@ func (r *Repository) ListOverrides(filters OverrideFilters) ([]ScheduleOverride,
 	if filters.TargetDate != nil {
 		q = q.Where("so.target_date = ?", dateOnly(*filters.TargetDate))
 	}
+	var rows []ScheduleOverride
+	err := q.Scan(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) ListOverridesPaged(filters OverrideFilters, limit, offset *int) ([]ScheduleOverride, error) {
+	q := r.db.Table("schedule_overrides so").
+		Select("so.id, so.target_date, so.group_id, so.pair_number, so.action_type, so.new_subject_id, so.new_location_id, so.new_teacher_manual, t.name AS new_teacher_name, so.comment, so.subgroup, so.created_at, so.updated_at").
+		Joins("LEFT JOIN teachers t ON t.id = so.new_teacher_id").
+		Order("so.target_date asc, so.pair_number asc")
+	if filters.GroupID != nil {
+		q = q.Where("so.group_id = ?", *filters.GroupID)
+	}
+	if filters.TargetDate != nil {
+		q = q.Where("so.target_date = ?", dateOnly(*filters.TargetDate))
+	}
+	q = applyLimitOffset(q, limit, offset)
 	var rows []ScheduleOverride
 	err := q.Scan(&rows).Error
 	return rows, err
@@ -506,6 +572,14 @@ func (r *Repository) UpsertOverlay(groupID int, date time.Time, text string, sty
 func (r *Repository) ListCalendarExceptions() ([]CalendarException, error) {
 	var rows []CalendarException
 	err := r.db.Order("target_date asc").Find(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) ListCalendarExceptionsPaged(limit, offset *int) ([]CalendarException, error) {
+	var rows []CalendarException
+	q := r.db.Order("target_date asc")
+	q = applyLimitOffset(q, limit, offset)
+	err := q.Find(&rows).Error
 	return rows, err
 }
 

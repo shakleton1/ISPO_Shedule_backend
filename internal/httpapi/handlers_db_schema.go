@@ -28,12 +28,12 @@ func handleAdminDBSchema(repoDB *gorm.DB) gin.HandlerFunc {
 		// Keep it read-only and safe: only introspect schema.
 		cols, err := listPublicColumns(repoDB)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			writeError(c, http.StatusInternalServerError, "internal_error", "", err.Error())
 			return
 		}
 		fks, err := listPublicFKs(repoDB)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			writeError(c, http.StatusInternalServerError, "internal_error", "", err.Error())
 			return
 		}
 

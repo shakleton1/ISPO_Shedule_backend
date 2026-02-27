@@ -66,6 +66,8 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
 
   /api/v1/auth/login:
     post:
@@ -272,6 +274,9 @@ paths:
     get:
       tags: [Dictionaries]
       summary: List groups (public)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -285,6 +290,9 @@ paths:
     get:
       tags: [Dictionaries]
       summary: List subjects (public)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -298,6 +306,9 @@ paths:
     get:
       tags: [Dictionaries]
       summary: List locations (public)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -312,6 +323,9 @@ paths:
       tags: [Admin]
       summary: List groups
       security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -374,6 +388,9 @@ paths:
       tags: [Admin]
       summary: List subjects
       security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -436,6 +453,9 @@ paths:
       tags: [Admin]
       summary: List locations
       security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -498,6 +518,9 @@ paths:
       tags: [Admin]
       summary: List teachers
       security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -569,6 +592,8 @@ paths:
           name: subject_id
           required: false
           schema: { type: integer, minimum: 1 }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -636,6 +661,8 @@ paths:
           name: status
           required: false
           schema: { type: string, enum: [draft, published] }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -745,6 +772,9 @@ paths:
       tags: [Admin]
       summary: List specialties
       security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -820,6 +850,8 @@ paths:
           name: is_active
           required: false
           schema: { type: boolean }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -887,6 +919,8 @@ paths:
           name: id
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -939,6 +973,8 @@ paths:
           name: id
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -987,6 +1023,8 @@ paths:
           required: false
           description: When true, returns items as a hierarchy (parent_id -> children)
           schema: { type: boolean }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -1063,6 +1101,8 @@ paths:
           name: id
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -1118,6 +1158,8 @@ paths:
           name: status
           required: false
           schema: { type: string, enum: [draft, published] }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -1244,6 +1286,8 @@ paths:
           name: date
           required: false
           schema: { type: string, format: date }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -1375,6 +1419,8 @@ paths:
           name: target_date
           required: false
           schema: { type: string, format: date }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -1454,6 +1500,9 @@ paths:
       tags: [Admin]
       summary: List calendar exceptions
       security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
         "200":
           description: OK
@@ -1557,6 +1606,27 @@ components:
       in: header
       name: X-Admin-Key
 
+  parameters:
+    Limit:
+      in: query
+      name: limit
+      required: false
+      description: |
+        Pagination limit. When omitted, pagination is disabled and the endpoint may return the full list.
+        Maximum: 500.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+    Offset:
+      in: query
+      name: offset
+      required: false
+      description: Pagination offset (0-based). Used only when `limit` is provided.
+      schema:
+        type: integer
+        minimum: 0
+
   responses:
     BadRequest:
       description: Bad request
@@ -1570,14 +1640,51 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    MethodNotAllowed:
+      description: Method not allowed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ServiceUnavailable:
+      description: Service unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
     ErrorResponse:
       type: object
-      required: [error]
+      required: [code, field, message]
       properties:
-        error:
+        code:
           type: string
+          description: Stable machine-readable error code
+        field:
+          type: string
+          description: Field name related to error (may be empty)
+        message:
+          type: string
+          description: Human-readable error message
 
     HealthResponse:
       type: object

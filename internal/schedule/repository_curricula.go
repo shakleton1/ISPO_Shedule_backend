@@ -15,6 +15,14 @@ func (r *Repository) ListSpecialties() ([]Specialty, error) {
 	return rows, err
 }
 
+func (r *Repository) ListSpecialtiesPaged(limit, offset *int) ([]Specialty, error) {
+	var rows []Specialty
+	q := r.db.Order("id asc")
+	q = applyLimitOffset(q, limit, offset)
+	err := q.Find(&rows).Error
+	return rows, err
+}
+
 func (r *Repository) CreateSpecialty(s *Specialty) error {
 	return r.db.Create(s).Error
 }
@@ -60,6 +68,23 @@ func (r *Repository) ListCurricula(filters CurriculumFilters) ([]Curriculum, err
 	return rows, err
 }
 
+func (r *Repository) ListCurriculaPaged(filters CurriculumFilters, limit, offset *int) ([]Curriculum, error) {
+	q := r.db.Where("deleted_at IS NULL").Order("specialty_id asc, admission_year asc, variant asc, id asc")
+	if filters.SpecialtyID != nil {
+		q = q.Where("specialty_id = ?", *filters.SpecialtyID)
+	}
+	if filters.AdmissionYear != nil {
+		q = q.Where("admission_year = ?", *filters.AdmissionYear)
+	}
+	if filters.IsActive != nil {
+		q = q.Where("is_active = ?", *filters.IsActive)
+	}
+	q = applyLimitOffset(q, limit, offset)
+	var rows []Curriculum
+	err := q.Find(&rows).Error
+	return rows, err
+}
+
 func (r *Repository) CreateCurriculum(c *Curriculum) error {
 	return r.db.Create(c).Error
 }
@@ -98,6 +123,14 @@ func (r *Repository) ListAcademicCalendars(curriculumID int64) ([]AcademicCalend
 	return rows, err
 }
 
+func (r *Repository) ListAcademicCalendarsPaged(curriculumID int64, limit, offset *int) ([]AcademicCalendar, error) {
+	var rows []AcademicCalendar
+	q := r.db.Where("curriculum_id = ?", curriculumID).Order("academic_year_start asc")
+	q = applyLimitOffset(q, limit, offset)
+	err := q.Find(&rows).Error
+	return rows, err
+}
+
 func (r *Repository) CreateAcademicCalendar(ac *AcademicCalendar) error {
 	ac.AcademicYearStart = dateOnly(ac.AcademicYearStart)
 	return r.db.Create(ac).Error
@@ -110,6 +143,14 @@ func (r *Repository) DeleteAcademicCalendar(id int64) error {
 func (r *Repository) ListAcademicCalendarWeeks(calendarID int64) ([]AcademicCalendarWeek, error) {
 	var rows []AcademicCalendarWeek
 	err := r.db.Where("calendar_id = ?", calendarID).Order("week_number asc").Find(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) ListAcademicCalendarWeeksPaged(calendarID int64, limit, offset *int) ([]AcademicCalendarWeek, error) {
+	var rows []AcademicCalendarWeek
+	q := r.db.Where("calendar_id = ?", calendarID).Order("week_number asc")
+	q = applyLimitOffset(q, limit, offset)
+	err := q.Find(&rows).Error
 	return rows, err
 }
 
@@ -165,6 +206,14 @@ func (r *Repository) ListCurriculumItems(curriculumID int64) ([]CurriculumItem, 
 	return rows, err
 }
 
+func (r *Repository) ListCurriculumItemsPaged(curriculumID int64, limit, offset *int) ([]CurriculumItem, error) {
+	var rows []CurriculumItem
+	q := r.db.Where("curriculum_id = ?", curriculumID).Order("id asc")
+	q = applyLimitOffset(q, limit, offset)
+	err := q.Find(&rows).Error
+	return rows, err
+}
+
 func (r *Repository) CreateCurriculumItem(it *CurriculumItem) error {
 	return r.db.Create(it).Error
 }
@@ -192,6 +241,14 @@ func (r *Repository) DeleteCurriculumItem(id int64) error {
 func (r *Repository) ListCurriculumItemAllocations(itemID int64) ([]CurriculumItemAllocation, error) {
 	var rows []CurriculumItemAllocation
 	err := r.db.Where("item_id = ?", itemID).Order("semester asc").Find(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) ListCurriculumItemAllocationsPaged(itemID int64, limit, offset *int) ([]CurriculumItemAllocation, error) {
+	var rows []CurriculumItemAllocation
+	q := r.db.Where("item_id = ?", itemID).Order("semester asc")
+	q = applyLimitOffset(q, limit, offset)
+	err := q.Find(&rows).Error
 	return rows, err
 }
 
