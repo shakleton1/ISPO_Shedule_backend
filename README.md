@@ -204,6 +204,10 @@ Draft/publish:
 
 Полный список и схемы — в `docs/openapi.yaml`.
 
+## Docker deploy
+
+См. пошаговый гайд: [docs/deploy_docker.md](docs/deploy_docker.md).
+
 ## Импорт шаблонов CSV/XLSX
 
 Импорт работает в режиме "заменить всё для группы" в рамках выбранного статуса:

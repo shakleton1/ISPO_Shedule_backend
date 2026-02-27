@@ -20,12 +20,23 @@ import (
 )
 
 func Run() error {
-	cfg, err := config.Load(config.LoadOptions{ConfigPath: "configs/config.yaml"})
-	if err != nil {
-		// Dev-friendly fallback
-		cfg, err = config.Load(config.LoadOptions{ConfigPath: "configs/config.example.yaml"})
+	configPath := os.Getenv("ISPO_CONFIG_PATH")
+
+	var cfg *config.Config
+	var err error
+	if configPath != "" {
+		cfg, err = config.Load(config.LoadOptions{ConfigPath: configPath})
 		if err != nil {
 			return err
+		}
+	} else {
+		cfg, err = config.Load(config.LoadOptions{ConfigPath: "configs/config.yaml"})
+		if err != nil {
+			// Dev-friendly fallback
+			cfg, err = config.Load(config.LoadOptions{ConfigPath: "configs/config.example.yaml"})
+			if err != nil {
+				return err
+			}
 		}
 	}
 
