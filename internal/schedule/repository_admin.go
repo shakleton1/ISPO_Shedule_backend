@@ -164,7 +164,7 @@ type TemplateFilters struct {
 
 func (r *Repository) ListTemplates(filters TemplateFilters) ([]ScheduleTemplate, error) {
 	q := r.db.Table("schedule_templates st").
-		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, st.status, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.created_at, st.updated_at").
+		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, st.status, st.teacher_manual, st.location_manual, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.created_at, st.updated_at").
 		Joins("LEFT JOIN teachers t ON t.id = st.teacher_id").
 		Order("st.group_id asc, st.day_of_week asc, st.week_parity asc, st.pair_number asc, st.subgroup asc")
 	if filters.GroupID != nil {
@@ -226,6 +226,8 @@ func (r *Repository) UpdateTemplate(id int64, patch *ScheduleTemplate) (*Schedul
 	row.SubjectID = patch.SubjectID
 	row.LocationID = patch.LocationID
 	row.Status = patch.Status
+	row.TeacherManual = patch.TeacherManual
+	row.LocationManual = patch.LocationManual
 	row.TeacherID = teacherID
 	row.Subgroup = patch.Subgroup
 	if err := r.db.Omit("TeacherName").Save(&row).Error; err != nil {
@@ -241,7 +243,7 @@ func (r *Repository) DeleteTemplate(id int64) error {
 func (r *Repository) GetTemplateByID(id int64) (*ScheduleTemplate, error) {
 	var row ScheduleTemplate
 	if err := r.db.Table("schedule_templates st").
-		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, st.status, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.created_at, st.updated_at").
+		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, st.status, st.teacher_manual, st.location_manual, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.created_at, st.updated_at").
 		Joins("LEFT JOIN teachers t ON t.id = st.teacher_id").
 		Where("st.id = ?", id).
 		Scan(&row).Error; err != nil {
@@ -273,8 +275,8 @@ func (r *Repository) PublishDraftTemplates(groupID int) (int64, error) {
 		}
 
 		res := tx.Exec(`
-			INSERT INTO schedule_templates (group_id, day_of_week, week_parity, pair_number, subject_id, location_id, status, teacher_id, subgroup, created_at, updated_at)
-			SELECT group_id, day_of_week, week_parity, pair_number, subject_id, location_id, 'published', teacher_id, subgroup, now(), now()
+			INSERT INTO schedule_templates (group_id, day_of_week, week_parity, pair_number, subject_id, location_id, status, teacher_manual, location_manual, teacher_id, subgroup, created_at, updated_at)
+			SELECT group_id, day_of_week, week_parity, pair_number, subject_id, location_id, 'published', teacher_manual, location_manual, teacher_id, subgroup, now(), now()
 			FROM schedule_templates
 			WHERE group_id = ? AND status = 'draft'
 		`, groupID)
@@ -309,7 +311,7 @@ type OverrideFilters struct {
 
 func (r *Repository) ListOverrides(filters OverrideFilters) ([]ScheduleOverride, error) {
 	q := r.db.Table("schedule_overrides so").
-		Select("so.id, so.target_date, so.group_id, so.pair_number, so.action_type, so.new_subject_id, so.new_location_id, t.name AS new_teacher_name, so.comment, so.subgroup, so.created_at, so.updated_at").
+		Select("so.id, so.target_date, so.group_id, so.pair_number, so.action_type, so.new_subject_id, so.new_location_id, so.new_teacher_manual, t.name AS new_teacher_name, so.comment, so.subgroup, so.created_at, so.updated_at").
 		Joins("LEFT JOIN teachers t ON t.id = so.new_teacher_id").
 		Order("so.target_date asc, so.pair_number asc")
 	if filters.GroupID != nil {
@@ -327,7 +329,20 @@ func (r *Repository) CreateOverride(o *ScheduleOverride) error {
 	if err := validateOverrideForWrite(o); err != nil {
 		return err
 	}
-	if o.NewTeacherName != nil {
+	if o.NewTeacherManual {
+		// Explicit teacher override. Empty name means "clear teacher".
+		if o.NewTeacherName == nil || strings.TrimSpace(*o.NewTeacherName) == "" {
+			o.NewTeacherID = nil
+		} else {
+			teacherID, err := ensureTeacherID(r.db, *o.NewTeacherName)
+			if err != nil {
+				return err
+			}
+			o.NewTeacherID = teacherID
+		}
+	} else if o.NewTeacherName != nil {
+		// Backward-compatible: if name is provided, treat as explicit override.
+		o.NewTeacherManual = true
 		teacherID, err := ensureTeacherID(r.db, *o.NewTeacherName)
 		if err != nil {
 			return err
@@ -346,14 +361,24 @@ func (r *Repository) UpdateOverride(id int64, patch *ScheduleOverride) (*Schedul
 	if err := r.db.Table("schedule_overrides").First(&row, id).Error; err != nil {
 		return nil, err
 	}
-	if patch.NewTeacherName != nil {
+	if patch.NewTeacherManual {
+		row.NewTeacherManual = true
+		if patch.NewTeacherName == nil || strings.TrimSpace(*patch.NewTeacherName) == "" {
+			row.NewTeacherID = nil
+		} else {
+			teacherID, err := ensureTeacherID(r.db, *patch.NewTeacherName)
+			if err != nil {
+				return nil, err
+			}
+			row.NewTeacherID = teacherID
+		}
+	} else if patch.NewTeacherName != nil {
+		row.NewTeacherManual = true
 		teacherID, err := ensureTeacherID(r.db, *patch.NewTeacherName)
 		if err != nil {
 			return nil, err
 		}
 		row.NewTeacherID = teacherID
-	} else {
-		row.NewTeacherID = nil
 	}
 	row.TargetDate = dateOnly(patch.TargetDate)
 	row.GroupID = patch.GroupID
@@ -384,15 +409,15 @@ func validateOverrideForWrite(o *ScheduleOverride) error {
 	}
 	switch o.ActionType {
 	case OverrideCancel:
-		if o.NewSubjectID != nil || o.NewLocationID != nil || o.NewTeacherName != nil {
+		if o.NewSubjectID != nil || o.NewLocationID != nil || o.NewTeacherName != nil || o.NewTeacherManual {
 			return fmt.Errorf("CANCEL must not set new_* fields")
 		}
 	case OverrideAdd:
-		if o.NewSubjectID == nil || o.NewLocationID == nil {
-			return fmt.Errorf("ADD requires new_subject_id and new_location_id")
+		if o.NewSubjectID == nil {
+			return fmt.Errorf("ADD requires new_subject_id")
 		}
 	case OverrideReplace:
-		if o.NewSubjectID == nil && o.NewLocationID == nil && o.NewTeacherName == nil && o.Comment == nil {
+		if o.NewSubjectID == nil && o.NewLocationID == nil && o.NewTeacherName == nil && o.Comment == nil && !o.NewTeacherManual {
 			return fmt.Errorf("REPLACE requires at least one change field")
 		}
 	default:
@@ -408,7 +433,7 @@ func (r *Repository) DeleteOverride(id int64) error {
 func (r *Repository) GetOverrideByID(id int64) (*ScheduleOverride, error) {
 	var row ScheduleOverride
 	if err := r.db.Table("schedule_overrides so").
-		Select("so.id, so.target_date, so.group_id, so.pair_number, so.action_type, so.new_subject_id, so.new_location_id, t.name AS new_teacher_name, so.comment, so.subgroup, so.created_at, so.updated_at").
+		Select("so.id, so.target_date, so.group_id, so.pair_number, so.action_type, so.new_subject_id, so.new_location_id, so.new_teacher_manual, t.name AS new_teacher_name, so.comment, so.subgroup, so.created_at, so.updated_at").
 		Joins("LEFT JOIN teachers t ON t.id = so.new_teacher_id").
 		Where("so.id = ?", id).
 		Scan(&row).Error; err != nil {

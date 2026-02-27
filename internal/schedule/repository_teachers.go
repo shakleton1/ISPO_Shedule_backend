@@ -81,11 +81,13 @@ type CourseAssignmentFilters struct {
 }
 
 type CourseAssignmentTeacherView struct {
-	ID          int64  `gorm:"column:id"`
-	Semester    int16  `gorm:"column:semester"`
-	SubjectID   int    `gorm:"column:subject_id"`
-	Subgroup    *int16 `gorm:"column:subgroup"`
-	TeacherName *string
+	ID           int64  `gorm:"column:id"`
+	Semester     int16  `gorm:"column:semester"`
+	SubjectID    int    `gorm:"column:subject_id"`
+	Subgroup     *int16 `gorm:"column:subgroup"`
+	TeacherName  *string
+	LocationID   *int    `gorm:"column:location_id"`
+	LocationName *string `gorm:"column:location_name"`
 }
 
 func (r *Repository) ListCourseAssignments(filters CourseAssignmentFilters) ([]CourseAssignment, error) {
@@ -254,8 +256,9 @@ func (r *Repository) ListCourseAssignmentTeachersForGroup(groupID int) ([]Course
 
 	var rows []CourseAssignmentTeacherView
 	err := r.db.Table("course_assignments ca").
-		Select("ca.id, ca.semester, ca.subject_id, ca.subgroup, t.name as teacher_name").
+		Select("ca.id, ca.semester, ca.subject_id, ca.subgroup, t.name as teacher_name, ca.location_id, l.name as location_name").
 		Joins("LEFT JOIN teachers t ON t.id = ca.teacher_id").
+		Joins("LEFT JOIN locations l ON l.id = ca.location_id").
 		Where("ca.group_id = ? AND ca.status = ?", groupID, StatusPublished).
 		Order("ca.subject_id asc, COALESCE(ca.subgroup, 0) asc, ca.semester desc, ca.id desc").
 		Scan(&rows).Error

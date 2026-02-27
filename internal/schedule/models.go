@@ -76,6 +76,8 @@ type ScheduleTemplate struct {
 	SubjectID   int          `gorm:"not null" json:"subject_id"`
 	LocationID  int          `gorm:"not null" json:"location_id"`
 	Status      EntityStatus `gorm:"type:text;not null;default:'published'" json:"status"`
+	TeacherManual bool       `gorm:"not null;default:false" json:"teacher_manual"`
+	LocationManual bool      `gorm:"not null;default:false" json:"location_manual"`
 	TeacherID   *int         `gorm:"" json:"-"`
 	TeacherName string       `gorm:"column:teacher_name;->" json:"teacher_name"`
 	Subgroup    *int16       `gorm:"" json:"subgroup"` // nil = вся группа
@@ -92,6 +94,7 @@ type ScheduleOverride struct {
 	NewSubjectID   *int           `json:"new_subject_id"`
 	NewLocationID  *int           `json:"new_location_id"`
 	NewTeacherID   *int           `json:"-"`
+	NewTeacherManual bool         `gorm:"not null;default:false" json:"new_teacher_manual"`
 	NewTeacherName *string        `gorm:"column:new_teacher_name;->" json:"new_teacher_name"`
 	Comment        *string        `json:"comment"`
 	Subgroup       *int16         `json:"subgroup"` // nil = для всех

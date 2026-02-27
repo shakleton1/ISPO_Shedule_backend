@@ -1248,6 +1248,32 @@ paths:
       responses:
         "204": { description: Deleted }
 
+  /api/v1/admin/schedule/validate:
+    get:
+      tags: [Admin]
+      summary: Validate schedule lessons against curriculum allocations
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: start_date
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: end_date
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                { $ref: "#/components/schemas/ScheduleValidationResponse" }
+
   /api/v1/admin/override:
     post:
       tags: [Admin]
@@ -1748,6 +1774,8 @@ components:
         location_id: { type: integer }
         location_name: { type: string }
         teacher_name: { type: string }
+        teacher_manual: { type: boolean }
+        location_manual: { type: boolean }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
 
     OverrideView:
@@ -1763,6 +1791,7 @@ components:
         new_subject_name: { type: string }
         new_location_id: { type: integer, nullable: true }
         new_location_name: { type: string }
+        new_teacher_manual: { type: boolean }
         new_teacher_name: { type: string, nullable: true }
         comment: { type: string, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
@@ -1869,6 +1898,8 @@ components:
         location_id: { type: integer }
         status: { type: string, enum: [draft, published] }
         teacher_name: { type: string }
+        teacher_manual: { type: boolean }
+        location_manual: { type: boolean }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
@@ -1920,6 +1951,40 @@ components:
             semester_inferred: { type: integer, nullable: true }
             non_teaching: { type: boolean }
 
+    ScheduleValidationWarning:
+      type: object
+      required: [date, pair_number, subject_id, subject_name, semester]
+      properties:
+        date: { type: string, format: date }
+        pair_number: { type: integer, minimum: 1, maximum: 8 }
+        subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        subject_id: { type: integer }
+        subject_name: { type: string }
+        semester: { type: integer, minimum: 1, maximum: 12 }
+
+    ScheduleValidationResponse:
+      type: object
+      required:
+        [
+          group_id,
+          start_date,
+          end_date,
+          warnings,
+          warn_count,
+          validated,
+          no_curriculum,
+        ]
+      properties:
+        group_id: { type: integer }
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date }
+        warnings:
+          type: array
+          items: { $ref: "#/components/schemas/ScheduleValidationWarning" }
+        warn_count: { type: integer }
+        validated: { type: boolean }
+        no_curriculum: { type: boolean }
+
     ScheduleOverride:
       type: object
       required: [id, target_date, group_id, pair_number, action_type]
@@ -1936,6 +2001,7 @@ components:
           enum: [CANCEL, REPLACE, ADD]
         new_subject_id: { type: integer, nullable: true }
         new_location_id: { type: integer, nullable: true }
+        new_teacher_manual: { type: boolean }
         new_teacher_name: { type: string, nullable: true }
         comment: { type: string, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
@@ -1954,6 +2020,7 @@ components:
           enum: [CANCEL, REPLACE, ADD]
         new_subject_id: { type: integer, nullable: true }
         new_location_id: { type: integer, nullable: true }
+        new_teacher_manual: { type: boolean }
         new_teacher_name: { type: string, nullable: true }
         comment: { type: string, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }

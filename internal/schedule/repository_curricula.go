@@ -232,6 +232,45 @@ DO UPDATE SET
 	return r.ListCurriculumItemAllocations(itemID)
 }
 
+type allocatedSubjectRow struct {
+	Semester  int16 `gorm:"column:semester"`
+	SubjectID int   `gorm:"column:subject_id"`
+}
+
+func (r *Repository) ListAllocatedSubjectsBySemester(curriculumID int64, semesters []int16) (map[int16]map[int]bool, error) {
+	if curriculumID <= 0 {
+		return nil, fmt.Errorf("curriculum_id required")
+	}
+	if len(semesters) == 0 {
+		return map[int16]map[int]bool{}, nil
+	}
+
+	var rows []allocatedSubjectRow
+	err := r.db.Raw(`
+SELECT DISTINCT a.semester, ci.subject_id
+FROM curriculum_items ci
+JOIN curriculum_item_allocations a ON a.item_id = ci.id
+WHERE ci.curriculum_id = ?
+  AND ci.subject_id IS NOT NULL
+  AND a.semester IN ?
+ORDER BY a.semester asc, ci.subject_id asc
+`, curriculumID, semesters).Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	out := map[int16]map[int]bool{}
+	for _, r := range rows {
+		m, ok := out[r.Semester]
+		if !ok {
+			m = map[int]bool{}
+			out[r.Semester] = m
+		}
+		m[r.SubjectID] = true
+	}
+	return out, nil
+}
+
 // Calendar helpers for schedule building
 
 type teachingWeekRow struct {

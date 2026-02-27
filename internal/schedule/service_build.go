@@ -10,6 +10,17 @@ type assignmentKey struct {
 	Subgroup  int16 // 0 means NULL
 }
 
+type assignmentResolve struct {
+	TeacherName  string
+	LocationID   *int
+	LocationName string
+}
+
+type slotKey struct {
+	PairNumber int16
+	Subgroup   int16 // 0 means NULL
+}
+
 func subgroupKey(subgroup *int16) int16 {
 	if subgroup == nil {
 		return 0
@@ -47,23 +58,30 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 	if err != nil {
 		return nil, err
 	}
-	assignmentsBySemester := map[int16]map[assignmentKey]string{}
-	latestAssignments := map[assignmentKey]string{}
+	assignmentsBySemester := map[int16]map[assignmentKey]assignmentResolve{}
+	latestAssignments := map[assignmentKey]assignmentResolve{}
 	for _, a := range assignmentRows {
-		if a.TeacherName == nil || *a.TeacherName == "" {
+		if (a.TeacherName == nil || *a.TeacherName == "") && a.LocationID == nil {
 			continue
 		}
 		k := assignmentKey{SubjectID: a.SubjectID, Subgroup: subgroupKey(a.Subgroup)}
 		m, ok := assignmentsBySemester[a.Semester]
 		if !ok {
-			m = map[assignmentKey]string{}
+			m = map[assignmentKey]assignmentResolve{}
 			assignmentsBySemester[a.Semester] = m
 		}
+		res := assignmentResolve{LocationID: a.LocationID}
+		if a.TeacherName != nil {
+			res.TeacherName = *a.TeacherName
+		}
+		if a.LocationName != nil {
+			res.LocationName = *a.LocationName
+		}
 		if _, exists := m[k]; !exists {
-			m[k] = *a.TeacherName
+			m[k] = res
 		}
 		if _, exists := latestAssignments[k]; !exists {
-			latestAssignments[k] = *a.TeacherName
+			latestAssignments[k] = res
 		}
 	}
 
@@ -145,8 +163,34 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 			return nil, err
 		}
 
+		ovrsNorm := normalizeOverrides(ovrs)
+
+		// Manual-empty suppression flags for teacher auto-resolve.
+		tplManualEmpty := map[slotKey]bool{}
+		for _, t := range tpls {
+			if t.TeacherManual && t.TeacherName == "" {
+				tplManualEmpty[slotKey{PairNumber: t.PairNumber, Subgroup: subgroupKey(t.Subgroup)}] = true
+			}
+		}
+		ovrManualEmptyAll := map[int16]bool{}
+		ovrManualEmpty := map[slotKey]bool{}
+		for _, o := range ovrsNorm {
+			if !o.NewTeacherManual {
+				continue
+			}
+			// If manual flag is set but new teacher is NULL => dispatcher explicitly cleared teacher.
+			if o.NewTeacherName != nil {
+				continue
+			}
+			if o.Subgroup == nil {
+				ovrManualEmptyAll[o.PairNumber] = true
+				continue
+			}
+			ovrManualEmpty[slotKey{PairNumber: o.PairNumber, Subgroup: subgroupKey(o.Subgroup)}] = true
+		}
+
 		semester := inferSemesterForDate(d, group.Course)
-		var semesterAssignments map[assignmentKey]string
+		var semesterAssignments map[assignmentKey]assignmentResolve
 		if semester != nil {
 			semesterAssignments = assignmentsBySemester[*semester]
 		}
@@ -155,6 +199,16 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 				continue
 			}
 			if lessons[i].SubjectID == nil {
+				continue
+			}
+			if ovrManualEmptyAll[lessons[i].PairNumber] {
+				continue
+			}
+			sgKey := subgroupKey(lessons[i].Subgroup)
+			if ovrManualEmpty[slotKey{PairNumber: lessons[i].PairNumber, Subgroup: sgKey}] {
+				continue
+			}
+			if tplManualEmpty[slotKey{PairNumber: lessons[i].PairNumber, Subgroup: sgKey}] {
 				continue
 			}
 
@@ -173,7 +227,7 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 			if semesterAssignments != nil {
 				for _, k := range candidates {
 					if v, ok := semesterAssignments[k]; ok {
-						resolved = v
+						resolved = v.TeacherName
 						break
 					}
 				}
@@ -181,13 +235,60 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 			if resolved == "" {
 				for _, k := range candidates {
 					if v, ok := latestAssignments[k]; ok {
-						resolved = v
+						resolved = v.TeacherName
 						break
 					}
 				}
 			}
 			if resolved != "" {
 				lessons[i].TeacherName = resolved
+			}
+		}
+
+		// Auto-fill location from course_assignments when missing (e.g. ADD override without new_location_id).
+		for i := range lessons {
+			if lessons[i].LocationID != nil {
+				continue
+			}
+			if lessons[i].SubjectID == nil {
+				continue
+			}
+
+			var candidates []assignmentKey
+			if lessons[i].Subgroup == nil {
+				candidates = []assignmentKey{{SubjectID: *lessons[i].SubjectID, Subgroup: 0}}
+			} else {
+				candidates = []assignmentKey{
+					{SubjectID: *lessons[i].SubjectID, Subgroup: subgroupKey(lessons[i].Subgroup)},
+					{SubjectID: *lessons[i].SubjectID, Subgroup: 0},
+				}
+			}
+
+			var resolved *int
+			var resolvedName string
+			if semesterAssignments != nil {
+				for _, k := range candidates {
+					if v, ok := semesterAssignments[k]; ok && v.LocationID != nil {
+						resolved = v.LocationID
+						resolvedName = v.LocationName
+						break
+					}
+				}
+			}
+			if resolved == nil {
+				for _, k := range candidates {
+					if v, ok := latestAssignments[k]; ok && v.LocationID != nil {
+						resolved = v.LocationID
+						resolvedName = v.LocationName
+						break
+					}
+				}
+			}
+			if resolved != nil {
+				lessons[i].LocationID = resolved
+				if resolvedName != "" {
+					lessons[i].LocationName = resolvedName
+				}
 			}
 		}
 

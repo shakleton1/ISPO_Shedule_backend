@@ -107,28 +107,58 @@ func (s *Service) ExplainSlot(groupID int, date time.Time, pairNumber int16, sub
 	if err != nil {
 		return nil, err
 	}
-	assignmentsBySemester := map[int16]map[assignmentKey]string{}
-	latestAssignments := map[assignmentKey]string{}
+	assignmentsBySemester := map[int16]map[assignmentKey]assignmentResolve{}
+	latestAssignments := map[assignmentKey]assignmentResolve{}
 	for _, a := range assignmentRows {
-		if a.TeacherName == nil || *a.TeacherName == "" {
+		if (a.TeacherName == nil || *a.TeacherName == "") && a.LocationID == nil {
 			continue
 		}
 		k := assignmentKey{SubjectID: a.SubjectID, Subgroup: subgroupKey(a.Subgroup)}
 		m, ok := assignmentsBySemester[a.Semester]
 		if !ok {
-			m = map[assignmentKey]string{}
+			m = map[assignmentKey]assignmentResolve{}
 			assignmentsBySemester[a.Semester] = m
 		}
+		res := assignmentResolve{LocationID: a.LocationID}
+		if a.TeacherName != nil {
+			res.TeacherName = *a.TeacherName
+		}
+		if a.LocationName != nil {
+			res.LocationName = *a.LocationName
+		}
 		if _, exists := m[k]; !exists {
-			m[k] = *a.TeacherName
+			m[k] = res
 		}
 		if _, exists := latestAssignments[k]; !exists {
-			latestAssignments[k] = *a.TeacherName
+			latestAssignments[k] = res
 		}
 	}
 
+	// Manual-empty suppression flags for teacher auto-resolve.
+	tplManualEmpty := map[slotKey]bool{}
+	for _, t := range tplsPub {
+		if t.TeacherManual && t.TeacherName == "" {
+			tplManualEmpty[slotKey{PairNumber: t.PairNumber, Subgroup: subgroupKey(t.Subgroup)}] = true
+		}
+	}
+	ovrManualEmptyAll := map[int16]bool{}
+	ovrManualEmpty := map[slotKey]bool{}
+	for _, o := range ovrsNorm {
+		if !o.NewTeacherManual {
+			continue
+		}
+		if o.NewTeacherName != nil {
+			continue
+		}
+		if o.Subgroup == nil {
+			ovrManualEmptyAll[o.PairNumber] = true
+			continue
+		}
+		ovrManualEmpty[slotKey{PairNumber: o.PairNumber, Subgroup: subgroupKey(o.Subgroup)}] = true
+	}
+
 	semester := inferSemesterForDate(date, group.Course)
-	var semesterAssignments map[assignmentKey]string
+	var semesterAssignments map[assignmentKey]assignmentResolve
 	if semester != nil {
 		semesterAssignments = assignmentsBySemester[*semester]
 	}
@@ -137,6 +167,16 @@ func (s *Service) ExplainSlot(groupID int, date time.Time, pairNumber int16, sub
 			continue
 		}
 		if merged[i].SubjectID == nil {
+			continue
+		}
+		if ovrManualEmptyAll[merged[i].PairNumber] {
+			continue
+		}
+		sgKey := subgroupKey(merged[i].Subgroup)
+		if ovrManualEmpty[slotKey{PairNumber: merged[i].PairNumber, Subgroup: sgKey}] {
+			continue
+		}
+		if tplManualEmpty[slotKey{PairNumber: merged[i].PairNumber, Subgroup: sgKey}] {
 			continue
 		}
 
@@ -154,7 +194,7 @@ func (s *Service) ExplainSlot(groupID int, date time.Time, pairNumber int16, sub
 		if semesterAssignments != nil {
 			for _, k := range candidates {
 				if v, ok := semesterAssignments[k]; ok {
-					resolved = v
+					resolved = v.TeacherName
 					break
 				}
 			}
@@ -162,13 +202,59 @@ func (s *Service) ExplainSlot(groupID int, date time.Time, pairNumber int16, sub
 		if resolved == "" {
 			for _, k := range candidates {
 				if v, ok := latestAssignments[k]; ok {
-					resolved = v
+					resolved = v.TeacherName
 					break
 				}
 			}
 		}
 		if resolved != "" {
 			merged[i].TeacherName = resolved
+		}
+	}
+
+	for i := range merged {
+		if merged[i].LocationID != nil {
+			continue
+		}
+		if merged[i].SubjectID == nil {
+			continue
+		}
+
+		var candidates []assignmentKey
+		if merged[i].Subgroup == nil {
+			candidates = []assignmentKey{{SubjectID: *merged[i].SubjectID, Subgroup: 0}}
+		} else {
+			candidates = []assignmentKey{
+				{SubjectID: *merged[i].SubjectID, Subgroup: subgroupKey(merged[i].Subgroup)},
+				{SubjectID: *merged[i].SubjectID, Subgroup: 0},
+			}
+		}
+
+		var resolved *int
+		var resolvedName string
+		if semesterAssignments != nil {
+			for _, k := range candidates {
+				if v, ok := semesterAssignments[k]; ok && v.LocationID != nil {
+					resolved = v.LocationID
+					resolvedName = v.LocationName
+					break
+				}
+			}
+		}
+		if resolved == nil {
+			for _, k := range candidates {
+				if v, ok := latestAssignments[k]; ok && v.LocationID != nil {
+					resolved = v.LocationID
+					resolvedName = v.LocationName
+					break
+				}
+			}
+		}
+		if resolved != nil {
+			merged[i].LocationID = resolved
+			if resolvedName != "" {
+				merged[i].LocationName = resolvedName
+			}
 		}
 	}
 

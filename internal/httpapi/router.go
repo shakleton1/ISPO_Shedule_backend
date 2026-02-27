@@ -199,6 +199,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminScheduleWrite.POST("/override", handleAdminCreateOverride(deps.Repo, deps.Push))
 				adminScheduleWrite.PUT("/overrides/:id", handleAdminUpdateOverride(deps.Repo, deps.Push))
 				adminScheduleWrite.DELETE("/overrides/:id", handleAdminDeleteOverride(deps.Repo, deps.Push))
+				adminScheduleWrite.GET("/schedule/validate", handleAdminValidateSchedule(deps.ScheduleSvc))
 
 				adminScheduleWrite.POST("/overrides/bulk", handleAdminBulkOverrides(deps.Repo))
 				adminScheduleWrite.POST("/override/move", handleAdminMovePair(deps.ScheduleSvc, deps.Repo))

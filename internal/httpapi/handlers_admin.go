@@ -884,15 +884,16 @@ func handleAdminListOverrides(repo *schedule.Repository) gin.HandlerFunc {
 }
 
 type adminOverrideRequest struct {
-	GroupID        int     `json:"group_id"`
-	Date           string  `json:"date"`
-	Pair           int16   `json:"pair"`
-	Action         string  `json:"action"`
-	NewSubjectID   *int    `json:"new_subject_id"`
-	NewLocationID  *int    `json:"new_location_id"`
-	NewTeacherName *string `json:"new_teacher_name"`
-	Comment        *string `json:"comment"`
-	Subgroup       *int16  `json:"subgroup"`
+	GroupID          int     `json:"group_id"`
+	Date             string  `json:"date"`
+	Pair             int16   `json:"pair"`
+	Action           string  `json:"action"`
+	NewSubjectID     *int    `json:"new_subject_id"`
+	NewLocationID    *int    `json:"new_location_id"`
+	NewTeacherManual bool    `json:"new_teacher_manual"`
+	NewTeacherName   *string `json:"new_teacher_name"`
+	Comment          *string `json:"comment"`
+	Subgroup         *int16  `json:"subgroup"`
 }
 
 func validateOverrideRequest(o schedule.ScheduleOverride) error {
@@ -907,15 +908,15 @@ func validateOverrideRequest(o schedule.ScheduleOverride) error {
 	}
 	switch o.ActionType {
 	case schedule.OverrideCancel:
-		if o.NewSubjectID != nil || o.NewLocationID != nil || o.NewTeacherName != nil {
+		if o.NewSubjectID != nil || o.NewLocationID != nil || o.NewTeacherName != nil || o.NewTeacherManual {
 			return errors.New("CANCEL must not include new_* fields")
 		}
 	case schedule.OverrideAdd:
-		if o.NewSubjectID == nil || o.NewLocationID == nil {
-			return errors.New("ADD requires new_subject_id and new_location_id")
+		if o.NewSubjectID == nil {
+			return errors.New("ADD requires new_subject_id")
 		}
 	case schedule.OverrideReplace:
-		if o.NewSubjectID == nil && o.NewLocationID == nil && o.NewTeacherName == nil && o.Comment == nil {
+		if o.NewSubjectID == nil && o.NewLocationID == nil && o.NewTeacherName == nil && o.Comment == nil && !o.NewTeacherManual {
 			return errors.New("REPLACE requires at least one change field")
 		}
 	default:
@@ -937,15 +938,16 @@ func handleAdminCreateOverride(repo *schedule.Repository, pushSvc *push.Service)
 			return
 		}
 		o := schedule.ScheduleOverride{
-			GroupID:        req.GroupID,
-			TargetDate:     d,
-			PairNumber:     req.Pair,
-			ActionType:     schedule.OverrideAction(req.Action),
-			NewSubjectID:   req.NewSubjectID,
-			NewLocationID:  req.NewLocationID,
-			NewTeacherName: req.NewTeacherName,
-			Comment:        req.Comment,
-			Subgroup:       req.Subgroup,
+			GroupID:          req.GroupID,
+			TargetDate:       d,
+			PairNumber:       req.Pair,
+			ActionType:       schedule.OverrideAction(req.Action),
+			NewSubjectID:     req.NewSubjectID,
+			NewLocationID:    req.NewLocationID,
+			NewTeacherManual: req.NewTeacherManual,
+			NewTeacherName:   req.NewTeacherName,
+			Comment:          req.Comment,
+			Subgroup:         req.Subgroup,
 		}
 		if err := validateOverrideRequest(o); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -1016,6 +1018,47 @@ func handleAdminDeleteOverride(repo *schedule.Repository, pushSvc *push.Service)
 		}
 		writeAudit(c, repo, "delete", "schedule_overrides", strconv.FormatInt(id, 10), nil)
 		c.Status(http.StatusNoContent)
+	}
+}
+
+func handleAdminValidateSchedule(svc *schedule.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if svc == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "schedule service not configured"})
+			return
+		}
+		groupID, err := strconv.Atoi(strings.TrimSpace(c.Query("group_id")))
+		if err != nil || groupID <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "group_id required"})
+			return
+		}
+		startStr := strings.TrimSpace(c.Query("start_date"))
+		endStr := strings.TrimSpace(c.Query("end_date"))
+		if startStr == "" || endStr == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "start_date and end_date required"})
+			return
+		}
+		start, err := time.Parse("2006-01-02", startStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid start_date"})
+			return
+		}
+		end, err := time.Parse("2006-01-02", endStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid end_date"})
+			return
+		}
+		if end.Before(start) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "end_date must be >= start_date"})
+			return
+		}
+
+		res, err := svc.ValidateScheduleRange(groupID, start, end)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, res)
 	}
 }
 
