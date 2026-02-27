@@ -31,6 +31,8 @@ func NewRouter(deps RouterDeps) http.Handler {
 		_ = recovered
 		abortWithError(c, http.StatusInternalServerError, "internal_error", "", "internal server error")
 	}))
+	r.Use(securityHeadersMiddleware())
+	r.Use(corsMiddleware(deps.Config.Server.CORS))
 	r.Use(requestIDMiddleware())
 	r.Use(requestLoggingMiddleware())
 	r.Use(metricsMiddleware(deps.DBPing))

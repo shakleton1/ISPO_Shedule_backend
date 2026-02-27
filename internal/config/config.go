@@ -27,7 +27,21 @@ type ServerConfig struct {
 	IdleTimeout             time.Duration   `mapstructure:"idle_timeout"`
 	MaxHeaderBytes          int             `mapstructure:"max_header_bytes"`
 	AdminImportMaxBodyBytes int64           `mapstructure:"admin_import_max_body_bytes"`
+	CORS                    CORSConfig      `mapstructure:"cors"`
 	RateLimit               RateLimitConfig `mapstructure:"rate_limit"`
+}
+
+type CORSConfig struct {
+	// AllowedOrigins is a list of exact origins (e.g. "https://admin.example.com").
+	// Use "*" to allow any origin (NOT compatible with AllowCredentials=true).
+	AllowedOrigins []string `mapstructure:"allowed_origins"`
+	// AllowedMethods is a comma-separated list.
+	AllowedMethods string `mapstructure:"allowed_methods"`
+	// AllowedHeaders is a comma-separated list.
+	AllowedHeaders string `mapstructure:"allowed_headers"`
+	// ExposedHeaders is a comma-separated list.
+	ExposedHeaders   string `mapstructure:"exposed_headers"`
+	AllowCredentials bool   `mapstructure:"allow_credentials"`
 }
 
 type RateLimitConfig struct {

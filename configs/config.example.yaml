@@ -14,6 +14,18 @@ server:
   # Upload/import body size limit (bytes). Applied to heavy endpoints like admin import.
   admin_import_max_body_bytes: 26214400 # 25 MiB
 
+  # CORS (для Web фронта на другом origin).
+  # По умолчанию CORS выключен (allowed_origins пустой).
+  cors:
+    allowed_origins: []
+    # Пример:
+    # allowed_origins: ["https://admin.example.com", "http://localhost:3000"]
+    allow_credentials: false
+    # allowed_methods/headers можно не задавать — будут безопасные дефолты.
+    allowed_methods: ""
+    allowed_headers: ""
+    exposed_headers: ""
+
   # Rate limiting (token bucket, per-IP). Useful to protect heavy endpoints.
   # If enabled, tune these based on expected traffic.
   rate_limit:
