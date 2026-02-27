@@ -11,28 +11,53 @@ import (
 
 func (r *Repository) ListTeachers() ([]Teacher, error) {
 	var rows []Teacher
-	err := r.db.Order("id asc").Find(&rows).Error
+	err := r.db.Where("deleted_at IS NULL").Order("id asc").Find(&rows).Error
 	return rows, err
 }
 
 func (r *Repository) CreateTeacher(t *Teacher) error {
-	return r.db.Create(t).Error
+	if t == nil {
+		return fmt.Errorf("teacher is nil")
+	}
+	if t.Name == "" {
+		return fmt.Errorf("name required")
+	}
+	// Upsert by name_key and auto-restore if it was soft-deleted.
+	var out struct {
+		ID int `gorm:"column:id"`
+	}
+	err := r.db.Raw(
+		"INSERT INTO teachers (name) VALUES (?) ON CONFLICT (name_key) DO UPDATE SET name = EXCLUDED.name, deleted_at = NULL RETURNING id",
+		t.Name,
+	).Scan(&out).Error
+	if err != nil {
+		return err
+	}
+	t.ID = out.ID
+	return nil
 }
 
 func (r *Repository) UpdateTeacher(id int, patch *Teacher) (*Teacher, error) {
-	var row Teacher
-	if err := r.db.First(&row, id).Error; err != nil {
+	if patch == nil {
+		return nil, fmt.Errorf("teacher patch is nil")
+	}
+	if patch.Name == "" {
+		return nil, fmt.Errorf("name required")
+	}
+	// Restore if soft-deleted.
+	if err := r.db.Exec("UPDATE teachers SET name = ?, deleted_at = NULL WHERE id = ?", patch.Name, id).Error; err != nil {
 		return nil, err
 	}
-	row.Name = patch.Name
-	if err := r.db.Save(&row).Error; err != nil {
+	var row Teacher
+	if err := r.db.First(&row, id).Error; err != nil {
 		return nil, err
 	}
 	return &row, nil
 }
 
 func (r *Repository) DeleteTeacher(id int) error {
-	return r.db.Delete(&Teacher{}, id).Error
+	res := r.db.Exec("UPDATE teachers SET deleted_at = now() WHERE id = ? AND deleted_at IS NULL", id)
+	return res.Error
 }
 
 // Teacher subjects

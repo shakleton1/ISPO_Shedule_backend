@@ -40,7 +40,7 @@ func ensureTeacherID(tx *gorm.DB, name string) (*int, error) {
 		ID int `gorm:"column:id"`
 	}
 	err := tx.Raw(
-		"INSERT INTO teachers (name) VALUES (?) ON CONFLICT (name_key) DO UPDATE SET name = EXCLUDED.name RETURNING id",
+		"INSERT INTO teachers (name) VALUES (?) ON CONFLICT (name_key) DO UPDATE SET name = EXCLUDED.name, deleted_at = NULL RETURNING id",
 		name,
 	).Scan(&out).Error
 	if err != nil {
@@ -125,7 +125,7 @@ func (r *Repository) DeleteGroup(id int) error {
 
 func (r *Repository) ListSubjects() ([]Subject, error) {
 	var rows []Subject
-	err := r.db.Order("id asc").Find(&rows).Error
+	err := r.db.Where("deleted_at IS NULL").Order("id asc").Find(&rows).Error
 	return rows, err
 }
 
@@ -143,11 +143,16 @@ func (r *Repository) UpdateSubject(id int, patch *Subject) (*Subject, error) {
 	if err := r.db.Save(&row).Error; err != nil {
 		return nil, err
 	}
+	// If it was soft-deleted earlier, restore.
+	if err := r.db.Exec("UPDATE subjects SET deleted_at = NULL WHERE id = ?", id).Error; err != nil {
+		return nil, err
+	}
 	return &row, nil
 }
 
 func (r *Repository) DeleteSubject(id int) error {
-	return r.db.Delete(&Subject{}, id).Error
+	res := r.db.Exec("UPDATE subjects SET deleted_at = now() WHERE id = ? AND deleted_at IS NULL", id)
+	return res.Error
 }
 
 // Locations

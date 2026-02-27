@@ -45,7 +45,7 @@ type CurriculumFilters struct {
 }
 
 func (r *Repository) ListCurricula(filters CurriculumFilters) ([]Curriculum, error) {
-	q := r.db.Order("specialty_id asc, admission_year asc, variant asc, id asc")
+	q := r.db.Where("deleted_at IS NULL").Order("specialty_id asc, admission_year asc, variant asc, id asc")
 	if filters.SpecialtyID != nil {
 		q = q.Where("specialty_id = ?", *filters.SpecialtyID)
 	}
@@ -78,11 +78,16 @@ func (r *Repository) UpdateCurriculum(id int64, patch *Curriculum) (*Curriculum,
 	if err := r.db.Save(&row).Error; err != nil {
 		return nil, err
 	}
+	// If it was soft-deleted earlier, restore.
+	if err := r.db.Exec("UPDATE curricula SET deleted_at = NULL WHERE id = ?", id).Error; err != nil {
+		return nil, err
+	}
 	return &row, nil
 }
 
 func (r *Repository) DeleteCurriculum(id int64) error {
-	return r.db.Delete(&Curriculum{}, id).Error
+	res := r.db.Exec("UPDATE curricula SET deleted_at = now() WHERE id = ? AND deleted_at IS NULL", id)
+	return res.Error
 }
 
 // Academic calendars
