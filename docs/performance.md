@@ -1,48 +1,48 @@
-# Performance notes
+# Производительность
 
-This project builds schedule responses by combining:
+Этот проект собирает ответы расписания, комбинируя данные из:
 
-- templates (`schedule_templates`)
-- overrides (`schedule_overrides`)
-- calendar exceptions (`calendar_exceptions`)
-- day overlays/events
+- шаблонов (`schedule_templates`)
+- overrides/оверрайдов (`schedule_overrides`)
+- переносов дней (`calendar_exceptions`)
+- дневных оверлеев/событий
 
-## 1) Week cache (server-side)
+## 1) Кэш недели (на стороне сервера)
 
-The backend keeps an in-memory cache for **canonical Mon..Sat weeks**, keyed by:
+Backend держит in-memory кэш для **канонических недель Пн..Сб**, ключ:
 
 - `group_id`
-- `week_start` (Monday date, `YYYY-MM-DD`)
-- `data_version` (from `system_state.schedule_version`)
+- `week_start` (дата понедельника, `YYYY-MM-DD`)
+- `data_version` (из `system_state.schedule_version`)
 
-So if `data_version` is unchanged, repeated calls to:
+Если `data_version` не менялся, повторные запросы:
 
 - `GET /api/v1/schedule/current`
-- `GET /api/v1/schedule/range` (when `date_start` is Monday and `date_end` is Saturday)
-- `GET /api/v1/schedule/pdf` (internally builds two week ranges)
+- `GET /api/v1/schedule/range` (когда `date_start` = понедельник, а `date_end` = суббота)
+- `GET /api/v1/schedule/pdf` (внутри строит 2 недельных диапазона)
 
-will reuse the cached week response.
+будут переиспользовать закэшированный ответ недели.
 
-## 2) Detecting N+1 in dev
+## 2) Как ловить N+1 в dev
 
-You can enable SQL logs from GORM using an env var:
+Можно включить SQL-логи GORM через env:
 
 ```powershell
 $env:ISPO_DB_LOG_LEVEL = "info"
 go run .\cmd\api
 ```
 
-This helps you spot repeated similar queries per request (a typical N+1 symptom).
+Это помогает увидеть повторяющиеся похожие запросы в рамках одного HTTP-запроса (типичный симптом N+1).
 
-Valid values:
+Допустимые значения:
 
-- `silent`, `error`, `warn` (default), `info`
+- `silent`, `error`, `warn` (по умолчанию), `info`
 
 ## 3) EXPLAIN / EXPLAIN ANALYZE (Postgres)
 
-For critical schedule endpoints, the hottest DB queries are usually templates/overrides.
+Для критичных schedule-эндпоинтов самые “горячие” запросы обычно — templates/overrides.
 
-### 3.1) Templates query
+### 3.1) Запрос шаблонов
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS)
@@ -60,7 +60,7 @@ WHERE st.group_id = 1
 ORDER BY st.day_of_week, st.pair_number, COALESCE(st.subgroup, 0), st.id;
 ```
 
-### 3.2) Overrides query
+### 3.2) Запрос overrides
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS)
@@ -78,4 +78,4 @@ WHERE so.group_id = 1
 ORDER BY so.target_date, so.pair_number, COALESCE(so.subgroup, 0), so.id;
 ```
 
-If these EXPLAINs show sequential scans on big tables, add or adjust indexes (preferably via migrations).
+Если в этих EXPLAIN видно последовательное сканирование (seq scan) по большим таблицам — добавляйте/правьте индексы (лучше через миграции).

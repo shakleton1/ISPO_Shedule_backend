@@ -1,8 +1,8 @@
-# Backup/Restore playbook (Postgres)
+# Playbook бэкап/восстановление (Postgres)
 
 Ниже — практический минимум для бэкапа и восстановления базы `ispo_schedule`.
 
-## Backup (pg_dump)
+## Бэкап (pg_dump)
 
 Рекомендуемый формат — custom (`-Fc`), чтобы можно было выборочно восстанавливать.
 
@@ -18,9 +18,9 @@ pg_dump -h <host> -p 5432 -U <user> -d ispo_schedule -Fc -f "backup_ispo_schedul
 pg_restore -l "backup_ispo_schedule_$ts.dump" | Select-Object -First 20
 ```
 
-## Restore (pg_restore)
+## Восстановление (pg_restore)
 
-Вариант A (полное восстановление в новую базу):
+Вариант A (полное восстановление в новую БД):
 
 ```powershell
 $env:PGPASSWORD = "<password>"
@@ -44,7 +44,7 @@ pg_restore -h <host> -p 5432 -U <user> -d ispo_schedule --clean --if-exists -Fc 
 - Минимум: ежедневный бэкап + хранение 7–14 дней.
 - Перед каждым деплоем миграций — отдельный бэкап.
 
-## Smoke после restore
+## Smoke-проверка после восстановления
 
 - Прогнать миграции `goose up` (если restore старее схемы).
 - Проверить:
