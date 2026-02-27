@@ -21,16 +21,16 @@ func Open(cfg config.DBConfig) (*gorm.DB, error) {
 	level := strings.ToLower(strings.TrimSpace(os.Getenv("ISPO_DB_LOG_LEVEL")))
 	mode := logger.Warn
 	switch level {
-	case "", "warn", "warning":
-		mode = logger.Warn
 	case "silent":
 		mode = logger.Silent
 	case "error":
 		mode = logger.Error
 	case "info":
 		mode = logger.Info
+	case "", "warn", "warning":
+		// keep default
 	default:
-		mode = logger.Warn
+		// keep default
 	}
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{

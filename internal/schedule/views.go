@@ -5,16 +5,16 @@ import "time"
 // View structs with joined names for response building.
 
 type TemplateDayView struct {
-	DayOfWeek     int16  `gorm:"column:day_of_week"`
-	PairNumber    int16  `gorm:"column:pair_number"`
-	SubjectID     int    `gorm:"column:subject_id"`
-	SubjectName   string `gorm:"column:subject_name"`
-	LocationID    int    `gorm:"column:location_id"`
-	LocationName  string `gorm:"column:location_name"`
-	TeacherName   string `gorm:"column:teacher_name"`
-	TeacherManual bool   `gorm:"column:teacher_manual"`
-	LocationManual bool  `gorm:"column:location_manual"`
-	Subgroup      *int16 `gorm:"column:subgroup"`
+	DayOfWeek      int16  `gorm:"column:day_of_week"`
+	PairNumber     int16  `gorm:"column:pair_number"`
+	SubjectID      int    `gorm:"column:subject_id"`
+	SubjectName    string `gorm:"column:subject_name"`
+	LocationID     int    `gorm:"column:location_id"`
+	LocationName   string `gorm:"column:location_name"`
+	TeacherName    string `gorm:"column:teacher_name"`
+	TeacherManual  bool   `gorm:"column:teacher_manual"`
+	LocationManual bool   `gorm:"column:location_manual"`
+	Subgroup       *int16 `gorm:"column:subgroup"`
 }
 
 type TemplateView struct {

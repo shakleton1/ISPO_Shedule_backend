@@ -174,15 +174,15 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 			byDay := map[int16][]TemplateView{}
 			for _, r := range rows {
 				byDay[r.DayOfWeek] = append(byDay[r.DayOfWeek], TemplateView{
-					PairNumber:      r.PairNumber,
-					SubjectID:       r.SubjectID,
-					SubjectName:     r.SubjectName,
-					LocationID:      r.LocationID,
-					LocationName:    r.LocationName,
-					TeacherName:     r.TeacherName,
-					TeacherManual:   r.TeacherManual,
-					LocationManual:  r.LocationManual,
-					Subgroup:        r.Subgroup,
+					PairNumber:     r.PairNumber,
+					SubjectID:      r.SubjectID,
+					SubjectName:    r.SubjectName,
+					LocationID:     r.LocationID,
+					LocationName:   r.LocationName,
+					TeacherName:    r.TeacherName,
+					TeacherManual:  r.TeacherManual,
+					LocationManual: r.LocationManual,
+					Subgroup:       r.Subgroup,
 				})
 			}
 			pm[p] = byDay
