@@ -1,6 +1,6 @@
 module ispo-schedule
 
-go 1.21
+go 1.24.0
 
 require (
 	github.com/chromedp/cdproto v0.0.0-20240801214329-3f85d328b335
@@ -10,7 +10,10 @@ require (
 	github.com/prometheus/client_golang v1.19.1
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/viper v1.19.0
+	github.com/xuri/excelize/v2 v2.9.0
 	golang.org/x/crypto v0.28.0
+	golang.org/x/oauth2 v0.25.0
+	golang.org/x/time v0.14.0
 	gorm.io/driver/postgres v1.5.7
 	gorm.io/gorm v1.26.1
 )
@@ -68,14 +71,12 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/xuri/efp v0.0.0-20240408161823-9ad904a10d6d // indirect
-	github.com/xuri/excelize/v2 v2.9.0 // indirect
 	github.com/xuri/nfp v0.0.0-20240318013403-ab9948c2c4a7 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/net v0.30.0 // indirect
-	golang.org/x/oauth2 v0.25.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect

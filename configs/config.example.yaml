@@ -3,6 +3,22 @@ server:
   read_timeout: "10s"
   write_timeout: "10s"
 
+  # Rate limiting (token bucket, per-IP). Useful to protect heavy endpoints.
+  # If enabled, tune these based on expected traffic.
+  rate_limit:
+    login:
+      enabled: true
+      rps: 0.2 # ~12 requests/minute
+      burst: 5
+    schedule_pdf:
+      enabled: true
+      rps: 0.1 # ~6 requests/minute
+      burst: 2
+    admin_import:
+      enabled: true
+      rps: 0.02 # ~1.2 requests/minute
+      burst: 1
+
 log:
   level: "info" # trace|debug|info|warn|error|fatal|panic
   pretty: true # console output for dev

@@ -218,6 +218,11 @@ Draft/publish:
 Преподаватели вынесены в таблицу `teachers`:
 
 - `schedule_templates.teacher_id` → `teachers(id)`
+
+## Ops / эксплуатация
+
+- Prod-стратегия миграций: [docs/ops_migrations.md](docs/ops_migrations.md)
+- Backup/restore playbook: [docs/backup_restore.md](docs/backup_restore.md)
 - `schedule_overrides.new_teacher_id` → `teachers(id)`
 
 API при этом по-прежнему использует поле `teacher_name`/`new_teacher_name` (строка): репозиторий автоматически создаёт/находит запись в `teachers` при записи.

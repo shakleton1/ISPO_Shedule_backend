@@ -30,6 +30,8 @@ func NewRouter(deps RouterDeps) http.Handler {
 	r.Use(requestLoggingMiddleware())
 	r.Use(metricsMiddleware(deps.DBPing))
 
+	rlStore := newRateLimitStore(10 * time.Minute)
+
 	// Prometheus metrics endpoint (обычно без auth, т.к. его дергает Prometheus).
 	r.GET("/metrics", metricsHandler(deps.DBPing))
 
@@ -86,7 +88,11 @@ func NewRouter(deps RouterDeps) http.Handler {
 
 		authGroup := v1.Group("/auth")
 		{
-			authGroup.POST("/login", handleLogin(deps.Tokens, deps.Repo))
+			authGroup.POST(
+				"/login",
+				rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.Login, "auth_login"),
+				handleLogin(deps.Tokens, deps.Repo),
+			)
 			// /me requires JWT
 			authGroup.GET("/me", authMiddleware(deps.Tokens, deps.Repo), handleMe(deps.Repo))
 		}
@@ -96,7 +102,11 @@ func NewRouter(deps RouterDeps) http.Handler {
 			client.GET("/current", handleGetCurrentSchedule(deps.ScheduleSvc, deps.Repo))
 			client.GET("/range", handleGetScheduleRange(deps.ScheduleSvc))
 			client.GET("/version", handleGetScheduleVersion(deps.Repo))
-			client.GET("/pdf", handleGetSchedulePDF(deps.ScheduleSvc, deps.Repo, pdfEngineAdapter{e: deps.PDF}))
+			client.GET(
+				"/pdf",
+				rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.SchedulePDF, "schedule_pdf"),
+				handleGetSchedulePDF(deps.ScheduleSvc, deps.Repo, pdfEngineAdapter{e: deps.PDF}),
+			)
 		}
 
 		pushGroup := v1.Group("/push")
@@ -181,8 +191,16 @@ func NewRouter(deps RouterDeps) http.Handler {
 			adminScheduleWrite := admin.Group("")
 			adminScheduleWrite.Use(requireAnyRole(auth.RoleAdmin, auth.RoleDispatcher))
 			{
-				adminScheduleWrite.POST("/import/templates/csv", handleAdminImportTemplatesCSV(deps.Repo, deps.Push))
-				adminScheduleWrite.POST("/import/templates/xlsx", handleAdminImportTemplatesXLSX(deps.Repo, deps.Push))
+				adminScheduleWrite.POST(
+					"/import/templates/csv",
+					rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
+					handleAdminImportTemplatesCSV(deps.Repo, deps.Push),
+				)
+				adminScheduleWrite.POST(
+					"/import/templates/xlsx",
+					rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
+					handleAdminImportTemplatesXLSX(deps.Repo, deps.Push),
+				)
 
 				adminScheduleWrite.POST("/templates", handleAdminCreateTemplate(deps.Repo, deps.Push))
 				adminScheduleWrite.PUT("/templates/:id", handleAdminUpdateTemplate(deps.Repo, deps.Push))

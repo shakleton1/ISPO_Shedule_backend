@@ -20,9 +20,22 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Addr         string        `mapstructure:"addr"`
-	ReadTimeout  time.Duration `mapstructure:"read_timeout"`
-	WriteTimeout time.Duration `mapstructure:"write_timeout"`
+	Addr         string          `mapstructure:"addr"`
+	ReadTimeout  time.Duration   `mapstructure:"read_timeout"`
+	WriteTimeout time.Duration   `mapstructure:"write_timeout"`
+	RateLimit    RateLimitConfig `mapstructure:"rate_limit"`
+}
+
+type RateLimitConfig struct {
+	Login       RateLimitRuleConfig `mapstructure:"login"`
+	SchedulePDF RateLimitRuleConfig `mapstructure:"schedule_pdf"`
+	AdminImport RateLimitRuleConfig `mapstructure:"admin_import"`
+}
+
+type RateLimitRuleConfig struct {
+	Enabled bool    `mapstructure:"enabled"`
+	RPS     float64 `mapstructure:"rps"`
+	Burst   int     `mapstructure:"burst"`
 }
 
 type LogConfig struct {
@@ -117,6 +130,32 @@ func Load(opts LoadOptions) (*Config, error) {
 	}
 	if cfg.Push.FCM.Timeout == 0 {
 		cfg.Push.FCM.Timeout = 5 * time.Second
+	}
+
+	// Rate limit defaults (applied only when rule is enabled).
+	if cfg.Server.RateLimit.Login.Enabled {
+		if cfg.Server.RateLimit.Login.RPS <= 0 {
+			cfg.Server.RateLimit.Login.RPS = 0.2 // ~12/min
+		}
+		if cfg.Server.RateLimit.Login.Burst <= 0 {
+			cfg.Server.RateLimit.Login.Burst = 5
+		}
+	}
+	if cfg.Server.RateLimit.SchedulePDF.Enabled {
+		if cfg.Server.RateLimit.SchedulePDF.RPS <= 0 {
+			cfg.Server.RateLimit.SchedulePDF.RPS = 0.1 // ~6/min
+		}
+		if cfg.Server.RateLimit.SchedulePDF.Burst <= 0 {
+			cfg.Server.RateLimit.SchedulePDF.Burst = 2
+		}
+	}
+	if cfg.Server.RateLimit.AdminImport.Enabled {
+		if cfg.Server.RateLimit.AdminImport.RPS <= 0 {
+			cfg.Server.RateLimit.AdminImport.RPS = 0.02 // ~1.2/min
+		}
+		if cfg.Server.RateLimit.AdminImport.Burst <= 0 {
+			cfg.Server.RateLimit.AdminImport.Burst = 1
+		}
 	}
 
 	return &cfg, nil
