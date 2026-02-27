@@ -300,13 +300,11 @@ func (s *Service) ExplainSlot(groupID int, date time.Time, pairNumber int16, sub
 			if t.PairNumber != pairNumber {
 				continue
 			}
-			if subgroup != nil {
-				if t.Subgroup != nil && *t.Subgroup != *subgroup {
-					continue
-				}
-				if t.Subgroup == nil {
-					// show whole-group template as relevant for any subgroup
-				}
+			// If a specific subgroup is requested, keep both:
+			// - subgroup-specific entries for this subgroup
+			// - whole-group entries (Subgroup == nil)
+			if subgroup != nil && t.Subgroup != nil && *t.Subgroup != *subgroup {
+				continue
 			}
 			out = append(out, t)
 		}
@@ -318,13 +316,9 @@ func (s *Service) ExplainSlot(groupID int, date time.Time, pairNumber int16, sub
 			if o.PairNumber != pairNumber {
 				continue
 			}
-			if subgroup != nil {
-				if o.Subgroup != nil && *o.Subgroup != *subgroup {
-					continue
-				}
-				if o.Subgroup == nil {
-					// relevant to all
-				}
+			// Whole-group overrides (Subgroup == nil) are relevant for any subgroup.
+			if subgroup != nil && o.Subgroup != nil && *o.Subgroup != *subgroup {
+				continue
 			}
 			out = append(out, o)
 		}
@@ -336,13 +330,9 @@ func (s *Service) ExplainSlot(groupID int, date time.Time, pairNumber int16, sub
 			if l.PairNumber != pairNumber {
 				continue
 			}
-			if subgroup != nil {
-				if l.Subgroup != nil && *l.Subgroup != *subgroup {
-					continue
-				}
-				if l.Subgroup == nil {
-					// keep whole-group lesson as relevant
-				}
+			// Whole-group lessons (Subgroup == nil) are relevant for any subgroup.
+			if subgroup != nil && l.Subgroup != nil && *l.Subgroup != *subgroup {
+				continue
 			}
 			out = append(out, l)
 		}
