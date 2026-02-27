@@ -2156,8 +2156,8 @@ components:
         id: { type: integer, format: int64 }
         target_date:
           type: string
-          format: date-time
-          description: Stored as DATE in DB, serialized as time
+          format: date
+          description: Stored as DATE in DB
         group_id: { type: integer }
         pair_number: { type: integer, minimum: 1, maximum: 8 }
         action_type:
@@ -2195,12 +2195,9 @@ components:
       properties:
         id: { type: integer, format: int64 }
         target_date:
-          {
-            type: string,
-            format: date-time,
-            description: Stored as DATE in DB,
-            serialized as time,
-          }
+          type: string
+          format: date
+          description: Stored as DATE in DB
         group_id: { type: integer }
         text: { type: string }
         style_preset: { type: string }
@@ -2213,12 +2210,9 @@ components:
       properties:
         id: { type: integer, format: int64 }
         target_date:
-          {
-            type: string,
-            format: date-time,
-            description: Stored as DATE in DB,
-            serialized as time,
-          }
+          type: string
+          format: date
+          description: Stored as DATE in DB
         works_as_day: { type: integer, minimum: 0, maximum: 6 }
         comment: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
@@ -2247,12 +2241,9 @@ components:
       properties:
         id: { type: integer, format: int64 }
         target_date:
-          {
-            type: string,
-            format: date-time,
-            description: Stored as DATE in DB,
-            serialized as time,
-          }
+          type: string
+          format: date
+          description: Stored as DATE in DB
         group_id: { type: integer }
         event_type:
           type: string
