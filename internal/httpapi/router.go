@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
 	"ispo-schedule/internal/auth"
 	"ispo-schedule/internal/config"
@@ -34,6 +35,9 @@ func NewRouter(deps RouterDeps) http.Handler {
 	r.Use(securityHeadersMiddleware())
 	r.Use(corsMiddleware(deps.Config.Server.CORS))
 	r.Use(requestIDMiddleware())
+	if deps.Config.Server.Tracing.Enabled {
+		r.Use(otelgin.Middleware(deps.Config.Server.Tracing.ServiceName))
+	}
 	r.Use(requestLoggingMiddleware())
 	r.Use(metricsMiddleware(deps.DBPing))
 
@@ -147,6 +151,12 @@ func NewRouter(deps RouterDeps) http.Handler {
 		admin := v1.Group("/admin")
 		admin.Use(adminGateMiddleware(deps.Config.Admin.APIKey, deps.Tokens, deps.Repo))
 		{
+			if deps.Config.Server.Debug.Pprof.Enabled {
+				debug := admin.Group("/debug")
+				debug.Use(requireAnyRole(auth.RoleAdmin))
+				registerPprofRoutes(debug)
+			}
+
 			adminRead := admin.Group("")
 			adminRead.Use(requireAnyPermission(PermAdminRead))
 			{

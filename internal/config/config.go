@@ -28,7 +28,24 @@ type ServerConfig struct {
 	MaxHeaderBytes          int             `mapstructure:"max_header_bytes"`
 	AdminImportMaxBodyBytes int64           `mapstructure:"admin_import_max_body_bytes"`
 	CORS                    CORSConfig      `mapstructure:"cors"`
+	Debug                   DebugConfig     `mapstructure:"debug"`
 	RateLimit               RateLimitConfig `mapstructure:"rate_limit"`
+	Tracing                 TracingConfig   `mapstructure:"tracing"`
+}
+
+type DebugConfig struct {
+	Pprof PprofConfig `mapstructure:"pprof"`
+}
+
+type PprofConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+}
+
+type TracingConfig struct {
+	Enabled          bool    `mapstructure:"enabled"`
+	ServiceName      string  `mapstructure:"service_name"`
+	OTLPHTTPEndpoint string  `mapstructure:"otlp_http_endpoint"`
+	SampleRatio      float64 `mapstructure:"sample_ratio"`
 }
 
 type CORSConfig struct {
@@ -164,6 +181,15 @@ func Load(opts LoadOptions) (*Config, error) {
 	}
 	if cfg.Push.FCM.Timeout == 0 {
 		cfg.Push.FCM.Timeout = 5 * time.Second
+	}
+
+	if cfg.Server.Tracing.ServiceName == "" {
+		cfg.Server.Tracing.ServiceName = "ispo-schedule"
+	}
+	if cfg.Server.Tracing.Enabled {
+		if cfg.Server.Tracing.SampleRatio <= 0 {
+			cfg.Server.Tracing.SampleRatio = 0.1
+		}
 	}
 
 	// Rate limit defaults (applied only when rule is enabled).

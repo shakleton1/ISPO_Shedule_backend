@@ -42,6 +42,16 @@ func Run() error {
 
 	obs.InitLogger(cfg.Log)
 
+	tracingShutdown, err := obs.InitTracing(context.Background(), obs.TracingConfig{
+		Enabled:          cfg.Server.Tracing.Enabled,
+		ServiceName:      cfg.Server.Tracing.ServiceName,
+		OTLPHTTPEndpoint: cfg.Server.Tracing.OTLPHTTPEndpoint,
+		SampleRatio:      cfg.Server.Tracing.SampleRatio,
+	})
+	if err != nil {
+		return err
+	}
+
 	gormDB, err := db.Open(cfg.DB)
 	if err != nil {
 		return err
@@ -111,11 +121,18 @@ func Run() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		_ = srv.Shutdown(ctx)
+		_ = tracingShutdown(ctx)
 		return nil
 	case err := <-errCh:
 		if err == nil || err == http.ErrServerClosed {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = tracingShutdown(ctx)
 			return nil
 		}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = tracingShutdown(ctx)
 		return fmt.Errorf("http server: %w", err)
 	}
 }
