@@ -27,6 +27,7 @@ type RouterDeps struct {
 func NewRouter(deps RouterDeps) http.Handler {
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(requestIDMiddleware())
 	r.Use(requestLoggingMiddleware())
 	r.Use(metricsMiddleware(deps.DBPing))
 
@@ -91,7 +92,17 @@ func NewRouter(deps RouterDeps) http.Handler {
 			authGroup.POST(
 				"/login",
 				rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.Login, "auth_login"),
-				handleLogin(deps.Tokens, deps.Repo),
+				handleLogin(deps.Tokens, deps.Repo, deps.Config.Auth.RefreshTokenTTL),
+			)
+			authGroup.POST(
+				"/refresh",
+				rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.Login, "auth_refresh"),
+				handleRefresh(deps.Tokens, deps.Repo, deps.Config.Auth.RefreshTokenTTL),
+			)
+			authGroup.POST(
+				"/logout",
+				rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.Login, "auth_logout"),
+				handleLogout(deps.Repo),
 			)
 			// /me requires JWT
 			authGroup.GET("/me", authMiddleware(deps.Tokens, deps.Repo), handleMe(deps.Repo))
@@ -124,7 +135,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 		admin.Use(adminGateMiddleware(deps.Config.Admin.APIKey, deps.Tokens, deps.Repo))
 		{
 			adminRead := admin.Group("")
-			adminRead.Use(requireAnyRole(auth.RoleAdmin, auth.RoleDispatcher, auth.RoleViewer))
+			adminRead.Use(requireAnyPermission(PermAdminRead))
 			{
 				adminRead.GET("/groups", handleAdminListGroups(deps.Repo))
 				adminRead.GET("/subjects", handleAdminListSubjects(deps.Repo))
@@ -149,7 +160,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 			}
 
 			adminDictWrite := admin.Group("")
-			adminDictWrite.Use(requireAnyRole(auth.RoleAdmin))
+			adminDictWrite.Use(requireAnyPermission(PermDictWrite))
 			{
 				adminDictWrite.POST("/groups", handleAdminCreateGroup(deps.Repo))
 				adminDictWrite.PUT("/groups/:id", handleAdminUpdateGroup(deps.Repo))
@@ -189,18 +200,23 @@ func NewRouter(deps RouterDeps) http.Handler {
 			}
 
 			adminScheduleWrite := admin.Group("")
-			adminScheduleWrite.Use(requireAnyRole(auth.RoleAdmin, auth.RoleDispatcher))
+			adminScheduleWrite.Use(requireAnyPermission(PermScheduleWrite))
 			{
-				adminScheduleWrite.POST(
-					"/import/templates/csv",
-					rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
-					handleAdminImportTemplatesCSV(deps.Repo, deps.Push),
-				)
-				adminScheduleWrite.POST(
-					"/import/templates/xlsx",
-					rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
-					handleAdminImportTemplatesXLSX(deps.Repo, deps.Push),
-				)
+				// Import is restricted by permission (admin by default).
+				adminImport := adminScheduleWrite.Group("")
+				adminImport.Use(requireAnyPermission(PermImport))
+				{
+					adminImport.POST(
+						"/import/templates/csv",
+						rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
+						handleAdminImportTemplatesCSV(deps.Repo, deps.Push),
+					)
+					adminImport.POST(
+						"/import/templates/xlsx",
+						rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
+						handleAdminImportTemplatesXLSX(deps.Repo, deps.Push),
+					)
+				}
 
 				adminScheduleWrite.POST("/templates", handleAdminCreateTemplate(deps.Repo, deps.Push))
 				adminScheduleWrite.PUT("/templates/:id", handleAdminUpdateTemplate(deps.Repo, deps.Push))

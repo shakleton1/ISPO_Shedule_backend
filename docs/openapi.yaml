@@ -89,6 +89,44 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Rotate refresh token and get new JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "204":
+          description: No Content
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
   /api/v1/auth/me:
     get:
       tags: [Auth]
@@ -1557,13 +1595,31 @@ components:
 
     LoginResponse:
       type: object
-      required: [access_token, expires_at, role]
+      required:
+        [access_token, expires_at, refresh_token, refresh_expires_at, role]
       properties:
         access_token: { type: string }
         expires_at: { type: string, format: date-time }
+        refresh_token: { type: string }
+        refresh_expires_at: { type: string, format: date-time }
         role:
           type: string
           enum: [student, dispatcher, admin, viewer]
+
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token: { type: string }
+
+    RefreshResponse:
+      type: object
+      required: [access_token, expires_at, refresh_token, refresh_expires_at]
+      properties:
+        access_token: { type: string }
+        expires_at: { type: string, format: date-time }
+        refresh_token: { type: string }
+        refresh_expires_at: { type: string, format: date-time }
 
     MeResponse:
       type: object

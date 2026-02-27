@@ -392,8 +392,8 @@ func dateOnly(t time.Time) time.Time {
 }
 
 func ptrString(v string) *string { return &v }
-func ptrInt(v int) *int         { return &v }
-func ptrI16(v int16) *int16     { return &v }
+func ptrInt(v int) *int          { return &v }
+func ptrI16(v int16) *int16      { return &v }
 
 func firstNonEmpty(values ...string) string {
 	for _, v := range values {

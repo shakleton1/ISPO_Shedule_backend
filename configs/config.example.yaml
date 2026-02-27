@@ -44,6 +44,7 @@ auth:
   # JWT secret для подписи access token (HMAC). В проде должен быть длинным и случайным.
   jwt_secret: "dev-secret-change-me"
   access_token_ttl: "12h"
+  refresh_token_ttl: "720h" # 30 days
   # Bootstrap админа при старте (если такого логина еще нет).
   bootstrap_admin_login: "admin"
   bootstrap_admin_password: "admin123"

@@ -63,6 +63,7 @@ type AdminConfig struct {
 type AuthConfig struct {
 	JWTSecret              string        `mapstructure:"jwt_secret"`
 	AccessTokenTTL         time.Duration `mapstructure:"access_token_ttl"`
+	RefreshTokenTTL        time.Duration `mapstructure:"refresh_token_ttl"`
 	BootstrapAdminLogin    string        `mapstructure:"bootstrap_admin_login"`
 	BootstrapAdminPassword string        `mapstructure:"bootstrap_admin_password"`
 }
@@ -127,6 +128,9 @@ func Load(opts LoadOptions) (*Config, error) {
 	}
 	if cfg.Auth.AccessTokenTTL == 0 {
 		cfg.Auth.AccessTokenTTL = 12 * time.Hour
+	}
+	if cfg.Auth.RefreshTokenTTL == 0 {
+		cfg.Auth.RefreshTokenTTL = 30 * 24 * time.Hour
 	}
 	if cfg.Push.FCM.Timeout == 0 {
 		cfg.Push.FCM.Timeout = 5 * time.Second

@@ -1,7 +1,6 @@
 package httpapi
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -441,9 +440,19 @@ func auditActorFromContext(c *gin.Context) (actorType string, actorID *int64, ac
 
 func writeAudit(c *gin.Context, repo *schedule.Repository, action, entityType, entityID string, payload any) {
 	actorType, actorID, actorLogin, actorRole := auditActorFromContext(c)
-	var b []byte
-	if payload != nil {
-		b, _ = json.Marshal(payload)
+	b := sanitizeAuditPayload(payload)
+	rid := requestIDFromContext(c)
+	ip := c.ClientIP()
+	ua := c.GetHeader("User-Agent")
+	var ridPtr, ipPtr, uaPtr *string
+	if rid != "" {
+		ridPtr = &rid
+	}
+	if ip != "" {
+		ipPtr = &ip
+	}
+	if ua != "" {
+		uaPtr = &ua
 	}
 	_ = repo.CreateAuditLog(&schedule.AuditLog{
 		ActorType:  actorType,
@@ -452,6 +461,9 @@ func writeAudit(c *gin.Context, repo *schedule.Repository, action, entityType, e
 		ActorRole:  actorRole,
 		Method:     c.Request.Method,
 		Path:       c.FullPath(),
+		RequestID:  ridPtr,
+		IP:         ipPtr,
+		UserAgent:  uaPtr,
 		Action:     action,
 		EntityType: entityType,
 		EntityID:   entityID,
