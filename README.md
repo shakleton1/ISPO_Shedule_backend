@@ -93,6 +93,26 @@ go run .\cmd\api
 - OpenAPI: `GET http://127.0.0.1:8080/openapi.yaml`
 - Swagger UI: `GET http://127.0.0.1:8080/docs`
 
+## DX (удобные команды)
+
+Для Windows есть простые скрипты в `scripts/`:
+
+- Postgres: `powershell -File .\scripts\db-up.ps1`
+- Миграции: `powershell -File .\scripts\migrate-up.ps1`
+- Seed: `powershell -File .\scripts\seed.ps1`
+- Run API: `powershell -File .\scripts\run-api.ps1`
+- Test: `powershell -File .\scripts\test.ps1`
+- Lint: `powershell -File .\scripts\lint.ps1`
+
+Также добавлен `Taskfile.yml` (если используете task runner):
+
+- `task db:up`
+- `task migrate:up`
+- `task seed`
+- `task run`
+- `task test`
+- `task lint`
+
 ## Эндпоинты (кратко)
 
 ### Публичные (без auth)

@@ -1,0 +1,15 @@
+run:
+  timeout: 5m
+  go: "1.22"
+
+linters:
+  disable-all: true
+  enable:
+    - govet
+    - staticcheck
+    - ineffassign
+    - typecheck
+    - gofmt
+
+issues:
+  exclude-use-default: false

@@ -1,0 +1,78 @@
+version: "3"
+
+vars:
+  DB_HOST: { default: "localhost" }
+  DB_PORT: { default: "5432" }
+  DB_USER: { default: "postgres" }
+  DB_PASSWORD: { default: "postgres" }
+  DB_NAME: { default: "ispo_schedule" }
+  DB_SSLMODE: { default: "disable" }
+
+  GOOSE_DRIVER: postgres
+  GOOSE_DBSTRING: "host={{.DB_HOST}} port={{.DB_PORT}} user={{.DB_USER}} password={{.DB_PASSWORD}} dbname={{.DB_NAME}} sslmode={{.DB_SSLMODE}}"
+
+  GOLANGCI_LINT_VERSION: v1.62.2
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  db:up:
+    desc: Start dev Postgres via docker compose
+    cmds:
+      - docker compose up -d
+
+  db:down:
+    desc: Stop dev Postgres
+    cmds:
+      - docker compose down
+
+  tools:goose:
+    desc: Install goose (Go tool) into GOPATH/bin
+    cmds:
+      - go install github.com/pressly/goose/v3/cmd/goose@latest
+
+  tools:golangci-lint:
+    desc: Install golangci-lint into GOPATH/bin
+    cmds:
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}}
+
+  migrate:up:
+    desc: Apply DB migrations (goose up)
+    cmds:
+      - |
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "$goose = Join-Path (go env GOPATH) 'bin\goose.exe'; if (-not (Test-Path $goose)) { go install github.com/pressly/goose/v3/cmd/goose@latest }; $env:GOOSE_DRIVER='{{.GOOSE_DRIVER}}'; $env:GOOSE_DBSTRING='{{.GOOSE_DBSTRING}}'; & $goose -dir .\db\migrations up"
+
+  migrate:status:
+    desc: Show migration status (goose status)
+    cmds:
+      - |
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "$goose = Join-Path (go env GOPATH) 'bin\goose.exe'; if (-not (Test-Path $goose)) { go install github.com/pressly/goose/v3/cmd/goose@latest }; $env:GOOSE_DRIVER='{{.GOOSE_DRIVER}}'; $env:GOOSE_DBSTRING='{{.GOOSE_DBSTRING}}'; & $goose -dir .\db\migrations status"
+
+  seed:
+    desc: Seed minimal dev data
+    cmds:
+      - go run .\cmd\seed
+
+  run:
+    desc: Run API locally
+    cmds:
+      - go run .\cmd\api
+
+  test:
+    desc: Run unit tests
+    cmds:
+      - go test ./...
+
+  fmt:
+    desc: Format code (go fmt)
+    cmds:
+      - go fmt ./...
+
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - |
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "$lint = Join-Path (go env GOPATH) 'bin\golangci-lint.exe'; if (-not (Test-Path $lint)) { go install github.com/golangci/golangci-lint/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}} }; $env:GOMAXPROCS='1'; & $lint run ./... --timeout=5m --modules-download-mode=readonly --print-resources-usage --tests=false --exclude-dirs '(^|\\)\\.venv($|\\)' --concurrency 1 --fast --verbose"
