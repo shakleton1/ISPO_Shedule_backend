@@ -8,7 +8,9 @@ $lint = Join-Path $goPath 'bin\golangci-lint.exe'
 
 if (-not (Test-Path $lint)) {
   Write-Host "Installing golangci-lint..." -ForegroundColor Yellow
-  go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.2
+  $v = $env:ISPO_GOLANGCI_LINT_VERSION
+  if ([string]::IsNullOrWhiteSpace($v)) { $v = 'latest' }
+  go install "github.com/golangci/golangci-lint/cmd/golangci-lint@$v"
 }
 
 Write-Host "Using golangci-lint: $lint" -ForegroundColor DarkGray

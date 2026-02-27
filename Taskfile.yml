@@ -11,7 +11,9 @@ vars:
   GOOSE_DRIVER: postgres
   GOOSE_DBSTRING: "host={{.DB_HOST}} port={{.DB_PORT}} user={{.DB_USER}} password={{.DB_PASSWORD}} dbname={{.DB_NAME}} sslmode={{.DB_SSLMODE}}"
 
-  GOLANGCI_LINT_VERSION: v1.62.2
+  # NOTE: Go 1.24 requires a recent golangci-lint build.
+  # Use @latest by default; pin later if you want fully reproducible tool versions.
+  GOLANGCI_LINT_VERSION: latest
 
 tasks:
   default:
