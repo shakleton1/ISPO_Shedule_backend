@@ -79,6 +79,14 @@ type CourseAssignmentFilters struct {
 	TeacherID *int
 }
 
+type CourseAssignmentTeacherView struct {
+	ID          int64  `gorm:"column:id"`
+	Semester    int16  `gorm:"column:semester"`
+	SubjectID   int    `gorm:"column:subject_id"`
+	Subgroup    *int16 `gorm:"column:subgroup"`
+	TeacherName *string
+}
+
 func (r *Repository) ListCourseAssignments(filters CourseAssignmentFilters) ([]CourseAssignment, error) {
 	q := r.db.Model(&CourseAssignment{}).Order("group_id asc, semester asc, subject_id asc, COALESCE(subgroup, 0) asc, id asc")
 	if filters.GroupID != nil {
@@ -138,4 +146,19 @@ func (r *Repository) EnsureTeacherSubjectAllowed(teacherID int, subjectID int) e
 		return fmt.Errorf("teacher %d is not allowed for subject %d", teacherID, subjectID)
 	}
 	return err
+}
+
+func (r *Repository) ListCourseAssignmentTeachersForGroup(groupID int) ([]CourseAssignmentTeacherView, error) {
+	if groupID <= 0 {
+		return nil, fmt.Errorf("group_id required")
+	}
+
+	var rows []CourseAssignmentTeacherView
+	err := r.db.Table("course_assignments ca").
+		Select("ca.id, ca.semester, ca.subject_id, ca.subgroup, t.name as teacher_name").
+		Joins("LEFT JOIN teachers t ON t.id = ca.teacher_id").
+		Where("ca.group_id = ?", groupID).
+		Order("ca.subject_id asc, COALESCE(ca.subgroup, 0) asc, ca.semester desc, ca.id desc").
+		Scan(&rows).Error
+	return rows, err
 }

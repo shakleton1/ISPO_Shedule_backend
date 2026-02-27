@@ -5,7 +5,68 @@ import (
 	"time"
 )
 
+type assignmentKey struct {
+	SubjectID int
+	Subgroup  int16 // 0 means NULL
+}
+
+func subgroupKey(subgroup *int16) int16 {
+	if subgroup == nil {
+		return 0
+	}
+	return *subgroup
+}
+
+func inferSemesterForDate(d time.Time, course int) *int16 {
+	if course <= 0 || course > 6 {
+		return nil
+	}
+
+	var sem int16
+	switch d.Month() {
+	case time.September, time.October, time.November, time.December:
+		sem = int16((course-1)*2 + 1)
+	case time.January, time.February, time.March, time.April, time.May, time.June:
+		sem = int16((course-1)*2 + 2)
+	default:
+		return nil
+	}
+	if sem < 1 || sem > 12 {
+		return nil
+	}
+	return &sem
+}
+
 func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySchedule, error) {
+	group, err := s.repo.GetGroup(groupID)
+	if err != nil {
+		return nil, err
+	}
+
+	assignmentRows, err := s.repo.ListCourseAssignmentTeachersForGroup(groupID)
+	if err != nil {
+		return nil, err
+	}
+	assignmentsBySemester := map[int16]map[assignmentKey]string{}
+	latestAssignments := map[assignmentKey]string{}
+	for _, a := range assignmentRows {
+		if a.TeacherName == nil || *a.TeacherName == "" {
+			continue
+		}
+		k := assignmentKey{SubjectID: a.SubjectID, Subgroup: subgroupKey(a.Subgroup)}
+		m, ok := assignmentsBySemester[a.Semester]
+		if !ok {
+			m = map[assignmentKey]string{}
+			assignmentsBySemester[a.Semester] = m
+		}
+		if _, exists := m[k]; !exists {
+			m[k] = *a.TeacherName
+		}
+		if _, exists := latestAssignments[k]; !exists {
+			latestAssignments[k] = *a.TeacherName
+		}
+	}
+
 	// Preload calendar exceptions for range
 	exceptions, err := s.repo.ListCalendarExceptionsBetween(startDate, endDate)
 	if err != nil {
@@ -82,6 +143,52 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 		lessons, err := mergeLessons(tpls, ovrs)
 		if err != nil {
 			return nil, err
+		}
+
+		semester := inferSemesterForDate(d, group.Course)
+		var semesterAssignments map[assignmentKey]string
+		if semester != nil {
+			semesterAssignments = assignmentsBySemester[*semester]
+		}
+		for i := range lessons {
+			if lessons[i].TeacherName != "" {
+				continue
+			}
+			if lessons[i].SubjectID == nil {
+				continue
+			}
+
+			// Match subgroup strictly for whole-group lessons; for subgroup lessons allow fallback to whole-group assignment.
+			var candidates []assignmentKey
+			if lessons[i].Subgroup == nil {
+				candidates = []assignmentKey{{SubjectID: *lessons[i].SubjectID, Subgroup: 0}}
+			} else {
+				candidates = []assignmentKey{
+					{SubjectID: *lessons[i].SubjectID, Subgroup: subgroupKey(lessons[i].Subgroup)},
+					{SubjectID: *lessons[i].SubjectID, Subgroup: 0},
+				}
+			}
+
+			var resolved string
+			if semesterAssignments != nil {
+				for _, k := range candidates {
+					if v, ok := semesterAssignments[k]; ok {
+						resolved = v
+						break
+					}
+				}
+			}
+			if resolved == "" {
+				for _, k := range candidates {
+					if v, ok := latestAssignments[k]; ok {
+						resolved = v
+						break
+					}
+				}
+			}
+			if resolved != "" {
+				lessons[i].TeacherName = resolved
+			}
 		}
 
 		// Sort lessons by pair_number then subgroup
