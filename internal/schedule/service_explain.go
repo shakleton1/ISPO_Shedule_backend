@@ -43,6 +43,10 @@ func (s *Service) ExplainSlot(groupID int, date time.Time, pairNumber int16, sub
 	if err != nil {
 		return nil, err
 	}
+	chainIDs, err := s.scheduleInheritanceChainIDs(groupID)
+	if err != nil {
+		return nil, err
+	}
 
 	state, err := s.repo.GetSystemState()
 	if err != nil {
@@ -75,19 +79,46 @@ func (s *Service) ExplainSlot(groupID int, date time.Time, pairNumber int16, sub
 
 	var tplsPub, tplsDraft []TemplateView
 	if !nonTeaching {
-		tplsPub, err = s.repo.ListTemplatesForStatus(groupID, dayOfWeek, parity, StatusPublished)
-		if err != nil {
-			return nil, err
+		// Published templates: inherit from schedule source chain, leaf wins.
+		tplByKey := map[slotKey]TemplateView{}
+		for _, gid := range chainIDs {
+			rows, err := s.repo.ListTemplatesForStatus(gid, dayOfWeek, parity, StatusPublished)
+			if err != nil {
+				return nil, err
+			}
+			for _, t := range rows {
+				tplByKey[slotKey{PairNumber: t.PairNumber, Subgroup: subgroupKey(t.Subgroup)}] = t
+			}
 		}
+		tplsPub = make([]TemplateView, 0, len(tplByKey))
+		for _, v := range tplByKey {
+			tplsPub = append(tplsPub, v)
+		}
+
+		// Draft templates: only for this group.
 		tplsDraft, err = s.repo.ListTemplatesForStatus(groupID, dayOfWeek, parity, StatusDraft)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	ovrsRaw, err := s.repo.ListOverridesForDate(groupID, date)
-	if err != nil {
-		return nil, err
+	ovrByKey := map[overrideKey]OverrideView{}
+	for _, gid := range chainIDs {
+		rows, err := s.repo.ListOverridesForDate(gid, date)
+		if err != nil {
+			return nil, err
+		}
+		for _, o := range rows {
+			k := overrideKey{PairNumber: o.PairNumber, Subgroup: -1}
+			if o.Subgroup != nil {
+				k.Subgroup = *o.Subgroup
+			}
+			ovrByKey[k] = o
+		}
+	}
+	ovrsRaw := make([]OverrideView, 0, len(ovrByKey))
+	for _, v := range ovrByKey {
+		ovrsRaw = append(ovrsRaw, v)
 	}
 	ovrsNorm := normalizeOverrides(ovrsRaw)
 
@@ -103,9 +134,13 @@ func (s *Service) ExplainSlot(groupID int, date time.Time, pairNumber int16, sub
 	}
 
 	// Auto-fill teacher names from published course assignments (same logic as in buildDays).
-	assignmentRows, err := s.repo.ListCourseAssignmentTeachersForGroup(groupID)
-	if err != nil {
-		return nil, err
+	assignmentRows := make([]CourseAssignmentTeacherView, 0)
+	for i := len(chainIDs) - 1; i >= 0; i-- {
+		rows, err := s.repo.ListCourseAssignmentTeachersForGroup(chainIDs[i])
+		if err != nil {
+			return nil, err
+		}
+		assignmentRows = append(assignmentRows, rows...)
 	}
 	assignmentsBySemester := map[int16]map[assignmentKey]assignmentResolve{}
 	latestAssignments := map[assignmentKey]assignmentResolve{}

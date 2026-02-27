@@ -76,6 +76,32 @@ func (r *Repository) UpdateGroup(id int, patch *Group) (*Group, error) {
 	}
 	row.Name = patch.Name
 	row.Course = patch.Course
+	if patch.ScheduleSourceGroupID != nil {
+		if *patch.ScheduleSourceGroupID == row.ID {
+			return nil, fmt.Errorf("schedule_source_group_id must not point to self")
+		}
+		// Cycle check: follow schedule_source_group_id pointers.
+		seen := map[int]bool{row.ID: true}
+		next := *patch.ScheduleSourceGroupID
+		for depth := 0; depth < 10; depth++ {
+			if next <= 0 {
+				break
+			}
+			if seen[next] {
+				return nil, fmt.Errorf("schedule_source_group_id cycle detected")
+			}
+			seen[next] = true
+			var g Group
+			if err := r.db.First(&g, next).Error; err != nil {
+				return nil, err
+			}
+			if g.ScheduleSourceGroupID == nil {
+				break
+			}
+			next = *g.ScheduleSourceGroupID
+		}
+		row.ScheduleSourceGroupID = patch.ScheduleSourceGroupID
+	}
 	if patch.CurriculumID != nil {
 		row.CurriculumID = patch.CurriculumID
 	}

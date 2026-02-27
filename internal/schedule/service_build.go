@@ -53,10 +53,19 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 	if err != nil {
 		return nil, err
 	}
-
-	assignmentRows, err := s.repo.ListCourseAssignmentTeachersForGroup(groupID)
+	chainIDs, err := s.scheduleInheritanceChainIDs(groupID)
 	if err != nil {
 		return nil, err
+	}
+
+	assignmentRows := make([]CourseAssignmentTeacherView, 0)
+	// Process leaf->base so this group's assignments win.
+	for i := len(chainIDs) - 1; i >= 0; i-- {
+		rows, err := s.repo.ListCourseAssignmentTeachersForGroup(chainIDs[i])
+		if err != nil {
+			return nil, err
+		}
+		assignmentRows = append(assignmentRows, rows...)
 	}
 	assignmentsBySemester := map[int16]map[assignmentKey]assignmentResolve{}
 	latestAssignments := map[assignmentKey]assignmentResolve{}
@@ -104,9 +113,13 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 		overlayText[o.TargetDate.Format("2006-01-02")] = o.Text
 	}
 
-	events, err := s.repo.ListDayEventsBetween(groupID, startDate, endDate)
-	if err != nil {
-		return nil, err
+	events := make([]dayEventViewRow, 0)
+	for _, gid := range chainIDs {
+		rows, err := s.repo.ListDayEventsBetween(gid, startDate, endDate)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, rows...)
 	}
 	eventsByDay := map[string][]DayEvent{}
 	for _, e := range events {
@@ -147,15 +160,39 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 
 		var tpls []TemplateView
 		if !nonTeaching {
-			tpls, err = s.repo.ListTemplatesFor(groupID, dayOfWeek, parity)
-			if err != nil {
-				return nil, err
+			tplByKey := map[slotKey]TemplateView{}
+			for _, gid := range chainIDs {
+				rows, err := s.repo.ListTemplatesFor(gid, dayOfWeek, parity)
+				if err != nil {
+					return nil, err
+				}
+				for _, t := range rows {
+					tplByKey[slotKey{PairNumber: t.PairNumber, Subgroup: subgroupKey(t.Subgroup)}] = t
+				}
+			}
+			tpls = make([]TemplateView, 0, len(tplByKey))
+			for _, v := range tplByKey {
+				tpls = append(tpls, v)
 			}
 		}
 
-		ovrs, err := s.repo.ListOverridesForDate(groupID, d)
-		if err != nil {
-			return nil, err
+		ovrByKey := map[overrideKey]OverrideView{}
+		for _, gid := range chainIDs {
+			rows, err := s.repo.ListOverridesForDate(gid, d)
+			if err != nil {
+				return nil, err
+			}
+			for _, o := range rows {
+				k := overrideKey{PairNumber: o.PairNumber, Subgroup: -1}
+				if o.Subgroup != nil {
+					k.Subgroup = *o.Subgroup
+				}
+				ovrByKey[k] = o
+			}
+		}
+		ovrs := make([]OverrideView, 0, len(ovrByKey))
+		for _, v := range ovrByKey {
+			ovrs = append(ovrs, v)
 		}
 
 		lessons, err := mergeLessons(tpls, ovrs)

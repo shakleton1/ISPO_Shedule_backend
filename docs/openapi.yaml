@@ -1584,6 +1584,7 @@ components:
         id: { type: integer }
         name: { type: string }
         course: { type: integer }
+        schedule_source_group_id: { type: integer, nullable: true }
         curriculum_id: { type: integer, format: int64, nullable: true }
         admission_year: { type: integer, nullable: true }
         specialty_id: { type: integer, nullable: true }
