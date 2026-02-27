@@ -8,6 +8,5 @@ dist/
 
 .env
 
-# Local planning + Go checksum file (per repo policy)
+# Local planning file
 BACKEND_PLAN.txt
-go.sum

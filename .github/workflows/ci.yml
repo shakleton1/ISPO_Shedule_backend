@@ -32,11 +32,14 @@ jobs:
           which go
           go version
 
+      - name: Download Go modules
+        run: go mod download
+
       - name: Lint
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
-          args: --timeout=10m --print-resources-usage
+          args: --timeout=10m --print-resources-usage --modules-download-mode=readonly
         env:
           GOTOOLCHAIN: go1.24.0+auto
 
