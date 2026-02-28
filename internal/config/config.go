@@ -18,6 +18,7 @@ type Config struct {
 	Auth     AuthConfig     `mapstructure:"auth"`
 	Push     PushConfig     `mapstructure:"push"`
 	PDF      PDFConfig      `mapstructure:"pdf"`
+	Env      string         `mapstructure:"env"`
 }
 
 type ServerConfig struct {
@@ -157,6 +158,17 @@ func Load(opts LoadOptions) (*Config, error) {
 		return nil, fmt.Errorf("unmarshal config: %w", err)
 	}
 
+	cfg.Env = strings.TrimSpace(strings.ToLower(cfg.Env))
+	if cfg.Env == "" {
+		cfg.Env = "dev"
+	}
+	switch cfg.Env {
+	case "dev", "prod", "test":
+		// ok
+	default:
+		return nil, fmt.Errorf("env: unknown value %q (expected dev|prod|test)", cfg.Env)
+	}
+
 	if cfg.Server.Addr == "" {
 		cfg.Server.Addr = "127.0.0.1:8080"
 	}
@@ -237,6 +249,22 @@ func Load(opts LoadOptions) (*Config, error) {
 		}
 		if cfg.Server.RateLimit.AdminImport.Burst <= 0 {
 			cfg.Server.RateLimit.AdminImport.Burst = 1
+		}
+	}
+		// Guardrails: refuse to start with dev defaults.
+		secret := strings.TrimSpace(cfg.Auth.JWTSecret)
+		if secret == "" || secret == "dev-secret-change-me" || len(secret) < 32 {
+			return nil, fmt.Errorf("auth.jwt_secret: must be a strong secret in prod")
+		}
+		if strings.TrimSpace(cfg.Admin.APIKey) == "" {
+			return nil, fmt.Errorf("admin.api_key: must be set in prod")
+		}
+		if cfg.Server.CORS.AllowCredentials {
+			for _, o := range cfg.Server.CORS.AllowedOrigins {
+				if strings.TrimSpace(o) == "*" {
+					return nil, fmt.Errorf("server.cors.allowed_origins: cannot contain '*' when allow_credentials=true")
+				}
+			}
 		}
 	}
 

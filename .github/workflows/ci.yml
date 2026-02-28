@@ -10,6 +10,20 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ispo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" \
+          --health-interval 10s \
+          --health-timeout 5s \
+          --health-retries 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,7 +36,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24.0'
+          go-version: "1.24.0"
           cache: true
 
       - name: Go toolchain info
@@ -40,6 +54,46 @@ jobs:
       - name: Download Go modules
         run: go mod download
 
+      - name: Dependency audit (tidy/verify)
+        env:
+          GOTOOLCHAIN: go1.24.0+auto
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+          go mod verify
+
+      - name: Govulncheck
+        env:
+          GOTOOLCHAIN: go1.24.0+auto
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+      - name: Build Docker image (for scan)
+        run: docker build -t ispo-schedule:ci .
+
+      - name: Trivy scan (filesystem)
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/work" \
+            -w /work \
+            aquasec/trivy:0.49.1 fs \
+            --scanners vuln,secret,misconfig \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            --no-progress \
+            .
+
+      - name: Trivy scan (image)
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:0.49.1 image \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            --no-progress \
+            ispo-schedule:ci
+
       - name: Lint
         uses: golangci/golangci-lint-action@v6
         with:
@@ -52,3 +106,9 @@ jobs:
         env:
           GOTOOLCHAIN: go1.24.0+auto
         run: go test ./...
+
+      - name: Integration smoke (Postgres + migrations)
+        env:
+          GOTOOLCHAIN: go1.24.0+auto
+          ISPO_TEST_DATABASE_URL: "postgres://postgres:postgres@localhost:5432/ispo_test?sslmode=disable"
+        run: go test -tags=integration ./internal/integration -count=1

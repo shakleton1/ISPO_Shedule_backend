@@ -1,3 +1,7 @@
+# Environment: dev|prod|test
+# In prod, startup guardrails require a strong auth.jwt_secret and non-empty admin.api_key.
+env: "dev"
+
 server:
   addr: "127.0.0.1:8080"
   read_timeout: "10s"
