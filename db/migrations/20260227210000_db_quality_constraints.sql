@@ -18,6 +18,7 @@ CREATE INDEX IF NOT EXISTS idx_curricula_deleted_at ON curricula(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_teacher_subjects_teacher_id ON teacher_subjects(teacher_id);
 
 -- 3) Hard guarantee: course_assignments.curriculum_item_id belongs to group.curriculum_id.
+-- +goose StatementBegin
 CREATE OR REPLACE FUNCTION ispo_validate_course_assignment_curriculum_item()
 RETURNS trigger AS $$
 DECLARE
@@ -53,6 +54,7 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+-- +goose StatementEnd
 
 DROP TRIGGER IF EXISTS trg_course_assignments_validate_curriculum_item ON course_assignments;
 CREATE TRIGGER trg_course_assignments_validate_curriculum_item
