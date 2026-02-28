@@ -251,6 +251,8 @@ func Load(opts LoadOptions) (*Config, error) {
 			cfg.Server.RateLimit.AdminImport.Burst = 1
 		}
 	}
+
+	if cfg.Env == "prod" {
 		// Guardrails: refuse to start with dev defaults.
 		secret := strings.TrimSpace(cfg.Auth.JWTSecret)
 		if secret == "" || secret == "dev-secret-change-me" || len(secret) < 32 {
