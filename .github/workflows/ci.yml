@@ -33,12 +33,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24.0"
+          go-version: "1.25.x"
           cache: true
 
       - name: Go toolchain info
-        env:
-          GOTOOLCHAIN: go1.24.0
         run: |
           go version
           go env GOTOOLCHAIN
@@ -52,16 +50,12 @@ jobs:
         run: go mod download
 
       - name: Dependency audit (tidy/verify)
-        env:
-          GOTOOLCHAIN: go1.24.0
         run: |
-          go mod tidy -go=1.24
+          go mod tidy -go=1.25
           git diff --exit-code go.mod go.sum
           go mod verify
 
       - name: Govulncheck
-        env:
-          GOTOOLCHAIN: go1.24.0
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...

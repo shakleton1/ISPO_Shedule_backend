@@ -1,6 +1,6 @@
 module ispo-schedule
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/chromedp/cdproto v0.0.0-20240801214329-3f85d328b335
