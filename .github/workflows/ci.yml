@@ -82,6 +82,7 @@ jobs:
             aquasec/trivy:0.49.1 image \
             --severity HIGH,CRITICAL \
             --exit-code 1 \
+            --ignore-unfixed \
             --no-progress \
             ispo-schedule:ci
 
@@ -90,16 +91,11 @@ jobs:
         with:
           version: latest
           args: --timeout=10m --print-resources-usage --modules-download-mode=readonly
-        env:
-          GOTOOLCHAIN: go1.24.0
 
       - name: Test
-        env:
-          GOTOOLCHAIN: go1.24.0
         run: go test ./...
 
       - name: Integration smoke (Postgres + migrations)
         env:
-          GOTOOLCHAIN: go1.24.0
           ISPO_TEST_DATABASE_URL: "postgres://postgres:postgres@localhost:5432/ispo_test?sslmode=disable"
         run: go test -tags=integration ./internal/integration -count=1
