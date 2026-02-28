@@ -3,6 +3,7 @@
 ALTER TABLE groups
   ADD COLUMN IF NOT EXISTS schedule_source_group_id INT NULL;
 
+-- +goose StatementBegin
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -16,7 +17,9 @@ BEGIN
       REFERENCES groups(id)
       ON DELETE SET NULL;
   END IF;
-END $$;
+END;
+$$;
+-- +goose StatementEnd
 
 CREATE INDEX IF NOT EXISTS idx_groups_schedule_source_group_id
   ON groups(schedule_source_group_id);
