@@ -27,6 +27,16 @@ type RouterDeps struct {
 
 func NewRouter(deps RouterDeps) http.Handler {
 	r := gin.New()
+	if len(deps.Config.Server.Proxy.TrustedProxies) > 0 {
+		r.ForwardedByClientIP = true
+		r.RemoteIPHeaders = []string{"X-Forwarded-For", "X-Real-IP"}
+		_ = r.SetTrustedProxies(deps.Config.Server.Proxy.TrustedProxies)
+	} else {
+		// Security default: do not trust client-supplied forwarded IP headers.
+		r.ForwardedByClientIP = false
+		r.RemoteIPHeaders = nil
+		_ = r.SetTrustedProxies([]string{})
+	}
 	r.Use(gin.CustomRecovery(func(c *gin.Context, recovered any) {
 		// Do not leak panic details to clients.
 		_ = recovered

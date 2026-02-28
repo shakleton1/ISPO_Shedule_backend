@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -28,9 +29,16 @@ type ServerConfig struct {
 	MaxHeaderBytes          int             `mapstructure:"max_header_bytes"`
 	AdminImportMaxBodyBytes int64           `mapstructure:"admin_import_max_body_bytes"`
 	CORS                    CORSConfig      `mapstructure:"cors"`
+	Proxy                   ProxyConfig     `mapstructure:"proxy"`
 	Debug                   DebugConfig     `mapstructure:"debug"`
 	RateLimit               RateLimitConfig `mapstructure:"rate_limit"`
 	Tracing                 TracingConfig   `mapstructure:"tracing"`
+}
+
+type ProxyConfig struct {
+	// TrustedProxies is a list of trusted reverse proxy IPs or CIDRs.
+	// If empty, X-Forwarded-For/X-Real-IP headers are ignored to prevent spoofing.
+	TrustedProxies []string `mapstructure:"trusted_proxies"`
 }
 
 type DebugConfig struct {
@@ -190,6 +198,20 @@ func Load(opts LoadOptions) (*Config, error) {
 		if cfg.Server.Tracing.SampleRatio <= 0 {
 			cfg.Server.Tracing.SampleRatio = 0.1
 		}
+	}
+
+	for _, s := range cfg.Server.Proxy.TrustedProxies {
+		s = strings.TrimSpace(s)
+		if s == "" {
+			return nil, fmt.Errorf("server.proxy.trusted_proxies: empty entry")
+		}
+		if ip := net.ParseIP(s); ip != nil {
+			continue
+		}
+		if _, _, err := net.ParseCIDR(s); err == nil {
+			continue
+		}
+		return nil, fmt.Errorf("server.proxy.trusted_proxies: invalid entry %q (expected IP or CIDR)", s)
 	}
 
 	// Rate limit defaults (applied only when rule is enabled).

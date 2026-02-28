@@ -26,6 +26,13 @@ server:
     allowed_headers: ""
     exposed_headers: ""
 
+  # Reverse proxy support (nginx/traefik). Security default: do NOT trust X-Forwarded-For.
+  # To enable real client IP extraction, list your trusted proxy IPs/CIDRs here.
+  proxy:
+    trusted_proxies: []
+    # Пример:
+    # trusted_proxies: ["127.0.0.1", "10.0.0.0/8", "192.168.0.0/16"]
+
   # Debug endpoints (disabled by default).
   # If enabled, pprof is exposed under /api/v1/admin/debug/pprof/* and requires admin access.
   debug:

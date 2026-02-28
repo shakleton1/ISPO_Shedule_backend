@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func requestLoggingMiddleware() gin.HandlerFunc {
@@ -23,6 +24,13 @@ func requestLoggingMiddleware() gin.HandlerFunc {
 			evt = log.Error()
 		} else if c.Writer.Status() >= 400 {
 			evt = log.Warn()
+		}
+
+		sc := trace.SpanFromContext(c.Request.Context()).SpanContext()
+		if sc.IsValid() {
+			evt = evt.
+				Str("trace_id", sc.TraceID().String()).
+				Str("span_id", sc.SpanID().String())
 		}
 
 		evt.
