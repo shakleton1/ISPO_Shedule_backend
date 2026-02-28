@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.24.0-bookworm AS build
+FROM golang:1.25.7-bookworm AS build
 
 WORKDIR /src
 
@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api
 
-RUN CGO_ENABLED=0 go install github.com/pressly/goose/v3/cmd/goose@v3.24.1
+RUN CGO_ENABLED=0 go install github.com/pressly/goose/v3/cmd/goose@v3.26.0
 
 
 FROM debian:bookworm-slim AS runtime
