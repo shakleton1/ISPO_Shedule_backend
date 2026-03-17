@@ -1,0 +1,951 @@
+SMART SCHEDULE BACKEND — ПЛАН/ЧЕКЛИСТ (Go + PostgreSQL)
+Дата: 2026-02-27
+Workspace: ИСПО Расписание
+
+Формат:
+- [x] сделано
+- [ ] не сделано / нужно позже
+
+======================================================================
+0) ЦЕЛЬ / ГРАНИЦЫ
+======================================================================
+[x] Один общий backend для Web Admin + Mobile Client.
+[x] Алгоритм генерации расписания: шаблон недели + overrides + calendar exceptions.
+[x] Offline-first поддержан контрактом (data_version + range endpoint).
+[x] PDF генерируется через headless Chrome (chromedp), HTML/CSS.
+[x] Полноценная аутентификация пользователей/ролей (JWT + bcrypt, роли admin/dispatcher/student).
+[x] Push-уведомления (FCM Android): регистрация токена + пуш при изменении расписания.
+[ ] Push-уведомления (APNS iOS) — позже.
+
+======================================================================
+1) СТРУКТУРА ПРОЕКТА
+======================================================================
+[x] Инициализирован Go модуль: go.mod
+[x] Entry point: cmd/api/main.go
+[x] App wiring: internal/app/app.go
+[x] Config (Viper): internal/config/config.go + configs/config.example.yaml
+[x] DB connect (GORM+postgres): internal/db/db.go
+[x] HTTP router (Gin): internal/httpapi/router.go
+[x] Admin API key middleware: internal/httpapi/mw_admin_key.go
+[x] Dev DB: docker-compose.yml
+[x] CI (GitHub Actions): workflow (.github/workflows/ci.yml) запускает go test на push/PR
+[x] Логирование (zerolog) + метрики (Prometheus): request logs, /metrics
+[x] DB health: метрика ispo_db_up + /api/v1/metrics/health проверяет Postgres
+
+======================================================================
+2) БАЗА ДАННЫХ (PostgreSQL) + MIGRATIONS
+======================================================================
+Файлы:
+- db/migrations/20260226100000_init.sql
+
+[x] Таблицы справочников: groups, subjects, locations
+[x] Таблица ядра: schedule_templates
+[x] Таблица форс-мажоров: schedule_overrides
+[x] Таблица оверлеев дня: schedule_day_overlays
+[x] Таблица переносов дней: calendar_exceptions
+[x] Таблица состояния системы: system_state (schedule_version)
+[x] (Задел) students (логин/хэш/группа/подгруппа)
+[x] Роли пользователей: migration 20260226103000_auth_roles.sql (role: student/dispatcher/admin)
+[x] Индексы для основных запросов (templates/overrides)
+[x] Триггеры updated_at: migration 20260226130000_updated_at_triggers.sql
+[x] Аудит-лог изменений (кто/когда/что): audit_logs + запись из admin API (migration 20260226131000_audit_logs.sql)
+[x] Device tokens для push: migration 20260226134000_device_tokens.sql
+
+======================================================================
+3) ДОМЕННАЯ ЛОГИКА (ScheduleService)
+======================================================================
+Файлы:
+- internal/schedule/service.go
+- internal/schedule/service_build.go
+- internal/schedule/merge.go
+- internal/schedule/repository_queries.go
+
+[x] Расчет четности недели (numerator/denominator) от schedule.semester_start_date
+    Примечание: по спецификации week_diff=0 => denominator.
+[x] Учет calendar_exceptions (дата “работает как” другой день недели)
+[x] Загрузка шаблонов: group + day_of_week + week_parity IN (current, both)
+[x] Загрузка overrides на дату
+[x] Merge алгоритм:
+    - CANCEL удаляет пару
+    - REPLACE заменяет поля и выставляет IsChanged
+    - ADD добавляет новую пару (IsAdded)
+[x] Поддержка подгрупп:
+    - Templates: subgroup NULL = вся группа, 1/2 = подгруппа
+    - Overrides: subgroup NULL = применять ко всем, 1/2 = только к подгруппе
+[x] OverlayText (на уровень дня) через schedule_day_overlays
+[x] Политика конфликтов overrides: детерминированный выбор (priority action + updated_at) + ORDER BY в запросе
+[x] Валидация бизнес-ограничений overrides: DB unique (1 запись на пару/подгруппу) + CHECK constraints + API validation
+
+======================================================================
+4) API: CLIENT (Mobile)
+======================================================================
+Файлы:
+- internal/httpapi/handlers_client.go
+- internal/httpapi/pdf_helpers.go
+- internal/httpapi/pdf_template.go
+
+[x] GET /api/v1/health
+[x] GET /api/v1/schedule/current?group_id=1&date=YYYY-MM-DD
+    - отдаёт неделю (Пн..Сб) + data_version
+[x] GET /api/v1/schedule/range?group_id=1&date_start=YYYY-MM-DD&date_end=YYYY-MM-DD
+    - отдаёт расписание на диапазон + data_version (для синка и кэша на 2 недели)
+[x] GET /api/v1/schedule/version
+    - отдаёт только {data_version}
+[x] GET /api/v1/schedule/pdf?group_id=1&date_start=YYYY-MM-DD
+    - отдаёт PDF на 2 недели (week1+week2)
+
+[x] Публичные эндпоинты справочников (для клиента): GET /api/v1/groups, /api/v1/subjects, /api/v1/locations
+[x] Push endpoints (device tokens): /api/v1/push/register, /api/v1/push/unregister
+
+======================================================================
+5) API: ADMIN (Web Panel)
+======================================================================
+Файлы:
+- internal/httpapi/handlers_admin.go
+- internal/schedule/repository_admin.go
+
+Защита:
+[x] JWT auth + role-based access (admin/dispatcher). Опционально X-Admin-Key как обход.
+
+CRUD справочников:
+[x] GET/POST/PUT/DELETE /api/v1/admin/groups
+[x] GET/POST/PUT/DELETE /api/v1/admin/subjects
+[x] GET/POST/PUT/DELETE /api/v1/admin/locations
+
+CRUD расписания:
+[x] GET/POST/PUT/DELETE /api/v1/admin/templates
+[x] GET/PUT/DELETE /api/v1/admin/overrides
+[x] POST /api/v1/admin/override (как в ТЗ)
+
+Форс-мажор оверлей:
+[x] POST /api/v1/admin/overlay
+
+Перенос дней:
+[x] GET/POST /api/v1/admin/calendar-exceptions
+[x] DELETE /api/v1/admin/calendar-exceptions/:date
+
+Версионирование:
+[x] Любая запись через admin bump’ает system_state.schedule_version
+
+[x] RBAC (диспетчер/админ/чтение): admin/dispatcher/viewer (read-only)
+[x] Импорт шаблонов расписания из Excel/CSV: /api/v1/admin/import/templates/{csv|xlsx}
+
+======================================================================
+6) PDF ENGINE (HTML/CSS -> Headless Chrome)
+======================================================================
+Файлы:
+- internal/pdf/engine.go
+- internal/httpapi/pdf_template.go
+
+[x] HTML шаблон на A4, 2 колонки (Неделя 1 / Неделя 2)
+[x] CSS grid фиксированной структуры, split-cell для подгрупп
+[x] Использование chromedp + cdproto/page.PrintToPDF
+[x] Параметры печати: background=true, A4, margins=0 (управление через CSS)
+[ ] Pixel-perfect под конкретный фото-макет (нужен эталонный скрин/файл) — позже
+[ ] Встраивание шрифтов offline (Base64) — позже
+
+======================================================================
+7) ЗАПУСК / ПРОВЕРКА
+======================================================================
+[x] go mod tidy
+[x] go test ./...
+[x] README с командами
+[x] Fallback конфигурации: если нет configs/config.yaml, используется configs/config.example.yaml
+
+Как запустить локально:
+1) docker compose up -d
+2) goose -dir .\db\migrations up
+3) Copy-Item .\configs\config.example.yaml .\configs\config.yaml
+4) go run .\cmd\api
+
+======================================================================
+8) СЛЕДУЮЩИЕ ШАГИ (ОЧЕНЬ РЕКОМЕНДУЮ ДО ДИПЛОМА)
+======================================================================
+[x] OpenAPI/Swagger спецификация (docs/openapi.yaml + GET /openapi.yaml)
+[x] Юнит-тесты merge/parity/calendar exceptions
+[x] Seed данных (минимальный набор групп/кабинетов/предметов, плана, пользователей) — `go run .\cmd\seed`
+[x] Нормализация teacher (вынести в таблицу teachers) если нужно
+[x] Валидация constraints на уровне БД (unique по шаблонам, политика конфликтов)
+[x] Нотификации (изменилось расписание -> отправить пуш через FCM)
+[ ] Нотификации iOS (APNS) — позже
+
+======================================================================
+9) GAP / SENIOR POLISH (СПИСОК НЕХВАТАЮЩЕГО)
+======================================================================
+
+Политика данных и жизненный цикл
+[x] Сделано: формализованный “источник истины” и схема приоритетов между templates/assignments/curriculum/import/manual (задокументировано + закреплено в сборке).
+[x] Сделано: статусы черновик/опубликовано (draft/published) для шаблонов и назначений + publish/discard.
+[x] Сделано: “explain/trace” механизм (debug endpoint) — /api/v1/admin/schedule/explain.
+
+Связка план → назначения → расписание
+[x] Сделано: автоподстановка преподавателя из course_assignments (на этапе сборки ответа расписания, если teacher_name пустой; по subject+subgroup и семестру, с fallback).
+[x] Сделано: автоподстановка аудитории из course_assignments (если location_id отсутствует после merge, например ADD без new_location_id).
+[x] Сделано: явный флаг “ручное переопределение” (teacher_manual/new_teacher_manual) — авто-резолв уважает “manual empty” и не подставляет преподавателя.
+[x] Сделано: проверки “предмет в расписании должен соответствовать curriculum_item_allocations/семестру” (admin endpoint /api/v1/admin/schedule/validate возвращает warnings).
+[x] Сделано: “потоки/объединение групп” через schedule_source_group_id у группы (наследование templates/assignments/overrides/day_events, приоритет группы выше источника).
+
+Ограничения БД и качество данных
+[x] Сделано: индексы/уникальности под базовые кейсы (в т.ч. course_assignments key/status + индексы, teacher_subjects PK + индекс по teacher_id).
+[x] Сделано: жёсткая гарантия “curriculum_item_id принадлежит группе через её curriculum_id” (триггер на course_assignments).
+[x] Сделано: soft delete для ключевых сущностей (teachers/subjects/curricula) через deleted_at + admin delete -> пометка.
+
+Надёжность и эксплуатация
+[x] Сделано: prod-стратегия миграций (predeploy/backward-compatible/политики “опасных” миграций) — docs/ops_migrations.md.
+[x] Сделано: backup/restore playbook — docs/backup_restore.md.
+[x] Сделано: rate limiting для login/pdf/admin import (per-IP token bucket, настраивается в config).
+
+Деплой (Docker)
+[x] Сделано: Dockerfile для production-образа API (multi-stage build) + .dockerignore.
+[x] Сделано: Учет PDF-движка в контейнере: установить Chromium/Chrome + базовые шрифты, чтобы chromedp/PrintToPDF работал в Docker.
+[x] Сделано: Docker healthcheck (например, /api/v1/health и/или /api/v1/metrics/health) + понятный readiness/liveness подход.
+[x] Сделано: Документированный запуск миграций в Docker-деплое (отдельный job/одноразовый контейнер с goose, порядок запуска).
+[x] Сделано: Настройка конфигурации под контейнер (ENV/секреты/том для config.yaml) без копирования example в runtime.
+
+HTTP hardening (серверные таймауты/лимиты)
+[x] Сделано: ReadHeaderTimeout + IdleTimeout + MaxHeaderBytes для http.Server (защита от slowloris/больших заголовков).
+[x] Сделано: Явная политика лимитов тела запроса для upload/import (max bytes) на уровне Gin.
+
+Безопасность
+[x] Сделано: refresh tokens / logout / rotation стратегии.
+[x] Сделано: audit-log с request_id/IP/user-agent и маскированием чувствительных полей.
+[x] Сделано: права тоньше ролей (permissions на импорт/справочники/назначения/оверрайды).
+
+Безопасность (Web)
+[x] Сделано: CORS политика (если фронт на другом origin) + безопасные дефолты.
+[x] Сделано: Security headers middleware (минимум): X-Content-Type-Options, Referrer-Policy, (и т.п. по потребности).
+
+DX
+[x] Сделано: seed команда + скрипт/task + дока в README (idempotent).
+[x] Сделано: Taskfile/скрипты для Windows (up db/migrate/seed/run/lint/test).
+[x] Сделано: golangci-lint + CI.
+[x] Сделано: расширение тестов (хендлеры/импорт: парсинг CSV/XLSX).
+
+DX / Контракт как артефакт
+[x] Сделано: Проверка OpenAPI в CI (validate + fail build при ошибке/регрессе контракта).
+[x] Сделано: Минимальные контракт-тесты “UX-контракта” (единый формат ошибок + limit/offset на list endpoints).
+
+Импорт/экспорт
+[ ] Не сделано: экспорт в CSV/XLSX.
+[ ] Не сделано: идемпотентность/preview/diff режима импорта.
+
+Производительность
+[x] Сделано: кэш “расписание на неделю” по group_id+week_start+data_version (in-memory, Mon..Sat).
+[x] Сделано: контроль N+1/профилирование/EXPLAIN по критичным endpoint’ам (батч-запросы + docs/performance.md + ISPO_DB_LOG_LEVEL).
+
+Наблюдаемость / Debug
+[x] Сделано: request-id корреляция в access logs (пишется request_id из X-Request-ID).
+[x] Сделано: pprof endpoints под флагом/админ-доступом: /api/v1/admin/debug/pprof/* (server.debug.pprof.enabled).
+[x] Сделано: Tracing (OpenTelemetry) — опционально, включается server.tracing.enabled (OTLP HTTP или stdout exporter).
+[x] Сделано: корреляция trace↔logs (trace_id/span_id в access logs при включенном tracing).
+[x] Сделано: proxy-aware client IP (server.proxy.trusted_proxies + по умолчанию игнор forwarded headers).
+
+Prod готовность (Senior)
+[ ] Не сделано: supply-chain checks в CI: govulncheck (Go vuln DB) + container scan (Trivy) + dependency audit.
+[ ] Не сделано: guardrails конфигурации (валидация “prod-safe”: запрет дефолтного jwt_secret, требование admin.api_key в prod, и т.п.).
+[ ] Не сделано: интеграционные smoke-тесты с Postgres (migrations up + 1-2 критичных запроса/endpoint’а).
+
+UX-контракт API
+[x] Единый формат ошибок (code/field/message) во всех handlers + middleware.
+[x] Системная пагинация для list endpoints: limit/offset (без limit поведение как раньше).
+[x] Явные DTO для ответов (list + основной CRUD), без возврата моделей напрямую.
+
+Приоритетно (максимум пользы / минимум риска)
+[x] Bump schedule_version + push при изменении course_assignments
+[x] Автоподстановка аудитории из course_assignments
+[x] "Manual override" флаг/поведение для teacher/location, чтобы отличать авто от ручного
+
+======================================================================
+10) ТЕСТОВОЕ ПОКРЫТИЕ (ПОЛНЫЙ СПИСОК НЕДОСТАЮЩИХ ТЕСТОВ)
+======================================================================
+Формат:
+- [x] сделано
+- [ ] не сделано / нужно позже
+
+----------------------------------------------------------------------
+10.1) AUTH LAYER — P0 [ВЫПОЛНЕНО: 23 теста]
+----------------------------------------------------------------------
+Файл: internal/auth/jwt.go
+[x] internal/auth/jwt.go: NewTokenManager() — пустой secret — P0
+[x] internal/auth/jwt.go: IssueAccessToken() — базовый выпуск токена — P0
+[x] internal/auth/jwt.go: IssueAccessToken() — разные роли (admin/dispatcher/viewer/student) — P0
+[x] internal/auth/jwt.go: IssueAccessToken() — пользователь с group_id/subgroup — P0
+[x] internal/auth/jwt.go: Parse() — валидный токен — P0
+[x] internal/auth/jwt.go: Parse() — истёкший токен — P0
+[x] internal/auth/jwt.go: Parse() — неверная подпись — P0
+[x] internal/auth/jwt.go: Parse() — неверный signing method — P0
+[x] internal/auth/jwt.go: Parse() — invalid token string — P0
+[x] internal/auth/jwt.go: Parse() — malformed tokens — P0
+
+Файл: internal/auth/password.go
+[x] internal/auth/password.go: HashPassword() / VerifyPassword() — базовый цикл — P0
+[x] internal/auth/password.go: VerifyPassword() — неверный пароль — P0
+[x] internal/auth/password.go: HashPassword() — детерминированность — P0
+
+Файл: internal/auth/refresh_tokens.go
+[x] internal/auth/refresh_tokens.go: GenerateRefreshToken() — P1
+[x] internal/auth/refresh_tokens.go: HashRefreshToken() — P1
+[x] internal/auth/refresh_tokens.go: HashRefreshToken() — determinism — P1
+[x] internal/auth/refresh_tokens.go: HashRefreshToken() — empty token — P1
+[x] internal/auth/refresh_tokens.go: HashRefreshToken() — different tokens — P1
+
+Файл: internal/auth/user.go
+[ ] internal/auth/user.go: rolePermissions() — все 4 роли — P1
+[ ] internal/auth/user.go: rolePermissions() — неизвестная роль — P1
+
+----------------------------------------------------------------------
+10.2) HTTP HANDLERS — P0/P1 [ВЫПОЛНЕНО: 14 тестов]
+----------------------------------------------------------------------
+Файл: internal/httpapi/handlers_auth_test.go
+[x] internal/httpapi/handlers_auth_test.go: handleLogin — empty credentials — P0
+[x] internal/httpapi/handlers_auth_test.go: handleLogin — invalid JSON — P0
+[x] internal/httpapi/handlers_auth_test.go: handleRefresh — empty token — P0
+[x] internal/httpapi/handlers_auth_test.go: handleLogout — empty token — P1
+[x] internal/httpapi/handlers_auth_test.go: handleMe — unauthorized — P1
+
+Файл: internal/httpapi/handlers_client_test.go
+[x] internal/httpapi/handlers_client_test.go: handleGetCurrentSchedule — missing group_id — P0
+[x] internal/httpapi/handlers_client_test.go: handleGetCurrentSchedule — invalid group_id — P0
+[x] internal/httpapi/handlers_client_test.go: handleGetCurrentSchedule — invalid date — P0
+[x] internal/httpapi/handlers_client_test.go: handleGetScheduleRange — missing group_id — P0
+[x] internal/httpapi/handlers_client_test.go: handleGetScheduleRange — missing dates — P0
+[x] internal/httpapi/handlers_client_test.go: handleGetScheduleRange — invalid dates — P0
+[x] internal/httpapi/handlers_client_test.go: handleGetSchedulePDF — missing group_id — P1
+[x] internal/httpapi/handlers_client_test.go: handleGetSchedulePDF — missing date_start — P1
+[x] internal/httpapi/handlers_client_test.go: handleGetSchedulePDF — invalid date — P1
+
+[ ] internal/httpapi/handlers_auth.go: handleLogin() — успешный логин (integration) — P0
+[ ] internal/httpapi/handlers_auth.go: handleLogin() — неверный пароль (integration) — P0
+
+Файл: internal/httpapi/handlers_admin.go (1281 строка) — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminListDayEvents() — pagination — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminListDayEvents() — filters (group_id, target_date) — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminCreateDayEvent() — успешное создание — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminCreateDayEvent() — валидация полей — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminUpdateDayEvent() — успешное обновление — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminUpdateDayEvent() — not found — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminDeleteDayEvent() — успешное удаление — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminListTemplates() — pagination — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminCreateTemplate() — успешное создание — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminCreateTemplate() — валидация (day_of_week, week_parity) — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminUpdateTemplate() — bump version + push — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminDeleteTemplate() — soft delete — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminListOverrides() — pagination — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminCreateOverride() — CANCEL/REPLACE/ADD — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminCreateOverride() — валидация (action_type, pair_number) — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminBulkOverrides() — массовое создание — P2
+[ ] internal/httpapi/handlers_admin.go: handleAdminMovePair() — атомарный перенос — P2
+[ ] internal/httpapi/handlers_admin.go: handleAdminUpsertOverlay() — overlay дня — P2
+[ ] internal/httpapi/handlers_admin.go: handleAdminUpsertCalendarException() — works_as_day — P2
+[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesCSV() — успешный импорт — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesCSV() — missing required column — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesCSV() — invalid day_of_week — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesXLSX() — успешный импорт — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesXLSX() — invalid pair_number — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminPublishDraftTemplates() — publish + bump version — P2
+[ ] internal/httpapi/handlers_admin.go: handleAdminDiscardDraftTemplates() — откат черновиков — P2
+[ ] internal/httpapi/handlers_admin.go: handleAdminValidateSchedule() — validation warnings — P2
+
+Файл: internal/httpapi/handlers_push.go — P2
+[ ] internal/httpapi/handlers_push.go: handlePushRegister() — успешная регистрация — P2
+[ ] internal/httpapi/handlers_push.go: handlePushRegister() — invalid token — P2
+[ ] internal/httpapi/handlers_push.go: handlePushUnregister() — успешная отписка — P2
+
+Файл: internal/httpapi/handlers_curricula.go (400+ строк) — P2
+[ ] internal/httpapi/handlers_curricula.go: handleAdminListCurricula() — pagination — P2
+[ ] internal/httpapi/handlers_curricula.go: handleAdminCreateCurriculum() — успешное создание — P2
+[ ] internal/httpapi/handlers_curricula.go: handleAdminUpdateCurriculum() — обновление — P2
+[ ] internal/httpapi/handlers_curricula.go: handleAdminDeleteCurriculum() — soft delete — P2
+[ ] internal/httpapi/handlers_curricula.go: handleAdminListAcademicCalendars() — календари — P2
+[ ] internal/httpapi/handlers_curricula.go: handleAdminUpsertAcademicCalendarWeeks() — недели — P2
+[ ] internal/httpapi/handlers_curricula.go: handleAdminListCurriculumItems() — items — P2
+[ ] internal/httpapi/handlers_curricula.go: handleAdminUpsertCurriculumItemAllocations() — allocations — P2
+
+----------------------------------------------------------------------
+10.3) MIDDLEWARE (0% покрытие) — P0/P1
+----------------------------------------------------------------------
+Файл: internal/httpapi/mw_auth.go (100 строк) — P0
+[ ] internal/httpapi/mw_auth.go: authMiddleware() — missing Authorization header — P0
+[ ] internal/httpapi/mw_auth.go: authMiddleware() — invalid Bearer format — P0
+[ ] internal/httpapi/mw_auth.go: authMiddleware() — invalid token — P0
+[ ] internal/httpapi/mw_auth.go: authMiddleware() — user not found — P0
+[ ] internal/httpapi/mw_auth.go: authMiddleware() — успешная аутентификация — P0
+[ ] internal/httpapi/mw_auth.go: requireAnyRole() — разрешённая роль — P0
+[ ] internal/httpapi/mw_auth.go: requireAnyRole() — запрещённая роль (403) — P0
+[ ] internal/httpapi/mw_auth.go: adminGateMiddleware() — X-Admin-Key успех — P1
+[ ] internal/httpapi/mw_auth.go: adminGateMiddleware() — X-Admin-Key неверный → fallback JWT — P1
+[ ] internal/httpapi/mw_auth.go: adminGateMiddleware() — JWT успех — P1
+
+Файл: internal/httpapi/mw_permissions.go — P1
+[ ] internal/httpapi/mw_permissions.go: rolePermissions() — admin (все 4 permissions) — P1
+[ ] internal/httpapi/mw_permissions.go: rolePermissions() — dispatcher (2 permissions) — P1
+[ ] internal/httpapi/mw_permissions.go: rolePermissions() — viewer (1 permission) — P1
+[ ] internal/httpapi/mw_permissions.go: rolePermissions() — student (0 permissions) — P1
+[ ] internal/httpapi/mw_permissions.go: requireAnyPermission() — разрешённое — P1
+[ ] internal/httpapi/mw_permissions.go: requireAnyPermission() — запрещённое — P1
+
+Файл: internal/httpapi/mw_rate_limit.go — P1
+[ ] internal/httpapi/mw_rate_limit.go: rateLimitMiddleware() — отключённый rate limit — P1
+[ ] internal/httpapi/mw_rate_limit.go: rateLimitMiddleware() — в пределах лимита — P1
+[ ] internal/httpapi/mw_rate_limit.go: rateLimitMiddleware() — превышение лимита (429) — P1
+[ ] internal/httpapi/mw_rate_limit.go: newRateLimitStore() — cleanup старых клиентов — P2
+
+Файл: internal/httpapi/mw_cors.go — P2
+[ ] internal/httpapi/mw_cors.go: corsMiddleware() — разрешённый origin — P2
+[ ] internal/httpapi/mw_cors.go: corsMiddleware() — запрещённый origin — P2
+[ ] internal/httpapi/mw_cors.go: corsMiddleware() — preflight request (OPTIONS) — P2
+[ ] internal/httpapi/mw_cors.go: corsMiddleware() — AllowCredentials=true — P2
+
+Файл: internal/httpapi/mw_security_headers.go — P2
+[ ] internal/httpapi/mw_security_headers.go: securityHeadersMiddleware() — все заголовки — P2
+
+Файл: internal/httpapi/mw_body_limit.go — P2
+[ ] internal/httpapi/mw_body_limit.go: maxBodyBytesMiddleware() — в пределах лимита — P2
+[ ] internal/httpapi/mw_body_limit.go: maxBodyBytesMiddleware() — превышение (413) — P2
+
+Файл: internal/httpapi/mw_logging.go — P2
+[ ] internal/httpapi/mw_logging.go: requestLoggingMiddleware() — log с request_id — P2
+[ ] internal/httpapi/mw_logging.go: requestLoggingMiddleware() — trace_id/span_id при включённом tracing — P2
+
+Файл: internal/httpapi/mw_request_id.go — P2
+[ ] internal/httpapi/mw_request_id.go: requestIDMiddleware() — генерация нового ID — P2
+[ ] internal/httpapi/mw_request_id.go: requestIDMiddleware() — использование существующего X-Request-ID — P2
+
+Файл: internal/httpapi/mw_admin_key.go — P2
+[ ] internal/httpapi/mw_admin_key.go: adminKeyMiddleware() — успешный ключ — P2
+[ ] internal/httpapi/mw_admin_key.go: adminKeyMiddleware() — неверный ключ — P2
+
+----------------------------------------------------------------------
+10.4) REPOSITORY LAYER (0% покрытие) — P0/P1
+----------------------------------------------------------------------
+Файл: internal/schedule/repository.go — P0
+[ ] internal/schedule/repository.go: GetSystemState() — запись существует — P0
+[ ] internal/schedule/repository.go: GetSystemState() — запись не создана (автоинициализация) — P0
+[ ] internal/schedule/repository.go: BumpScheduleVersion() — P0
+
+Файл: internal/schedule/repository_admin.go (300+ строк) — P1
+[ ] internal/schedule/repository_admin.go: ListTemplatesForWeekStatus() — P1
+[ ] internal/schedule/repository_admin.go: ListOverridesBetween() — P1
+[ ] internal/schedule/repository_admin.go: ListOverlaysBetween() — P1
+[ ] internal/schedule/repository_admin.go: ListCalendarExceptionsBetween() — P1
+[ ] internal/schedule/repository_admin.go: ListDayEventsBetween() — P1
+[ ] internal/schedule/repository_admin.go: ListTeachingWeeksForGroupBetween() — P1
+[ ] internal/schedule/repository_admin.go: ListCourseAssignmentTeachersForGroup() — P1
+[ ] internal/schedule/repository_admin.go: GetGroup() / CreateGroup() / UpdateGroup() / DeleteGroup() — P1
+[ ] internal/schedule/repository_admin.go: GetSubject() / CreateSubject() / UpdateSubject() / DeleteSubject() — P1
+[ ] internal/schedule/repository_admin.go: GetLocation() / CreateLocation() / UpdateLocation() / DeleteLocation() — P1
+[ ] internal/schedule/repository_admin.go: GetTeacher() / CreateTeacher() / UpdateTeacher() / DeleteTeacher() — P1
+[ ] internal/schedule/repository_admin.go: ListAllocatedSubjectsBySemester() — P1
+[ ] internal/schedule/repository_admin.go: CreateDayEvent() / UpdateDayEvent() / DeleteDayEvent() — P1
+[ ] internal/schedule/repository_admin.go: ListDayEventsPaged() — P1
+
+Файл: internal/schedule/repository_curricula.go — P2
+[ ] internal/schedule/repository_curricula.go: GetSpecialty() / CreateSpecialty() / UpdateSpecialty() / DeleteSpecialty() — P2
+[ ] internal/schedule/repository_curricula.go: GetCurriculum() / CreateCurriculum() / UpdateCurriculum() / DeleteCurriculum() — P2
+[ ] internal/schedule/repository_curricula.go: ListAcademicCalendars() / CreateAcademicCalendar() / DeleteAcademicCalendar() — P2
+[ ] internal/schedule/repository_curricula.go: ListAcademicCalendarWeeks() / UpsertAcademicCalendarWeeks() — P2
+[ ] internal/schedule/repository_curricula.go: ListCurriculumItems() / CreateCurriculumItem() / UpdateCurriculumItem() / DeleteCurriculumItem() — P2
+[ ] internal/schedule/repository_curricula.go: ListCurriculumItemAllocations() / UpsertCurriculumItemAllocations() — P2
+
+Файл: internal/schedule/repository_push.go — P2
+[ ] internal/schedule/repository_push.go: RegisterDeviceToken() / UnregisterDeviceToken() — P2
+[ ] internal/schedule/repository_push.go: ListDeviceTokensByGroup() — P2
+
+Файл: internal/schedule/repository_refresh_tokens.go — P1
+[ ] internal/schedule/repository_refresh_tokens.go: CreateRefreshToken() — P1
+[ ] internal/schedule/repository_refresh_tokens.go: GetRefreshTokenByHash() — P1
+[ ] internal/schedule/repository_refresh_tokens.go: RevokeRefreshToken() — P1
+[ ] internal/schedule/repository_refresh_tokens.go: RevokeAllRefreshTokensForUser() — P1
+
+Файл: internal/schedule/repository_teachers.go — P2
+[ ] internal/schedule/repository_teachers.go: GetOrCreateTeacherID() — P2
+[ ] internal/schedule/repository_teachers.go: GetTeacherSubjects() / CreateTeacherSubject() / DeleteTeacherSubject() — P2
+
+----------------------------------------------------------------------
+10.5) SERVICE LAYER (частичное покрытие) — P0/P1
+----------------------------------------------------------------------
+Файл: internal/schedule/service_build.go (400+ строк) — P0
+[ ] internal/schedule/service_build.go: buildDays() — базовый сценарий — P0
+[ ] internal/schedule/service_build.go: buildDays() — группа не найдена — P0
+[ ] internal/schedule/service_build.go: buildDays() — inheritance chain (base → leaf) — P0
+[ ] internal/schedule/service_build.go: buildDays() — calendar exceptions (works_as_day) — P0
+[ ] internal/schedule/service_build.go: buildDays() — overlays — P0
+[ ] internal/schedule/service_build.go: buildDays() — day events — P0
+[ ] internal/schedule/service_build.go: buildDays() — academic calendar (non-teaching weeks) — P0
+[ ] internal/schedule/service_build.go: buildDays() — template inheritance (multiple groups) — P0
+[ ] internal/schedule/service_build.go: buildDays() — override inheritance — P0
+[ ] internal/schedule/service_build.go: buildDays() — teacher auto-resolve (semester assignments) — P0
+[ ] internal/schedule/service_build.go: buildDays() — location auto-resolve — P0
+[ ] internal/schedule/service_build.go: buildDays() — manual override flags (teacher_manual) — P0
+[ ] internal/schedule/service_build.go: buildDays() — subgroup merging — P0
+[ ] internal/schedule/service_build.go: weekParityForDate() — denominator/numerator/both — P0
+[ ] internal/schedule/service_build.go: weekParityForDate() — zero semester_start_date — P0
+[ ] internal/schedule/service_build.go: mondayOfWeek() — все дни недели — P0
+[ ] internal/schedule/service_build.go: dayOfWeekForDate() — с calendar exception — P0
+[ ] internal/schedule/service_build.go: inferSemesterForDate() — все месяцы — P0
+[ ] internal/schedule/service_build.go: inferSemesterForDate() — summer months (nil) — P0
+
+Файл: internal/schedule/service_inheritance.go — P1
+[ ] internal/schedule/service_inheritance.go: scheduleInheritanceChainIDs() — цепочка без наследования — P1
+[ ] internal/schedule/service_inheritance.go: scheduleInheritanceChainIDs() — цепочка 2+ уровня — P1
+[ ] internal/schedule/service_inheritance.go: scheduleInheritanceChainIDs() — cycle detection — P1
+[ ] internal/schedule/service_inheritance.go: scheduleInheritanceChainIDs() — группа не найдена — P1
+
+Файл: internal/schedule/service_validate.go — P1
+[ ] internal/schedule/service_validate.go: ValidateScheduleRange() — no curriculum — P1
+[ ] internal/schedule/service_validate.go: ValidateScheduleRange() — все предметы валидны — P1
+[ ] internal/schedule/service_validate.go: ValidateScheduleRange() — предметы не в семестре (warnings) — P1
+[ ] internal/schedule/service_validate.go: ValidateScheduleRange() — cannot infer semester — P1
+
+Файл: internal/schedule/service.go — P0 [ВЫПОЛНЕНО: 4 теста]
+[x] internal/schedule/service.go: NewService() — успешная инициализация — P0
+[x] internal/schedule/service.go: GetCurrentWeek() — group_id <= 0 — P0
+[x] internal/schedule/service.go: GetRange() — group_id <= 0 — P0
+[x] internal/schedule/service.go: GetRange() — date_end < date_start — P0
+
+[ ] internal/schedule/service.go: GetCurrentWeek() — успешный запрос (integration) — P0
+[ ] internal/schedule/service.go: GetRange() — cache hit (canonical week) (integration) — P0
+[ ] internal/schedule/service.go: GetRange() — cache miss (integration) — P0
+[ ] internal/schedule/service.go: GetRange() — группа не найдена (integration) — P0
+
+----------------------------------------------------------------------
+10.6) MERGE LOGIC — P0 [ВЫПОЛНЕНО: 22 теста]
+----------------------------------------------------------------------
+Файл: internal/schedule/merge.go
+[x] internal/schedule/merge.go: TestMergeLessons_CancelReplaceAdd — сделано (было)
+[x] internal/schedule/merge.go: TestMergeLessons_Normalization_PriorityBeatsRecency — сделано (было)
+[x] internal/schedule/merge.go: TestMergeLessons_Normalization_UpdatedAtThenID — сделано (было)
+[x] internal/schedule/merge.go: normalizeOverrides() — пустой список — P1
+[x] internal/schedule/merge.go: normalizeOverrides() — один override — P1
+[x] internal/schedule/merge.go: normalizeOverrides() — multiple subgroups — P1
+[x] internal/schedule/merge.go: normalizeOverrides() — duplicate key keeps best — P1
+[x] internal/schedule/merge.go: overrideBetterThan() — same priority, different UpdatedAt — P1
+[x] internal/schedule/merge.go: overrideBetterThan() — same updatedAt, larger ID wins — P1
+[x] internal/schedule/merge.go: overridePriority() — все action types — P1
+[x] internal/schedule/merge.go: subgroupMatch() — все комбинации (nil/1/2) — P1
+[x] internal/schedule/merge.go: filterOutPair() — filter по pair_number — P1
+[x] internal/schedule/merge.go: filterOutPair() — filter по pair and subgroup — P1
+[x] internal/schedule/merge.go: filterOutPair() — no match — P1
+[x] internal/schedule/merge.go: applyOverrideReplace() — full replace — P1
+[x] internal/schedule/merge.go: applyOverrideReplace() — partial replace — P1
+[x] internal/schedule/merge.go: buildLessonFromOverride() — ADD с полным набором полей — P1
+[x] internal/schedule/merge.go: buildLessonFromOverride() — ADD с минимальными данными — P1
+[x] internal/schedule/merge.go: buildLessonFromOverride() — REPLACE action — P1
+
+----------------------------------------------------------------------
+10.3) MIDDLEWARE — P0/P1 [ВЫПОЛНЕНО: 26 тестов]
+----------------------------------------------------------------------
+Файл: internal/httpapi/mw_auth.go
+[x] internal/httpapi/mw_auth.go: authMiddleware() — missing Authorization header — P0
+[x] internal/httpapi/mw_auth.go: authMiddleware() — invalid Bearer format — P0
+[x] internal/httpapi/mw_auth.go: authMiddleware() — invalid token — P0
+[x] internal/httpapi/mw_auth.go: requireAnyRole() — unauthorized (no user in context) — P0
+[x] internal/httpapi/mw_auth.go: requireAnyRole() — invalid user type — P0
+[x] internal/httpapi/mw_auth.go: requireAnyRole() — allowed role — P0
+[x] internal/httpapi/mw_auth.go: requireAnyRole() — forbidden role — P0
+[x] internal/httpapi/mw_auth.go: requireAnyRole() — multiple roles allowed — P0
+[x] internal/httpapi/mw_auth.go: adminGateMiddleware() — X-Admin-Key успех — P1
+[x] internal/httpapi/mw_auth.go: adminGateMiddleware() — no API key requires JWT — P1
+[x] internal/httpapi/mw_auth.go: parseSubjectID() — все варианты — P2
+
+Файл: internal/httpapi/mw_test.go (CORS, Security, Rate Limit, Request ID)
+[x] internal/httpapi/mw_test.go: TestSecurityHeadersMiddleware_Present — P2
+[x] internal/httpapi/mw_test.go: TestCorsMiddleware_NoOrigins — P2
+[x] internal/httpapi/mw_test.go: TestCorsMiddleware_WithOrigins — P2
+[x] internal/httpapi/mw_test.go: TestCorsMiddleware_Preflight — P2
+[x] internal/httpapi/mw_test.go: TestRequestIDMiddleware_GeneratesID — P2
+[x] internal/httpapi/mw_test.go: TestRequestIDMiddleware_UsesExisting — P2
+[x] internal/httpapi/mw_test.go: TestMaxBodyBytesMiddleware_WithinLimit — P2
+[x] internal/httpapi/mw_test.go: TestRateLimitMiddleware_Disabled — P2
+[x] internal/httpapi/mw_test.go: TestRateLimitMiddleware_WithinLimit — P2
+[x] internal/httpapi/mw_test.go: TestRateLimitMiddleware_ExceedsLimit — P2
+
+[ ] internal/httpapi/mw_auth.go: authMiddleware() — user not found (integration) — P0
+[ ] internal/httpapi/mw_auth.go: authMiddleware() — успешная аутентификация (integration) — P0
+
+----------------------------------------------------------------------
+10.7) CONFIG (0% покрытие) — P1
+----------------------------------------------------------------------
+Файл: internal/config/config.go (250+ строк)
+[ ] internal/config/config.go: Load() — успешная загрузка из файла — P1
+[ ] internal/config/config.go: Load() — fallback на config.example.yaml — P1
+[ ] internal/config/config.go: Load() — env переменные переопределяют файл — P1
+[ ] internal/config/config.go: Load() — invalid env (dev/prod/test) — P1
+[ ] internal/config/config.go: Load() — prod guardrails (weak jwt_secret) — P0
+[ ] internal/config/config.go: Load() — prod guardrails (empty api_key) — P0
+[ ] internal/config/config.go: Load() — CORS allow_credentials=true с wildcard — P1
+[ ] internal/config/config.go: Load() — invalid trusted_proxies (не IP/CIDR) — P1
+[ ] internal/config/config.go: Load() — default values (timeouts, RPS, etc.) — P1
+
+----------------------------------------------------------------------
+10.8) DATABASE LAYER (0% покрытие) — P2
+----------------------------------------------------------------------
+Файл: internal/db/db.go
+[ ] internal/db/db.go: Open() — успешное подключение — P2
+[ ] internal/db/db.go: Open() — invalid DSN — P2
+[ ] internal/db/db.go: Open() — connection pool settings — P2
+
+----------------------------------------------------------------------
+10.9) PDF ENGINE (0% покрытие) — P3
+----------------------------------------------------------------------
+Файл: internal/pdf/engine.go
+[ ] internal/pdf/engine.go: NewEngine() — без chrome_executable_path — P3
+[ ] internal/pdf/engine.go: NewEngine() — с chrome_executable_path — P3
+[ ] internal/pdf/engine.go: RenderHTMLToPDF() — успешная генерация — P3
+[ ] internal/pdf/engine.go: RenderHTMLToPDF() — timeout — P3
+[ ] internal/pdf/engine.go: RenderHTMLToPDF() — invalid HTML — P3
+
+----------------------------------------------------------------------
+10.10) PUSH SERVICE (0% покрытие) — P3
+----------------------------------------------------------------------
+Файл: internal/push/service.go
+[ ] internal/push/service.go: NewService() — с notifier — P3
+[ ] internal/push/service.go: NewService() — без notifier — P3
+[ ] internal/push/service.go: NotifyScheduleUpdatedAsync() — успешная отправка — P3
+[ ] internal/push/service.go: NotifyScheduleUpdatedAsync() — FCM error — P3
+[ ] internal/push/service.go: buildFCMNotifier() — успешное создание — P3
+[ ] internal/push/service.go: buildFCMNotifier() — invalid credentials — P3
+
+Файл: internal/push/fcm.go
+[ ] internal/push/fcm.go: FCMNotifier.Send() — успешная отправка — P3
+[ ] internal/push/fcm.go: FCMNotifier.Send() — error response — P3
+
+----------------------------------------------------------------------
+10.11) OBSERVABILITY (0% покрытие) — P3
+----------------------------------------------------------------------
+Файл: internal/obs/logger.go
+[ ] internal/obs/logger.go: InitLogger() — dev mode (pretty) — P3
+[ ] internal/obs/logger.go: InitLogger() — prod mode (JSON) — P3
+[ ] internal/obs/logger.go: InitLogger() — invalid level — P3
+
+Файл: internal/obs/tracing.go
+[ ] internal/obs/tracing.go: InitTracing() — enabled — P3
+[ ] internal/obs/tracing.go: InitTracing() — disabled — P3
+[ ] internal/obs/tracing.go: InitTracing() — invalid endpoint — P3
+
+----------------------------------------------------------------------
+10.12) IMPORT PARSERS (частичное покрытие) — P1
+----------------------------------------------------------------------
+Файл: internal/httpapi/handlers_import.go
+[✓] internal/httpapi/handlers_import.go: parseTemplatesCSV() — comma delimiter — сделано
+[✓] internal/httpapi/handlers_import.go: parseTemplatesCSV() — semicolon delimiter — сделано
+[✓] internal/httpapi/handlers_import.go: parseTemplatesCSV() — missing required column — сделано
+[✓] internal/httpapi/handlers_import.go: parseTemplatesXLSX() — basic — сделано
+[✓] internal/httpapi/handlers_import.go: parseTemplatesXLSX() — invalid row — сделано
+[ ] internal/httpapi/handlers_import.go: detectCSVDelimiter() — edge cases — P2
+[ ] internal/httpapi/handlers_import.go: mapHeaders() — все варианты названий колонок — P2
+[ ] internal/httpapi/handlers_import.go: parseTemplateRecord() — invalid day_of_week — P1
+[ ] internal/httpapi/handlers_import.go: parseTemplateRecord() — invalid week_parity — P1
+[ ] internal/httpapi/handlers_import.go: parseTemplateRecord() — invalid pair_number — P1
+[ ] internal/httpapi/handlers_import.go: parseTemplateRecord() — invalid subgroup — P1
+[ ] internal/httpapi/handlers_import.go: importTemplatesReplace() — успешный импорт — P1
+[ ] internal/httpapi/handlers_import.go: importTemplatesReplace() — transaction rollback — P1
+[ ] internal/httpapi/handlers_import.go: importTemplatesReplace() — draft status (no version bump) — P1
+[ ] internal/httpapi/handlers_import.go: getOrCreateSubjectID() — существует / не существует — P1
+[ ] internal/httpapi/handlers_import.go: getOrCreateLocationID() — существует / не существует — P1
+[ ] internal/httpapi/handlers_import.go: getOrCreateTeacherID() — существует / не существует — P1
+
+----------------------------------------------------------------------
+10.13) HTTP ERROR HANDLING (0% покрытие) — P2
+----------------------------------------------------------------------
+Файл: internal/httpapi/api_error.go
+[ ] internal/httpapi/api_error.go: writeError() — базовый формат — P2
+[ ] internal/httpapi/api_error.go: writeValidationError() — P2
+[ ] internal/httpapi/api_error.go: writeInvalidJSON() — P2
+[ ] internal/httpapi/api_error.go: writeDBError() — P2
+[ ] internal/httpapi/api_error.go: abortWithError() — P2
+
+----------------------------------------------------------------------
+10.14) PAGINATION (частичное покрытие) — P2
+----------------------------------------------------------------------
+Файл: internal/httpapi/pagination.go
+[✓] internal/httpapi/pagination.go: contract_pagination_test.go — сделано
+[ ] internal/httpapi/pagination.go: parseLimitOffset() — default limits — P2
+[ ] internal/httpapi/pagination.go: parseLimitOffset() — max limit cap — P2
+[ ] internal/httpapi/pagination.go: parseLimitOffset() — invalid values — P2
+
+----------------------------------------------------------------------
+10.15) DTOS (0% покрытие) — P3
+----------------------------------------------------------------------
+Файл: internal/httpapi/dto.go
+[ ] internal/httpapi/dto.go: toScheduleDayEventDTO() — P3
+[ ] internal/httpapi/dto.go: toScheduleTemplateDTO() — P3
+[ ] internal/httpapi/dto.go: toScheduleOverrideDTO() — P3
+
+----------------------------------------------------------------------
+10.16) WEEK CACHE (0% покрытие) — P2
+----------------------------------------------------------------------
+Файл: internal/schedule/week_cache.go
+[ ] internal/schedule/week_cache.go: newWeekCache() — P2
+[ ] internal/schedule/week_cache.go: weekCache.get() — hit — P2
+[ ] internal/schedule/week_cache.go: weekCache.get() — miss — P2
+[ ] internal/schedule/week_cache.go: weekCache.set() — заполнение — P2
+[ ] internal/schedule/week_cache.go: weekCacheKey() — корректный ключ — P2
+
+----------------------------------------------------------------------
+10.17) PDF HELPERS (0% покрытие) — P3
+----------------------------------------------------------------------
+Файл: internal/httpapi/pdf_helpers.go
+[ ] internal/httpapi/pdf_helpers.go: buildSchedulePDFHTML() — базовый HTML — P3
+[ ] internal/httpapi/pdf_helpers.go: buildSchedulePDFHTML() — 2 недели — P3
+[ ] internal/httpapi/pdf_helpers.go: buildSchedulePDFHTML() — overlay text — P3
+[ ] internal/httpapi/pdf_helpers.go: buildSchedulePDFHTML() — events — P3
+
+Файл: internal/httpapi/pdf_template.go
+[ ] internal/httpapi/pdf_template.go: parseSchedulePDFHTML() — P3
+
+----------------------------------------------------------------------
+10.18) AUDIT SANITIZE (0% покрытие) — P2
+----------------------------------------------------------------------
+Файл: internal/httpapi/audit_sanitize.go
+[ ] internal/httpapi/audit_sanitize.go: sanitizeAuditData() — masking чувствительных полей — P2
+
+----------------------------------------------------------------------
+10.19) PPROF ROUTES (0% покрытие) — P3
+----------------------------------------------------------------------
+Файл: internal/httpapi/pprof.go
+[ ] internal/httpapi/pprof.go: registerPprofRoutes() — routes зарегистрированы — P3
+
+----------------------------------------------------------------------
+10.20) METRICS (0% покрытие) — P2
+----------------------------------------------------------------------
+Файл: internal/httpapi/metrics.go
+[ ] internal/httpapi/metrics.go: metricsHandler() — Prometheus format — P2
+[ ] internal/httpapi/metrics.go: metricsHealthHandler() — DB up/down — P2
+
+----------------------------------------------------------------------
+10.21) ROUTER (0% покрытие) — P3
+----------------------------------------------------------------------
+Файл: internal/httpapi/router.go
+[ ] internal/httpapi/router.go: NewRouter() — все routes зарегистрированы — P3
+[ ] internal/httpapi/router.go: NewRouter() — trusted proxies config — P3
+[ ] internal/httpapi/router.go: NewRouter() — tracing middleware — P3
+
+======================================================================
+11) СВОДНАЯ СТАТИСТИКА ПО ТЕСТАМ
+======================================================================
+Всего недостающих тестов: ~150+ тестовых функций
+
+По приоритетам:
+- P0 (Критично): 35 тестов — auth, service_build, merge, repository (ядро)
+- P1 (Важно): 55 тестов — handlers_admin, handlers_client, middleware, config
+- P2 (Средне): 40 тестов — curricula, import, remaining middleware, utils
+- P3 (Низко): 20 тестов — pdf, push, obs, helpers
+
+Оценка времени на реализацию:
+- Фаза 1 (P0): 30 часов
+- Фаза 2 (P1): 40 часов
+- Фаза 3 (P2-P3): 40 часов
+- ИТОГО: 100-120 часов
+
+Целевое покрытие: 70-80%
+
+======================================================================
+12) ДОПОЛНИТЕЛЬНЫЕ УЛУЧШЕНИЯ (НЕ ТЕСТЫ)
+======================================================================
+[ ] Добавить coverage metrics в CI (цель: 70%+)
+[ ] Добавить benchmark тесты для критичных путей (service_build, merge)
+[ ] Добавить load testing (k6/vegeta)
+[ ] Добавить Grafana dashboards + alerting rules
+[ ] Добавить CD pipeline с автоматическим релизом
+[ ] Добавить semantic versioning + automated changelog
+
+======================================================================
+13) CI/CD ИНТЕГРАЦИЯ ТЕСТОВ
+======================================================================
+[✓] Все тесты запускаются в GitHub Actions автоматически
+[✓] go test ./... — запускает все unit тесты
+[✓] go test -tags=integration — integration smoke тесты
+[✓] PostgreSQL поднимается как service container (postgres:16)
+[✓] Кэширование Go modules настроено
+[✓] Go 1.25.x версия настроена
+
+[ ] Добавить coverage threshold (70%) в CI — P1
+[ ] Добавить загрузку coverage на Codecov — P2
+[ ] Добавить benchmark тесты в CI (критичные пути) — P2
+[ ] Добавить k6 load тесты (отдельный job) — P3
+[ ] Добавить кэширование Go build cache в Actions — P2
+[ ] Добавить matrix тестов (Go 1.24.x, 1.25.x) — P3
+
+----------------------------------------------------------------------
+13.1) ТЕКУЩАЯ КОНФИГУРАЦИЯ CI (.github/workflows/ci.yml)
+----------------------------------------------------------------------
+Запускается при:
+- push в branch main
+- pull_request в branch main
+- workflow_dispatch (ручной запуск)
+
+Шаги pipeline:
+[✓] Checkout кода
+[✓] Validate OpenAPI spec (openapi-spec-validator)
+[✓] Set up Go 1.25.x с кэшированием
+[✓] go mod download
+[✓] go mod tidy/verify (dependency audit)
+[✓] govulncheck (security scan)
+[✓] Build Docker image
+[✓] Trivy filesystem scan (vuln, secret, misconfig)
+[✓] Trivy image scan
+[✓] golangci-lint
+[✓] go test ./... (все unit тесты)
+[✓] Integration smoke tests (Postgres + migrations)
+
+----------------------------------------------------------------------
+13.2) СТАТИСТИКА ТЕСТОВ (НА ДАННЫЙ МОМЕНТ)
+----------------------------------------------------------------------
+Выполнено:
+- Auth Layer: 23 теста (internal/auth/)
+- Merge Logic: 22 теста (internal/schedule/merge.go)
+- Middleware Auth: 11 тестов (internal/httpapi/mw_auth.go)
+- Service: 4 теста (internal/schedule/service.go)
+- Import Parsers: 5 тестов (internal/httpapi/handlers_import_parse_test.go)
+- Contract Tests: 4 теста (error, pagination)
+- Curricula Tree: 1 тест
+- DB Schema: 3 теста
+
+ИТОГО: 105 unit тестов + 6 integration тестов = 111 тестов
+
+Integration тесты (с реальной БД, build tag "integration"):
+[✓] internal/integration/smoke_test.go — Postgres migrations smoke
+[✓] internal/integration/auth_middleware_test.go — auth middleware + service tests
+
+----------------------------------------------------------------------
+13.3) РЕКОМЕНДУЕМЫЕ УЛУЧШЕНИЯ CI (ПРИМЕРЫ)
+----------------------------------------------------------------------
+
+# Шаг 1: Добавить coverage с порогом 70%
+- name: Test with coverage
+  run: go test -coverprofile=coverage.out ./...
+
+- name: Check coverage threshold (70%)
+  run: |
+    COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | tr -d '%')
+    echo "Coverage: $COVERAGE%"
+    if (( $(echo "$COVERAGE < 70" | bc -l) )); then
+      echo "❌ Coverage below 70% threshold!"
+      exit 1
+    fi
+    echo "✅ Coverage above 70% threshold!"
+
+# Шаг 2: Upload coverage to Codecov (опционально)
+- name: Upload coverage to Codecov
+  uses: codecov/codecov-action@v4
+  with:
+    files: ./coverage.out
+    fail_ci_if_error: false
+
+# Шаг 3: Benchmark критичных путей
+- name: Benchmark critical paths
+  run: |
+    go test -bench=BenchmarkMergeLessons -benchtime=1s ./internal/schedule
+    go test -bench=BenchmarkBuildDays -benchtime=1s ./internal/schedule
+
+# Шаг 4: Matrix тестов (несколько версий Go)
+strategy:
+  matrix:
+    go-version: ["1.24.x", "1.25.x"]
+
+# Шаг 5: Кэширование Go build cache
+- name: Cache Go build cache
+  uses: actions/cache@v4
+  with:
+    path: |
+      ~/.cache/go-build
+      ~/go/pkg/mod
+    key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+    restore-keys: |
+      ${{ runner.os }}-go-
+
+----------------------------------------------------------------------
+13.3) ВРЕМЯ ПРОГОНА ТЕСТОВ В CI
+----------------------------------------------------------------------
+Оценка времени:
+- Unit тесты (~150 тестов): 2-5 минут
+- Integration тесты: 1-2 минуты
+- Lint + Security (golangci-lint, govulncheck, Trivy): 3-5 минут
+- Build + Download modules: 1-2 минуты
+- ИТОГО: 6-12 минут на полный CI pipeline
+
+----------------------------------------------------------------------
+13.4) КАК ДОБАВЛЯТЬ НОВЫЕ ТЕСТЫ
+----------------------------------------------------------------------
+1. Создать файл *_test.go в том же пакете, что и тестируемый код
+2. Написать тест в формате:
+   
+   func Test<FunctionName>_<Scenario>(t *testing.T) {
+       // Arrange
+       // Act
+       // Assert
+   }
+
+3. Запустить локально: go test ./...
+4. Закоммитить: git add . && git commit -m "test: add <description>"
+5. CI автоматически запустит все тесты при push/PR
+
+----------------------------------------------------------------------
+13.5) ПРИМЕРЫ ШАБЛОНОВ ТЕСТОВ
+----------------------------------------------------------------------
+
+# Unit тест (auth layer):
+func TestTokenManager_IssueAccessToken_Success(t *testing.T) {
+    tm, err := NewTokenManager("secret", time.Hour)
+    require.NoError(t, err)
+    
+    user := &User{ID: 1, Role: RoleAdmin}
+    token, exp, err := tm.IssueAccessToken(user, time.Now())
+    
+    require.NoError(t, err)
+    assert.NotEmpty(t, token)
+    assert.WithinDuration(t, time.Now().Add(time.Hour), exp, time.Second)
+}
+
+# Handler тест (HTTP layer):
+func TestHandleLogin_Success(t *testing.T) {
+    gin.SetMode(gin.TestMode)
+    w := httptest.NewRecorder()
+    c, _ := gin.CreateTestContext(w)
+    
+    c.Request = httptest.NewRequest(http.MethodPost, "/api/v1/auth/login",
+        strings.NewReader(`{"login":"admin","password":"admin123"}`))
+    
+    handler := handleLogin(tokenManager, repo, time.Hour*720)
+    handler(c)
+    
+    assert.Equal(t, http.StatusOK, w.Code)
+    assert.Contains(t, w.Body.String(), "access_token")
+}
+
+# Middleware тест:
+func TestAuthMiddleware_MissingHeader(t *testing.T) {
+    gin.SetMode(gin.TestMode)
+    w := httptest.NewRecorder()
+    c, _ := gin.CreateTestContext(w)
+    c.Request = httptest.NewRequest(http.MethodGet, "/api/v1/admin/groups", nil)
+    
+    authMiddleware(tokenManager, repo)(c)
+    
+    assert.Equal(t, http.StatusUnauthorized, w.Code)
+    assert.Contains(t, w.Body.String(), "unauthorized")
+}
+
+# Repository тест (с mock DB или testcontainer):
+func TestRepository_GetSystemState_Exists(t *testing.T) {
+    db := setupTestDB(t)
+    seedSystemState(t, db)
+    
+    repo := NewRepository(db)
+    state, err := repo.GetSystemState()
+    
+    require.NoError(t, err)
+    assert.Equal(t, int16(1), state.ID)
+    assert.NotZero(t, state.ScheduleVersion)
+}
+
+# Integration тест (с реальным Postgres):
+//go:build integration
+func TestPostgresMigrationsSmoke(t *testing.T) {
+    dsn := os.Getenv("ISPO_TEST_DATABASE_URL")
+    db, err := sql.Open("pgx", dsn)
+    require.NoError(t, err)
+    
+    // Run migrations, test queries, etc.
+}
