@@ -179,20 +179,22 @@ func TestRateLimitMiddleware_ExceedsLimit(t *testing.T) {
 	store := newRateLimitStore(10)
 	rule := RateLimitRuleConfig{Enabled: true, RPS: 0.1, Burst: 1}
 
+	handler := rateLimitMiddleware(store, rule, "test")
+
 	// Первый запрос
 	w1 := httptest.NewRecorder()
 	c1, _ := gin.CreateTestContext(w1)
 	c1.Request = httptest.NewRequest(http.MethodGet, "/test", nil)
-	c1.Request.RemoteAddr = "127.0.0.1"
+	c1.RemoteAddr = "192.168.1.100:1234"
 
-	handler := rateLimitMiddleware(store, rule, "test")
 	handler(c1)
+	assert.Equal(t, http.StatusOK, w1.Code)
 
 	// Второй запрос сразу же должен быть заблокирован
 	w2 := httptest.NewRecorder()
 	c2, _ := gin.CreateTestContext(w2)
 	c2.Request = httptest.NewRequest(http.MethodGet, "/test", nil)
-	c2.Request.RemoteAddr = "127.0.0.1"
+	c2.RemoteAddr = "192.168.1.100:1234"
 
 	handler(c2)
 
