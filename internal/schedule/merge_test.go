@@ -10,7 +10,7 @@ import (
 
 func TestNormalizeOverrides_EmptyList(t *testing.T) {
 	result := normalizeOverrides([]OverrideView{})
-	
+
 	assert.Empty(t, result)
 }
 
@@ -24,9 +24,9 @@ func TestNormalizeOverrides_SingleOverride(t *testing.T) {
 			UpdatedAt:  now,
 		},
 	}
-	
+
 	result := normalizeOverrides(input)
-	
+
 	require.Len(t, result, 1)
 	assert.Equal(t, int64(1), result[0].ID)
 }
@@ -35,15 +35,15 @@ func TestNormalizeOverrides_MultipleSubgroups(t *testing.T) {
 	now := time.Now().UTC()
 	sg1 := int16(1)
 	sg2 := int16(2)
-	
+
 	input := []OverrideView{
 		{ID: 1, PairNumber: 1, ActionType: OverrideCancel, Subgroup: nil, UpdatedAt: now},
 		{ID: 2, PairNumber: 1, ActionType: OverrideCancel, Subgroup: &sg1, UpdatedAt: now},
 		{ID: 3, PairNumber: 1, ActionType: OverrideCancel, Subgroup: &sg2, UpdatedAt: now},
 	}
-	
+
 	result := normalizeOverrides(input)
-	
+
 	// Должно остаться 3 override (разные subgroups)
 	require.Len(t, result, 3)
 }
@@ -51,14 +51,14 @@ func TestNormalizeOverrides_MultipleSubgroups(t *testing.T) {
 func TestNormalizeOverrides_DuplicateKey_KeepsBest(t *testing.T) {
 	base := time.Date(2026, 2, 26, 10, 0, 0, 0, time.UTC)
 	later := base.Add(time.Minute)
-	
+
 	input := []OverrideView{
 		{ID: 1, PairNumber: 1, ActionType: OverrideReplace, UpdatedAt: base},
 		{ID: 2, PairNumber: 1, ActionType: OverrideReplace, UpdatedAt: later},
 	}
-	
+
 	result := normalizeOverrides(input)
-	
+
 	require.Len(t, result, 1)
 	assert.Equal(t, int64(2), result[0].ID) // Более новый UpdatedAt
 }
@@ -66,10 +66,10 @@ func TestNormalizeOverrides_DuplicateKey_KeepsBest(t *testing.T) {
 func TestOverrideBetterThan_SamePriority_DifferentUpdatedAt(t *testing.T) {
 	base := time.Date(2026, 2, 26, 10, 0, 0, 0, time.UTC)
 	later := base.Add(time.Minute)
-	
+
 	a := OverrideView{ID: 1, ActionType: OverrideReplace, UpdatedAt: later}
 	b := OverrideView{ID: 2, ActionType: OverrideReplace, UpdatedAt: base}
-	
+
 	// a более новый, должен быть "лучше"
 	assert.True(t, overrideBetterThan(a, b))
 	assert.False(t, overrideBetterThan(b, a))
@@ -77,10 +77,10 @@ func TestOverrideBetterThan_SamePriority_DifferentUpdatedAt(t *testing.T) {
 
 func TestOverrideBetterThan_SameUpdatedAt_LargerIDWins(t *testing.T) {
 	sameTime := time.Date(2026, 2, 26, 10, 0, 0, 0, time.UTC)
-	
+
 	a := OverrideView{ID: 10, ActionType: OverrideReplace, UpdatedAt: sameTime}
 	b := OverrideView{ID: 20, ActionType: OverrideReplace, UpdatedAt: sameTime}
-	
+
 	// Больший ID должен выиграть
 	assert.False(t, overrideBetterThan(a, b))
 	assert.True(t, overrideBetterThan(b, a))
@@ -95,7 +95,7 @@ func TestOverridePriority(t *testing.T) {
 		{OverrideReplace, 1},
 		{OverrideAdd, 2},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(string(tt.action), func(t *testing.T) {
 			assert.Equal(t, tt.expected, overridePriority(tt.action))
@@ -106,12 +106,12 @@ func TestOverridePriority(t *testing.T) {
 func TestSubgroupMatch_AllCombinations(t *testing.T) {
 	sg1 := int16(1)
 	sg2 := int16(2)
-	
+
 	tests := []struct {
-		name           string
-		lessonSubgroup *int16
+		name             string
+		lessonSubgroup   *int16
 		overrideSubgroup *int16
-		expected       bool
+		expected         bool
 	}{
 		{"both nil", nil, nil, true},
 		{"lesson nil, override 1", nil, &sg1, true},
@@ -123,7 +123,7 @@ func TestSubgroupMatch_AllCombinations(t *testing.T) {
 		{"lesson 1, override 2", &sg1, &sg2, false},
 		{"lesson 2, override 1", &sg2, &sg1, false},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := subgroupMatch(tt.lessonSubgroup, tt.overrideSubgroup)
@@ -138,9 +138,9 @@ func TestFilterOutPair_ByPairNumber(t *testing.T) {
 		{PairNumber: 2, SubjectName: "Physics"},
 		{PairNumber: 3, SubjectName: "Chemistry"},
 	}
-	
+
 	result := filterOutPair(lessons, 2, nil)
-	
+
 	require.Len(t, result, 2)
 	assert.Equal(t, int16(1), result[0].PairNumber)
 	assert.Equal(t, int16(3), result[1].PairNumber)
@@ -149,28 +149,28 @@ func TestFilterOutPair_ByPairNumber(t *testing.T) {
 func TestFilterOutPair_ByPairAndSubgroup(t *testing.T) {
 	sg1 := int16(1)
 	sg2 := int16(2)
-	
+
 	lessons := []Lesson{
 		{PairNumber: 1, Subgroup: nil, SubjectName: "Math"},
 		{PairNumber: 1, Subgroup: &sg1, SubjectName: "Math SG1"},
 		{PairNumber: 1, Subgroup: &sg2, SubjectName: "Math SG2"},
 		{PairNumber: 2, Subgroup: nil, SubjectName: "Physics"},
 	}
-	
+
 	// Удаляем пару 1 с subgroup=1
 	// Логика функции: если subgroup!=nil в аргументах:
 	// - l.Subgroup=nil -> drop (не проходит if)
 	// - l.Subgroup=sg1 -> drop (равно, не проходит if)
 	// - l.Subgroup=sg2 -> keep (не равно, проходит if)
 	result := filterOutPair(lessons, 1, &sg1)
-	
+
 	require.Len(t, result, 2)
 	// Остаются: пара 1 с sg2 и пара 2
-	
+
 	assert.Equal(t, int16(1), result[0].PairNumber)
 	assert.Equal(t, sg2, *result[0].Subgroup)
 	assert.Equal(t, "Math SG2", result[0].SubjectName)
-	
+
 	assert.Equal(t, int16(2), result[1].PairNumber)
 	assert.Nil(t, result[1].Subgroup)
 	assert.Equal(t, "Physics", result[1].SubjectName)
@@ -181,9 +181,9 @@ func TestFilterOutPair_NoMatch(t *testing.T) {
 		{PairNumber: 1, SubjectName: "Math"},
 		{PairNumber: 2, SubjectName: "Physics"},
 	}
-	
+
 	result := filterOutPair(lessons, 3, nil)
-	
+
 	// Ничего не должно удалиться
 	require.Len(t, result, 2)
 	assert.Equal(t, int16(1), result[0].PairNumber)
@@ -196,7 +196,7 @@ func TestApplyOverrideReplace_FullReplace(t *testing.T) {
 	newTeacher := "New Teacher"
 	comment := "Test comment"
 	sg1 := int16(1)
-	
+
 	lesson := &Lesson{
 		PairNumber:   1,
 		SubjectID:    nil,
@@ -207,7 +207,7 @@ func TestApplyOverrideReplace_FullReplace(t *testing.T) {
 		Subgroup:     nil,
 		IsChanged:    false,
 	}
-	
+
 	override := OverrideView{
 		PairNumber:      1,
 		ActionType:      OverrideReplace,
@@ -219,9 +219,9 @@ func TestApplyOverrideReplace_FullReplace(t *testing.T) {
 		Comment:         &comment,
 		Subgroup:        &sg1,
 	}
-	
+
 	applyOverrideReplace(lesson, override)
-	
+
 	assert.Equal(t, newSubID, *lesson.SubjectID)
 	assert.Equal(t, "New Subject", lesson.SubjectName)
 	assert.Equal(t, newLocID, *lesson.LocationID)
@@ -234,7 +234,7 @@ func TestApplyOverrideReplace_FullReplace(t *testing.T) {
 
 func TestApplyOverrideReplace_PartialReplace(t *testing.T) {
 	newTeacher := "New Teacher"
-	
+
 	lesson := &Lesson{
 		PairNumber:   1,
 		SubjectID:    intPtr(10),
@@ -244,16 +244,16 @@ func TestApplyOverrideReplace_PartialReplace(t *testing.T) {
 		TeacherName:  "",
 		IsChanged:    false,
 	}
-	
+
 	override := OverrideView{
 		PairNumber:     1,
 		ActionType:     OverrideReplace,
 		NewTeacherName: &newTeacher,
 		// NewSubjectID и NewLocationID nil
 	}
-	
+
 	applyOverrideReplace(lesson, override)
-	
+
 	// Subject и Location должны остаться unchanged
 	assert.Equal(t, 10, *lesson.SubjectID)
 	assert.Equal(t, "Old Subject", lesson.SubjectName)
@@ -270,7 +270,7 @@ func TestBuildLessonFromOverride_FullData(t *testing.T) {
 	newTeacher := "Teacher"
 	comment := "Comment"
 	sg1 := int16(1)
-	
+
 	override := OverrideView{
 		PairNumber:      3,
 		ActionType:      OverrideAdd,
@@ -282,9 +282,9 @@ func TestBuildLessonFromOverride_FullData(t *testing.T) {
 		Comment:         &comment,
 		Subgroup:        &sg1,
 	}
-	
+
 	lesson := buildLessonFromOverride(override, true)
-	
+
 	assert.Equal(t, int16(3), lesson.PairNumber)
 	assert.Equal(t, newSubID, *lesson.SubjectID)
 	assert.Equal(t, "New Subject", lesson.SubjectName)
@@ -303,9 +303,9 @@ func TestBuildLessonFromOverride_MinimalData(t *testing.T) {
 		ActionType: OverrideAdd,
 		// Все остальные поля nil/пустые
 	}
-	
+
 	lesson := buildLessonFromOverride(override, true)
-	
+
 	assert.Equal(t, int16(5), lesson.PairNumber)
 	assert.Nil(t, lesson.SubjectID)
 	assert.Empty(t, lesson.SubjectName)
@@ -322,9 +322,9 @@ func TestBuildLessonFromOverride_ReplaceAction(t *testing.T) {
 		PairNumber: 2,
 		ActionType: OverrideReplace,
 	}
-	
+
 	lesson := buildLessonFromOverride(override, false)
-	
+
 	assert.Equal(t, int16(2), lesson.PairNumber)
 	assert.False(t, lesson.IsAdded)
 	assert.True(t, lesson.IsChanged) // REPLACE должен быть IsChanged=true
