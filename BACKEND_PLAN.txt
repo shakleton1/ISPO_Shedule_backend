@@ -796,13 +796,17 @@ UX-контракт API
 - Auth Layer: 23 теста (internal/auth/)
 - Merge Logic: 22 теста (internal/schedule/merge.go)
 - Middleware Auth: 11 тестов (internal/httpapi/mw_auth.go)
+- Middleware Other: 9 тестов (internal/httpapi/mw_test.go)
 - Service: 4 теста (internal/schedule/service.go)
+- Config: 10 тестов (internal/config/config_test.go)
+- Handler Auth: 5 тестов (internal/httpapi/handlers_auth_test.go)
+- Handler Client: 9 тестов (internal/httpapi/handlers_client_test.go)
 - Import Parsers: 5 тестов (internal/httpapi/handlers_import_parse_test.go)
 - Contract Tests: 4 теста (error, pagination)
 - Curricula Tree: 1 тест
 - DB Schema: 3 теста
 
-ИТОГО: 105 unit тестов + 6 integration тестов = 111 тестов
+ИТОГО: 106 unit тестов + 6 integration тестов = 112 тестов
 
 Integration тесты (с реальной БД, build tag "integration"):
 [✓] internal/integration/smoke_test.go — Postgres migrations smoke
