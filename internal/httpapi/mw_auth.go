@@ -12,6 +12,11 @@ import (
 
 const ctxUserKey = "auth.user"
 
+// AuthMiddlewareForTest exports authMiddleware for integration tests.
+func AuthMiddlewareForTest(tokens *auth.TokenManager, repo *schedule.Repository) gin.HandlerFunc {
+	return authMiddleware(tokens, repo)
+}
+
 func authMiddleware(tokens *auth.TokenManager, repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ah := c.GetHeader("Authorization")
