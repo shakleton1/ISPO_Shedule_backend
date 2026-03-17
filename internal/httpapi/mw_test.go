@@ -185,7 +185,7 @@ func TestRateLimitMiddleware_ExceedsLimit(t *testing.T) {
 	w1 := httptest.NewRecorder()
 	c1, _ := gin.CreateTestContext(w1)
 	c1.Request = httptest.NewRequest(http.MethodGet, "/test", nil)
-	c1.RemoteAddr = "192.168.1.100:1234"
+	c1.Request.RemoteAddr = "192.168.1.100:1234"
 
 	handler(c1)
 	assert.Equal(t, http.StatusOK, w1.Code)
@@ -194,7 +194,7 @@ func TestRateLimitMiddleware_ExceedsLimit(t *testing.T) {
 	w2 := httptest.NewRecorder()
 	c2, _ := gin.CreateTestContext(w2)
 	c2.Request = httptest.NewRequest(http.MethodGet, "/test", nil)
-	c2.RemoteAddr = "192.168.1.100:1234"
+	c2.Request.RemoteAddr = "192.168.1.100:1234"
 
 	handler(c2)
 
