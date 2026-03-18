@@ -5,37 +5,17 @@ package integration
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 
 	"ispo-schedule/internal/auth"
 	"ispo-schedule/internal/httpapi"
 	"ispo-schedule/internal/schedule"
 )
-
-func getTestDB(t *testing.T) *gorm.DB {
-	t.Helper()
-	
-	dsn := strings.TrimSpace(os.Getenv("ISPO_TEST_DATABASE_URL"))
-	if dsn == "" {
-		dsn = "postgres://postgres:postgres@localhost:5432/ispo_test?sslmode=disable"
-	}
-	
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	require.NoError(t, err)
-	
-	// Миграции должны быть применены заранее в CI
-	return db
-}
 
 func TestAuthMiddleware_Integration_UserNotFound(t *testing.T) {
 	if testing.Short() {

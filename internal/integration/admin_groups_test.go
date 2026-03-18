@@ -7,51 +7,16 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 
 	"ispo-schedule/internal/auth"
 	"ispo-schedule/internal/httpapi"
 	"ispo-schedule/internal/schedule"
 )
-
-func getTestDB(t *testing.T) *gorm.DB {
-	t.Helper()
-	
-	dsn := os.Getenv("ISPO_TEST_DATABASE_URL")
-	if dsn == "" {
-		dsn = "postgres://postgres:postgres@localhost:5432/ispo_test?sslmode=disable"
-	}
-	
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	require.NoError(t, err)
-	
-	return db
-}
-
-func setupTestGroup(t *testing.T, db *gorm.DB) *schedule.Group {
-	t.Helper()
-	
-	group := &schedule.Group{
-		Name:   "Test Group",
-		Course: 1,
-	}
-	
-	// Clean up if exists
-	db.Where("name = ?", group.Name).Delete(&schedule.Group{})
-	
-	err := db.Create(group).Error
-	require.NoError(t, err)
-	
-	return group
-}
 
 func TestHandleAdminCreateGroup_Success(t *testing.T) {
 	if testing.Short() {
