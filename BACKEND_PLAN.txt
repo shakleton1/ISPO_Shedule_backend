@@ -624,26 +624,30 @@ UX-контракт API
 [ ] internal/obs/tracing.go: InitTracing() — invalid endpoint — P3
 
 ----------------------------------------------------------------------
-10.12) IMPORT PARSERS (частичное покрытие) — P1
+10.12) IMPORT PARSERS (частичное покрытие) — P1 [ВЫПОЛНЕНО: 13 тестов]
 ----------------------------------------------------------------------
-Файл: internal/httpapi/handlers_import.go
-[✓] internal/httpapi/handlers_import.go: parseTemplatesCSV() — comma delimiter — сделано
-[✓] internal/httpapi/handlers_import.go: parseTemplatesCSV() — semicolon delimiter — сделано
-[✓] internal/httpapi/handlers_import.go: parseTemplatesCSV() — missing required column — сделано
-[✓] internal/httpapi/handlers_import.go: parseTemplatesXLSX() — basic — сделано
-[✓] internal/httpapi/handlers_import.go: parseTemplatesXLSX() — invalid row — сделано
-[ ] internal/httpapi/handlers_import.go: detectCSVDelimiter() — edge cases — P2
-[ ] internal/httpapi/handlers_import.go: mapHeaders() — все варианты названий колонок — P2
-[ ] internal/httpapi/handlers_import.go: parseTemplateRecord() — invalid day_of_week — P1
-[ ] internal/httpapi/handlers_import.go: parseTemplateRecord() — invalid week_parity — P1
-[ ] internal/httpapi/handlers_import.go: parseTemplateRecord() — invalid pair_number — P1
-[ ] internal/httpapi/handlers_import.go: parseTemplateRecord() — invalid subgroup — P1
-[ ] internal/httpapi/handlers_import.go: importTemplatesReplace() — успешный импорт — P1
-[ ] internal/httpapi/handlers_import.go: importTemplatesReplace() — transaction rollback — P1
-[ ] internal/httpapi/handlers_import.go: importTemplatesReplace() — draft status (no version bump) — P1
-[ ] internal/httpapi/handlers_import.go: getOrCreateSubjectID() — существует / не существует — P1
-[ ] internal/httpapi/handlers_import.go: getOrCreateLocationID() — существует / не существует — P1
-[ ] internal/httpapi/handlers_import.go: getOrCreateTeacherID() — существует / не существует — P1
+Файл: internal/httpapi/handlers_import_parse_test.go (существующие)
+[✓] internal/httpapi/handlers_import_parse_test.go: parseTemplatesCSV() — comma delimiter — сделано
+[✓] internal/httpapi/handlers_import_parse_test.go: parseTemplatesCSV() — semicolon delimiter — сделано
+[✓] internal/httpapi/handlers_import_parse_test.go: parseTemplatesCSV() — missing required column — сделано
+[✓] internal/httpapi/handlers_import_parse_test.go: parseTemplatesXLSX() — basic — сделано
+[✓] internal/httpapi/handlers_import_parse_test.go: parseTemplatesXLSX() — invalid row — сделано
+
+Файл: internal/httpapi/handlers_import_test.go (новые)
+[x] internal/httpapi/handlers_import_test.go: detectCSVDelimiter() — comma — P2
+[x] internal/httpapi/handlers_import_test.go: detectCSVDelimiter() — semicolon — P2
+[x] internal/httpapi/handlers_import_test.go: detectCSVDelimiter() — empty — P2
+[x] internal/httpapi/handlers_import_test.go: mapHeaders() — все варианты названий — P2
+[x] internal/httpapi/handlers_import_test.go: normalizeHeader() — все форматы — P2
+[x] internal/httpapi/handlers_import_test.go: parseTemplateRecord() — invalid day_of_week — P1
+[x] internal/httpapi/handlers_import_test.go: parseTemplateRecord() — invalid week_parity — P1
+[x] internal/httpapi/handlers_import_test.go: parseTemplateRecord() — invalid pair_number — P1
+[x] internal/httpapi/handlers_import_test.go: parseTemplateRecord() — invalid subgroup — P1
+[x] internal/httpapi/handlers_import_test.go: parseTemplateRecord() — missing required — P1
+
+[ ] internal/httpapi/handlers_import.go: importTemplatesReplace() — успешный импорт (integration) — P1
+[ ] internal/httpapi/handlers_import.go: importTemplatesReplace() — transaction rollback (integration) — P1
+[ ] internal/httpapi/handlers_import.go: getOrCreateSubjectID() — существует / не существует (integration) — P1
 
 ----------------------------------------------------------------------
 10.13) HTTP ERROR HANDLING (0% покрытие) — P2
@@ -805,8 +809,9 @@ UX-контракт API
 - Contract Tests: 4 теста (error, pagination)
 - Curricula Tree: 1 тест
 - DB Schema: 3 теста
+- Import Parsers: 13 тестов (handlers_import_test.go)
 
-ИТОГО: 106 unit тестов + 6 integration тестов = 112 тестов
+ИТОГО: 119 unit тестов + 6 integration тестов = 125 тестов
 
 Integration тесты (с реальной БД, build tag "integration"):
 [✓] internal/integration/smoke_test.go — Postgres migrations smoke
