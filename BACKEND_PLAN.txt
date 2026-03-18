@@ -650,23 +650,36 @@ UX-контракт API
 [ ] internal/httpapi/handlers_import.go: getOrCreateSubjectID() — существует / не существует (integration) — P1
 
 ----------------------------------------------------------------------
-10.13) HTTP ERROR HANDLING (0% покрытие) — P2
+10.13) HTTP ERROR HANDLING — P2 [ВЫПОЛНЕНО: 8 тестов]
 ----------------------------------------------------------------------
-Файл: internal/httpapi/api_error.go
-[ ] internal/httpapi/api_error.go: writeError() — базовый формат — P2
-[ ] internal/httpapi/api_error.go: writeValidationError() — P2
-[ ] internal/httpapi/api_error.go: writeInvalidJSON() — P2
-[ ] internal/httpapi/api_error.go: writeDBError() — P2
-[ ] internal/httpapi/api_error.go: abortWithError() — P2
+Файл: internal/httpapi/api_error_test.go
+[x] internal/httpapi/api_error_test.go: writeError() — базовый формат — P2
+[x] internal/httpapi/api_error_test.go: writeError() — empty code — P2
+[x] internal/httpapi/api_error_test.go: writeError() — empty message — P2
+[x] internal/httpapi/api_error_test.go: writeInvalidJSON() — P2
+[x] internal/httpapi/api_error_test.go: writeValidationError() — P2
+[x] internal/httpapi/api_error_test.go: writeUnauthorized() — P2
+[x] internal/httpapi/api_error_test.go: writeUnauthorized() — empty message — P2
+[x] internal/httpapi/api_error_test.go: abortWithError() — P2
+
+[ ] internal/httpapi/api_error.go: writeDBError() — требует gorm errors (integration) — P2
 
 ----------------------------------------------------------------------
-10.14) PAGINATION (частичное покрытие) — P2
+10.14) PAGINATION — P2 [ВЫПОЛНЕНО: 10 тестов]
 ----------------------------------------------------------------------
-Файл: internal/httpapi/pagination.go
-[✓] internal/httpapi/pagination.go: contract_pagination_test.go — сделано
-[ ] internal/httpapi/pagination.go: parseLimitOffset() — default limits — P2
-[ ] internal/httpapi/pagination.go: parseLimitOffset() — max limit cap — P2
-[ ] internal/httpapi/pagination.go: parseLimitOffset() — invalid values — P2
+Файл: internal/httpapi/contract_pagination_test.go (существующие)
+[✓] internal/httpapi/contract_pagination_test.go: contract pagination — сделано
+
+Файл: internal/httpapi/pagination_test.go (новые)
+[x] internal/httpapi/pagination_test.go: parseLimitOffset() — invalid limit — P2
+[x] internal/httpapi/pagination_test.go: parseLimitOffset() — invalid offset — P2
+[x] internal/httpapi/pagination_test.go: parseLimitOffset() — negative limit — P2
+[x] internal/httpapi/pagination_test.go: parseLimitOffset() — negative offset — P2
+[x] internal/httpapi/pagination_test.go: parseLimitOffset() — exceeds max limit — P2
+[x] internal/httpapi/pagination_test.go: parseLimitOffset() — zero limit — P2
+
+[ ] internal/httpapi/pagination.go: parseLimitOffset() — default limits (integration) — P2
+[ ] internal/httpapi/pagination.go: parseLimitOffset() — max limit cap (integration) — P2
 
 ----------------------------------------------------------------------
 10.15) DTOS (0% покрытие) — P3
@@ -810,8 +823,10 @@ UX-контракт API
 - Curricula Tree: 1 тест
 - DB Schema: 3 теста
 - Import Parsers: 13 тестов (handlers_import_test.go)
+- Error Handling: 8 тестов (api_error_test.go)
+- Pagination: 10 тестов (pagination_test.go)
 
-ИТОГО: 119 unit тестов + 6 integration тестов = 125 тестов
+ИТОГО: 137 unit тестов + 6 integration тестов = 143 тестов
 
 Integration тесты (с реальной БД, build tag "integration"):
 [✓] internal/integration/smoke_test.go — Postgres migrations smoke
