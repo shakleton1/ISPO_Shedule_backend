@@ -294,28 +294,61 @@ UX-контракт API
 [ ] internal/auth/user.go: rolePermissions() — неизвестная роль — P1
 
 ----------------------------------------------------------------------
-10.2) HTTP HANDLERS — P0/P1 [ВЫПОЛНЕНО: 14 тестов]
+10.2) HTTP HANDLERS — P0/P1 [ВЫПОЛНЕНО: 20 тестов]
 ----------------------------------------------------------------------
 Файл: internal/httpapi/handlers_auth_test.go
-[x] internal/httpapi/handlers_auth_test.go: handleLogin — empty credentials — P0
-[x] internal/httpapi/handlers_auth_test.go: handleLogin — invalid JSON — P0
-[x] internal/httpapi/handlers_auth_test.go: handleRefresh — empty token — P0
-[x] internal/httpapi/handlers_auth_test.go: handleLogout — empty token — P1
-[x] internal/httpapi/handlers_auth_test.go: handleMe — unauthorized — P1
+[x] internal/httpapi/handlers_auth_test.go: handleLogin — empty credentials — P0 ✅
+[x] internal/httpapi/handlers_auth_test.go: handleLogin — invalid JSON — P0 ✅
+[x] internal/httpapi/handlers_auth_test.go: handleRefresh — empty token — P0 ✅
+[x] internal/httpapi/handlers_auth_test.go: handleLogout — empty token — P1 ✅
+[x] internal/httpapi/handlers_auth_test.go: handleMe — unauthorized — P1 ✅
 
 Файл: internal/httpapi/handlers_client_test.go
-[x] internal/httpapi/handlers_client_test.go: handleGetCurrentSchedule — missing group_id — P0
-[x] internal/httpapi/handlers_client_test.go: handleGetCurrentSchedule — invalid group_id — P0
-[x] internal/httpapi/handlers_client_test.go: handleGetCurrentSchedule — invalid date — P0
-[x] internal/httpapi/handlers_client_test.go: handleGetScheduleRange — missing group_id — P0
-[x] internal/httpapi/handlers_client_test.go: handleGetScheduleRange — missing dates — P0
-[x] internal/httpapi/handlers_client_test.go: handleGetScheduleRange — invalid dates — P0
-[x] internal/httpapi/handlers_client_test.go: handleGetSchedulePDF — missing group_id — P1
-[x] internal/httpapi/handlers_client_test.go: handleGetSchedulePDF — missing date_start — P1
-[x] internal/httpapi/handlers_client_test.go: handleGetSchedulePDF — invalid date — P1
+[x] internal/httpapi/handlers_client_test.go: handleGetCurrentSchedule — missing group_id — P0 ✅
+[x] internal/httpapi/handlers_client_test.go: handleGetCurrentSchedule — invalid group_id — P0 ✅
+[x] internal/httpapi/handlers_client_test.go: handleGetCurrentSchedule — invalid date — P0 ✅
+[x] internal/httpapi/handlers_client_test.go: handleGetScheduleRange — missing group_id — P0 ✅
+[x] internal/httpapi/handlers_client_test.go: handleGetScheduleRange — missing dates — P0 ✅
+[x] internal/httpapi/handlers_client_test.go: handleGetScheduleRange — invalid dates — P0 ✅
+[x] internal/httpapi/handlers_client_test.go: handleGetSchedulePDF — missing group_id — P1 ✅
+[x] internal/httpapi/handlers_client_test.go: handleGetSchedulePDF — missing date_start — P1 ✅
+[x] internal/httpapi/handlers_client_test.go: handleGetSchedulePDF — invalid date — P1 ✅
 
-[ ] internal/httpapi/handlers_auth.go: handleLogin() — успешный логин (integration) — P0
-[ ] internal/httpapi/handlers_auth.go: handleLogin() — неверный пароль (integration) — P0
+Файл: internal/httpapi/handlers_admin.go — P1 [ВЫПОЛНЕНО: 6 integration тестов]
+[x] internal/integration/admin_groups_test.go: handleAdminCreateGroup — success — P1 ✅
+[x] internal/integration/admin_groups_test.go: handleAdminCreateGroup — empty name — P1 ✅
+[x] internal/integration/admin_groups_test.go: handleAdminCreateGroup — invalid course — P1 ✅
+[x] internal/integration/admin_groups_test.go: handleAdminListGroups — success — P1 ✅
+[x] internal/integration/admin_groups_test.go: handleAdminUpdateGroup — success — P1 ✅
+[x] internal/integration/admin_groups_test.go: handleAdminDeleteGroup — success — P1 ✅
+
+[ ] internal/httpapi/handlers_admin.go: handleAdminListDayEvents() — pagination — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminListDayEvents() — filters — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminCreateDayEvent() — success — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminCreateDayEvent() — validation — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminUpdateDayEvent() — success — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminUpdateDayEvent() — not found — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminDeleteDayEvent() — success — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminListTemplates() — pagination — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminCreateTemplate() — success — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminCreateTemplate() — validation — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminUpdateTemplate() — bump version + push — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminDeleteTemplate() — soft delete — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminListOverrides() — pagination — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminCreateOverride() — CANCEL/REPLACE/ADD — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminCreateOverride() — validation — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminBulkOverrides() — mass create — P2
+[ ] internal/httpapi/handlers_admin.go: handleAdminMovePair() — atomic move — P2
+[ ] internal/httpapi/handlers_admin.go: handleAdminUpsertOverlay() — day overlay — P2
+[ ] internal/httpapi/handlers_admin.go: handleAdminUpsertCalendarException() — works_as_day — P2
+[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesCSV() — success — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesCSV() — missing column — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesCSV() — invalid day — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesXLSX() — success — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesXLSX() — invalid pair — P1
+[ ] internal/httpapi/handlers_admin.go: handleAdminPublishDraftTemplates() — publish — P2
+[ ] internal/httpapi/handlers_admin.go: handleAdminDiscardDraftTemplates() — discard — P2
+[ ] internal/httpapi/handlers_admin.go: handleAdminValidateSchedule() — warnings — P2
 
 Файл: internal/httpapi/handlers_admin.go (1281 строка) — P1
 [ ] internal/httpapi/handlers_admin.go: handleAdminListDayEvents() — pagination — P1
@@ -836,8 +869,9 @@ UX-контракт API
 - Pagination: 10 тестов (pagination_test.go)
 - Week Cache: 8 тестов (repository_test.go + week_cache_test.go)
 - DTOs: 2 теста (dto_test.go)
+- Integration (Groups CRUD): 6 тестов (admin_groups_test.go)
 
-ИТОГО: 142 unit тестов + 6 integration тестов = 148 тестов
+ИТОГО: 154 unit/integration тестов
 
 Integration тесты (с реальной БД, build tag "integration"):
 [✓] internal/integration/smoke_test.go — Postgres migrations smoke
