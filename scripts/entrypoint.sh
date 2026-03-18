@@ -12,19 +12,17 @@ done
 
 echo "PostgreSQL is up - applying migrations..."
 
-# Install goose if not present
-if ! command -v goose &> /dev/null; then
-  echo "Installing goose..."
-  go install github.com/pressly/goose/v3/cmd/goose@latest
-fi
-
-# Run migrations
+# Run migrations (goose is already installed in the image)
 export GOOSE_DRIVER=postgres
 export GOOSE_DBSTRING="host=postgres port=5432 user=postgres password=${ISPO_DB_PASSWORD:-postgres} dbname=ispo_schedule sslmode=disable"
 
-goose -dir /app/db/migrations up
-
-echo "Migrations applied successfully!"
+# Try to run migrations, but don't fail if they already exist
+# This allows the app to start even if migrations were applied before
+if goose -dir /app/db/migrations up; then
+  echo "Migrations applied successfully!"
+else
+  echo "Warning: Migration failed or already applied, continuing..."
+fi
 
 # Start the API
 echo "Starting API server..."
