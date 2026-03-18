@@ -8,6 +8,18 @@ import (
 	"ispo-schedule/internal/schedule"
 )
 
+// Exported handlers for integration tests
+
+// HandlePushRegisterForTest exports handlePushRegister for integration tests
+func HandlePushRegisterForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handlePushRegister(repo)
+}
+
+// HandlePushUnregisterForTest exports handlePushUnregister for integration tests
+func HandlePushUnregisterForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handlePushUnregister(repo)
+}
+
 type pushRegisterRequest struct {
 	GroupID int    `json:"group_id"`
 	Token   string `json:"token"`
