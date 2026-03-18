@@ -23,6 +23,7 @@ RUN apt-get update \
      ca-certificates \
      tzdata \
      curl \
+     postgresql-client \
      chromium \
      fonts-dejavu-core \
      fonts-liberation \
@@ -36,6 +37,7 @@ WORKDIR /app
 
 COPY --from=build /out/api /app/api
 COPY --from=build /go/bin/goose /usr/local/bin/goose
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Needed at runtime: OpenAPI spec endpoint serves docs/openapi.yaml
 COPY docs /app/docs
@@ -46,7 +48,9 @@ COPY db/migrations /app/db/migrations
 # Optional reference; runtime should mount a real config.yaml
 COPY configs/config.example.yaml /app/configs/config.example.yaml
 
-RUN chown -R app:app /app
+RUN chown -R app:app /app \
+  && chmod +x /usr/local/bin/entrypoint.sh
+
 USER app
 
 ENV ISPO_SERVER_ADDR=0.0.0.0:8080 \
@@ -55,8 +59,5 @@ ENV ISPO_SERVER_ADDR=0.0.0.0:8080 \
 
 EXPOSE 8080
 
-# Liveness: API process responds.
-HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
-  CMD curl -fsS http://127.0.0.1:8080/api/v1/health || exit 1
-
-CMD ["/app/api"]
+# Use entrypoint script that applies migrations before starting API
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
