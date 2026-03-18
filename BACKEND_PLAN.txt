@@ -682,19 +682,29 @@ UX-контракт API
 [ ] internal/httpapi/pagination.go: parseLimitOffset() — max limit cap (integration) — P2
 
 ----------------------------------------------------------------------
-10.15) DTOS (0% покрытие) — P3
+10.15) DTOS — P3 [ВЫПОЛНЕНО: 2 теста]
 ----------------------------------------------------------------------
-Файл: internal/httpapi/dto.go
-[ ] internal/httpapi/dto.go: toScheduleDayEventDTO() — P3
-[ ] internal/httpapi/dto.go: toScheduleTemplateDTO() — P3
-[ ] internal/httpapi/dto.go: toScheduleOverrideDTO() — P3
+Файл: internal/httpapi/dto_test.go
+[x] internal/httpapi/dto_test.go: toScheduleDayEventDTO() — full data — P3
+[x] internal/httpapi/dto_test.go: toScheduleDayEventDTO() — nil fields — P3
+
+[ ] internal/httpapi/dto.go: toScheduleTemplateDTO() — требует integration — P3
+[ ] internal/httpapi/dto.go: toScheduleOverrideDTO() — требует integration — P3
 
 ----------------------------------------------------------------------
-10.16) WEEK CACHE (0% покрытие) — P2
+10.16) WEEK CACHE — P2 [ВЫПОЛНЕНО: 8 тестов]
 ----------------------------------------------------------------------
-Файл: internal/schedule/week_cache.go
-[ ] internal/schedule/week_cache.go: newWeekCache() — P2
-[ ] internal/schedule/week_cache.go: weekCache.get() — hit — P2
+Файл: internal/schedule/repository_test.go
+[x] internal/schedule/repository_test.go: TestWeekCache_NewCache — P2
+[x] internal/schedule/repository_test.go: TestWeekCache_GetMiss — P2
+[x] internal/schedule/repository_test.go: TestWeekCache_SetAndGet — P2
+[x] internal/schedule/repository_test.go: TestWeekCache_Capacity — P2
+[x] internal/schedule/repository_test.go: TestCloneWeekScheduleResponse — P2
+
+Файл: internal/schedule/week_cache_test.go
+[x] internal/schedule/week_cache_test.go: TestWeekCacheKey_Format — P3
+[x] internal/schedule/week_cache_test.go: TestWeekCache_Overwrite — P3
+[x] internal/schedule/week_cache_test.go: TestWeekCache_DifferentKeys — P3
 [ ] internal/schedule/week_cache.go: weekCache.get() — miss — P2
 [ ] internal/schedule/week_cache.go: weekCache.set() — заполнение — P2
 [ ] internal/schedule/week_cache.go: weekCacheKey() — корректный ключ — P2
@@ -825,8 +835,10 @@ UX-контракт API
 - Import Parsers: 13 тестов (handlers_import_test.go)
 - Error Handling: 8 тестов (api_error_test.go)
 - Pagination: 10 тестов (pagination_test.go)
+- Week Cache: 8 тестов (repository_test.go + week_cache_test.go)
+- DTOs: 2 теста (dto_test.go)
 
-ИТОГО: 137 unit тестов + 6 integration тестов = 143 тестов
+ИТОГО: 142 unit тестов + 6 integration тестов = 148 тестов
 
 Integration тесты (с реальной БД, build tag "integration"):
 [✓] internal/integration/smoke_test.go — Postgres migrations smoke
