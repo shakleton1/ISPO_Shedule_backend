@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -217,10 +216,10 @@ func TestHandleAdminDeleteGroup_Success(t *testing.T) {
 
 	db := getTestDB(t)
 	repo := schedule.NewRepository(db)
-	
+
 	// Create test group
 	group := setupTestGroup(t, db)
-	
+
 	adminUser := &auth.User{
 		Login:        "admin_test6",
 		PasswordHash: "hash",
@@ -230,16 +229,20 @@ func TestHandleAdminDeleteGroup_Success(t *testing.T) {
 	err := db.Create(adminUser).Error
 	require.NoError(t, err)
 	defer db.Where("login = ?", adminUser.Login).Delete(&auth.User{})
-	
+
+	// Use router for proper request handling
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		c.Set("auth.user", adminUser)
+		c.Next()
+	})
+
 	handler := httpapi.HandleAdminDeleteGroupForTest(repo)
+	r.DELETE("/api/v1/admin/groups/:id", handler)
 
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Params = []gin.Param{{Key: "id", Value: strconv.Itoa(int(group.ID))}}
-	c.Request = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/admin/groups/%d", group.ID), nil)
-	c.Set("auth.user", adminUser)
-
-	handler(c)
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/admin/groups/%d", group.ID), nil)
+	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
 
