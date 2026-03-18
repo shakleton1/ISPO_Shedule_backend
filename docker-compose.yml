@@ -5,11 +5,50 @@ services:
     environment:
       POSTGRES_DB: ispo_schedule
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${ISPO_DB_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
       - ispo_schedule_pgdata:/var/lib/postgresql/data
+    networks:
+      - ispo_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ispo_schedule_api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ISPO_CONFIG_PATH=/app/config.yaml
+      - ISPO_DB_PASSWORD=${ISPO_DB_PASSWORD:-postgres}
+      - ISPO_AUTH_JWT_SECRET=${ISPO_AUTH_JWT_SECRET:-change-me-in-production}
+      - ISPO_ADMIN_API_KEY=${ISPO_ADMIN_API_KEY:-change-me-in-production}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./configs/config.yaml:/app/config.yaml:ro
+    networks:
+      - ispo_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   ispo_schedule_pgdata:
+
+networks:
+  ispo_network:
+    driver: bridge
