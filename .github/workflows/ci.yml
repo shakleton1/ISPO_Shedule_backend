@@ -63,6 +63,12 @@ jobs:
       - name: Build Docker image (for scan)
         run: docker build -t ispo-schedule:ci .
 
+      - name: Validate docker-compose.yml
+        run: docker compose config --quiet
+
+      - name: Test docker-compose build
+        run: docker compose build --no-cache
+
       - name: Trivy scan (filesystem)
         run: |
           docker run --rm \
@@ -106,3 +112,10 @@ jobs:
           goose -dir db/migrations postgres "host=localhost port=5432 user=postgres password=postgres dbname=ispo_test sslmode=disable" up
           # Run integration tests
           go test -tags=integration ./internal/integration -count=1 -v
+
+      - name: Cleanup Docker resources
+        if: always()
+        run: |
+          docker compose down --volumes --remove-orphans || true
+          docker rmi ispo-schedule:ci || true
+          docker system prune -af
