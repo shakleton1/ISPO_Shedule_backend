@@ -362,104 +362,103 @@ UX-контракт API
 [ ] internal/httpapi/handlers_curricula.go: handleAdminUpsertCurriculumItemAllocations() — allocations — P2
 
 ----------------------------------------------------------------------
-10.3) MIDDLEWARE (0% покрытие) — P0/P1
+10.3) MIDDLEWARE — P0/P1 [ВЫПОЛНЕНО: 26 тестов]
 ----------------------------------------------------------------------
-Файл: internal/httpapi/mw_auth.go (100 строк) — P0
-[ ] internal/httpapi/mw_auth.go: authMiddleware() — missing Authorization header — P0
-[ ] internal/httpapi/mw_auth.go: authMiddleware() — invalid Bearer format — P0
-[ ] internal/httpapi/mw_auth.go: authMiddleware() — invalid token — P0
-[ ] internal/httpapi/mw_auth.go: authMiddleware() — user not found — P0
-[ ] internal/httpapi/mw_auth.go: authMiddleware() — успешная аутентификация — P0
-[ ] internal/httpapi/mw_auth.go: requireAnyRole() — разрешённая роль — P0
-[ ] internal/httpapi/mw_auth.go: requireAnyRole() — запрещённая роль (403) — P0
-[ ] internal/httpapi/mw_auth.go: adminGateMiddleware() — X-Admin-Key успех — P1
-[ ] internal/httpapi/mw_auth.go: adminGateMiddleware() — X-Admin-Key неверный → fallback JWT — P1
-[ ] internal/httpapi/mw_auth.go: adminGateMiddleware() — JWT успех — P1
+Файл: internal/httpapi/mw_auth.go — P0 [ВЫПОЛНЕНО: 11 тестов]
+[x] internal/httpapi/mw_auth.go: authMiddleware() — missing Authorization header — P0 ✅
+[x] internal/httpapi/mw_auth.go: authMiddleware() — invalid Bearer format — P0 ✅
+[x] internal/httpapi/mw_auth.go: authMiddleware() — invalid token — P0 ✅
+[x] internal/httpapi/mw_auth.go: authMiddleware() — user not found (integration) — P0
+[x] internal/httpapi/mw_auth.go: authMiddleware() — успешная аутентификация (integration) — P0
+[x] internal/httpapi/mw_auth.go: requireAnyRole() — разрешённая роль — P0 ✅
+[x] internal/httpapi/mw_auth.go: requireAnyRole() — запрещённая роль (403) — P0 ✅
+[x] internal/httpapi/mw_auth.go: adminGateMiddleware() — X-Admin-Key успех — P1 ✅
+[x] internal/httpapi/mw_auth.go: adminGateMiddleware() — X-Admin-Key неверный → fallback JWT — P1
+[x] internal/httpapi/mw_auth.go: adminGateMiddleware() — JWT успех — P1
 
-Файл: internal/httpapi/mw_permissions.go — P1
-[ ] internal/httpapi/mw_permissions.go: rolePermissions() — admin (все 4 permissions) — P1
-[ ] internal/httpapi/mw_permissions.go: rolePermissions() — dispatcher (2 permissions) — P1
-[ ] internal/httpapi/mw_permissions.go: rolePermissions() — viewer (1 permission) — P1
-[ ] internal/httpapi/mw_permissions.go: rolePermissions() — student (0 permissions) — P1
-[ ] internal/httpapi/mw_permissions.go: requireAnyPermission() — разрешённое — P1
-[ ] internal/httpapi/mw_permissions.go: requireAnyPermission() — запрещённое — P1
+Файл: internal/httpapi/mw_permissions.go — P1 [ВЫПОЛНЕНО: 6 тестов]
+[x] internal/httpapi/mw_permissions.go: rolePermissions() — все 4 permissions — P1 ✅
+[x] internal/httpapi/mw_permissions.go: rolePermissions() — dispatcher (2 permissions) — P1 ✅
+[x] internal/httpapi/mw_permissions.go: rolePermissions() — viewer (1 permission) — P1 ✅
+[x] internal/httpapi/mw_permissions.go: rolePermissions() — student (0 permissions) — P1 ✅
+[x] internal/httpapi/mw_permissions.go: requireAnyPermission() — разрешённое — P1 ✅
+[x] internal/httpapi/mw_permissions.go: requireAnyPermission() — запрещённое — P1 ✅
 
-Файл: internal/httpapi/mw_rate_limit.go — P1
-[ ] internal/httpapi/mw_rate_limit.go: rateLimitMiddleware() — отключённый rate limit — P1
-[ ] internal/httpapi/mw_rate_limit.go: rateLimitMiddleware() — в пределах лимита — P1
-[ ] internal/httpapi/mw_rate_limit.go: rateLimitMiddleware() — превышение лимита (429) — P1
+Файл: internal/httpapi/mw_rate_limit.go — P1 [ВЫПОЛНЕНО: 3 теста]
+[x] internal/httpapi/mw_rate_limit.go: rateLimitMiddleware() — отключённый rate limit — P1 ✅
+[x] internal/httpapi/mw_rate_limit.go: rateLimitMiddleware() — в пределах лимита — P1 ✅
+[x] internal/httpapi/mw_rate_limit.go: rateLimitMiddleware() — превышение лимита (429) — P1
 [ ] internal/httpapi/mw_rate_limit.go: newRateLimitStore() — cleanup старых клиентов — P2
 
-Файл: internal/httpapi/mw_cors.go — P2
-[ ] internal/httpapi/mw_cors.go: corsMiddleware() — разрешённый origin — P2
-[ ] internal/httpapi/mw_cors.go: corsMiddleware() — запрещённый origin — P2
-[ ] internal/httpapi/mw_cors.go: corsMiddleware() — preflight request (OPTIONS) — P2
+Файл: internal/httpapi/mw_cors.go — P2 [ВЫПОЛНЕНО: 3 теста]
+[x] internal/httpapi/mw_cors.go: corsMiddleware() — разрешённый origin — P2 ✅
+[x] internal/httpapi/mw_cors.go: corsMiddleware() — запрещённый origin — P2 ✅
+[x] internal/httpapi/mw_cors.go: corsMiddleware() — preflight request (OPTIONS) — P2 ✅
 [ ] internal/httpapi/mw_cors.go: corsMiddleware() — AllowCredentials=true — P2
 
-Файл: internal/httpapi/mw_security_headers.go — P2
-[ ] internal/httpapi/mw_security_headers.go: securityHeadersMiddleware() — все заголовки — P2
+Файл: internal/httpapi/mw_security_headers.go — P2 [ВЫПОЛНЕНО: 1 тест]
+[x] internal/httpapi/mw_security_headers.go: securityHeadersMiddleware() — все заголовки — P2 ✅
 
-Файл: internal/httpapi/mw_body_limit.go — P2
-[ ] internal/httpapi/mw_body_limit.go: maxBodyBytesMiddleware() — в пределах лимита — P2
+Файл: internal/httpapi/mw_body_limit.go — P2 [ВЫПОЛНЕНО: 1 тест]
+[x] internal/httpapi/mw_body_limit.go: maxBodyBytesMiddleware() — в пределах лимита — P2 ✅
 [ ] internal/httpapi/mw_body_limit.go: maxBodyBytesMiddleware() — превышение (413) — P2
 
 Файл: internal/httpapi/mw_logging.go — P2
 [ ] internal/httpapi/mw_logging.go: requestLoggingMiddleware() — log с request_id — P2
 [ ] internal/httpapi/mw_logging.go: requestLoggingMiddleware() — trace_id/span_id при включённом tracing — P2
 
-Файл: internal/httpapi/mw_request_id.go — P2
-[ ] internal/httpapi/mw_request_id.go: requestIDMiddleware() — генерация нового ID — P2
-[ ] internal/httpapi/mw_request_id.go: requestIDMiddleware() — использование существующего X-Request-ID — P2
+Файл: internal/httpapi/mw_request_id.go — P2 [ВЫПОЛНЕНО: 2 теста]
+[x] internal/httpapi/mw_request_id.go: requestIDMiddleware() — генерация нового ID — P2 ✅
+[x] internal/httpapi/mw_request_id.go: requestIDMiddleware() — использование существующего X-Request-ID — P2 ✅
 
 Файл: internal/httpapi/mw_admin_key.go — P2
 [ ] internal/httpapi/mw_admin_key.go: adminKeyMiddleware() — успешный ключ — P2
 [ ] internal/httpapi/mw_admin_key.go: adminKeyMiddleware() — неверный ключ — P2
 
 ----------------------------------------------------------------------
-10.4) REPOSITORY LAYER (0% покрытие) — P0/P1
+10.4) REPOSITORY LAYER — P0/P1 [ВЫПОЛНЕНО: 5 тестов]
 ----------------------------------------------------------------------
-Файл: internal/schedule/repository.go — P0
-[ ] internal/schedule/repository.go: GetSystemState() — запись существует — P0
-[ ] internal/schedule/repository.go: GetSystemState() — запись не создана (автоинициализация) — P0
-[ ] internal/schedule/repository.go: BumpScheduleVersion() — P0
+Файл: internal/schedule/repository.go — P0 [ВЫПОЛНЕНО: 3 теста]
+[x] internal/schedule/repository.go: GetSystemState() — запись существует (integration) — P0
+[x] internal/schedule/repository.go: GetSystemState() — запись не создана (автоинициализация) (integration) — P0
+[x] internal/schedule/repository.go: BumpScheduleVersion() (integration) — P0
 
-Файл: internal/schedule/repository_admin.go (300+ строк) — P1
-[ ] internal/schedule/repository_admin.go: ListTemplatesForWeekStatus() — P1
-[ ] internal/schedule/repository_admin.go: ListOverridesBetween() — P1
-[ ] internal/schedule/repository_admin.go: ListOverlaysBetween() — P1
-[ ] internal/schedule/repository_admin.go: ListCalendarExceptionsBetween() — P1
-[ ] internal/schedule/repository_admin.go: ListDayEventsBetween() — P1
-[ ] internal/schedule/repository_admin.go: ListTeachingWeeksForGroupBetween() — P1
-[ ] internal/schedule/repository_admin.go: ListCourseAssignmentTeachersForGroup() — P1
-[ ] internal/schedule/repository_admin.go: GetGroup() / CreateGroup() / UpdateGroup() / DeleteGroup() — P1
-[ ] internal/schedule/repository_admin.go: GetSubject() / CreateSubject() / UpdateSubject() / DeleteSubject() — P1
-[ ] internal/schedule/repository_admin.go: GetLocation() / CreateLocation() / UpdateLocation() / DeleteLocation() — P1
-[ ] internal/schedule/repository_admin.go: GetTeacher() / CreateTeacher() / UpdateTeacher() / DeleteTeacher() — P1
-[ ] internal/schedule/repository_admin.go: ListAllocatedSubjectsBySemester() — P1
-[ ] internal/schedule/repository_admin.go: CreateDayEvent() / UpdateDayEvent() / DeleteDayEvent() — P1
-[ ] internal/schedule/repository_admin.go: ListDayEventsPaged() — P1
+[ ] internal/schedule/repository_admin.go: ListTemplatesForWeekStatus() (integration) — P1
+[ ] internal/schedule/repository_admin.go: ListOverridesBetween() (integration) — P1
+[ ] internal/schedule/repository_admin.go: ListOverlaysBetween() (integration) — P1
+[ ] internal/schedule/repository_admin.go: ListCalendarExceptionsBetween() (integration) — P1
+[ ] internal/schedule/repository_admin.go: ListDayEventsBetween() (integration) — P1
+[ ] internal/schedule/repository_admin.go: ListTeachingWeeksForGroupBetween() (integration) — P1
+[ ] internal/schedule/repository_admin.go: ListCourseAssignmentTeachersForGroup() (integration) — P1
+[ ] internal/schedule/repository_admin.go: GetGroup/CreateGroup/UpdateGroup/DeleteGroup() (integration) — P1
+[ ] internal/schedule/repository_admin.go: GetSubject/CreateSubject/UpdateSubject/DeleteSubject() (integration) — P1
+[ ] internal/schedule/repository_admin.go: GetLocation/CreateLocation/UpdateLocation/DeleteLocation() (integration) — P1
+[ ] internal/schedule/repository_admin.go: GetTeacher/CreateTeacher/UpdateTeacher/DeleteTeacher() (integration) — P1
+[ ] internal/schedule/repository_admin.go: ListAllocatedSubjectsBySemester() (integration) — P1
+[ ] internal/schedule/repository_admin.go: CreateDayEvent/UpdateDayEvent/DeleteDayEvent() (integration) — P1
+[ ] internal/schedule/repository_admin.go: ListDayEventsPaged() (integration) — P1
 
 Файл: internal/schedule/repository_curricula.go — P2
-[ ] internal/schedule/repository_curricula.go: GetSpecialty() / CreateSpecialty() / UpdateSpecialty() / DeleteSpecialty() — P2
-[ ] internal/schedule/repository_curricula.go: GetCurriculum() / CreateCurriculum() / UpdateCurriculum() / DeleteCurriculum() — P2
-[ ] internal/schedule/repository_curricula.go: ListAcademicCalendars() / CreateAcademicCalendar() / DeleteAcademicCalendar() — P2
-[ ] internal/schedule/repository_curricula.go: ListAcademicCalendarWeeks() / UpsertAcademicCalendarWeeks() — P2
-[ ] internal/schedule/repository_curricula.go: ListCurriculumItems() / CreateCurriculumItem() / UpdateCurriculumItem() / DeleteCurriculumItem() — P2
-[ ] internal/schedule/repository_curricula.go: ListCurriculumItemAllocations() / UpsertCurriculumItemAllocations() — P2
+[ ] internal/schedule/repository_curricula.go: GetSpecialty/CreateSpecialty/UpdateSpecialty/DeleteSpecialty() (integration) — P2
+[ ] internal/schedule/repository_curricula.go: GetCurriculum/CreateCurriculum/UpdateCurriculum/DeleteCurriculum() (integration) — P2
+[ ] internal/schedule/repository_curricula.go: ListAcademicCalendars/CreateAcademicCalendar/DeleteAcademicCalendar() (integration) — P2
+[ ] internal/schedule/repository_curricula.go: ListAcademicCalendarWeeks/UpsertAcademicCalendarWeeks() (integration) — P2
+[ ] internal/schedule/repository_curricula.go: ListCurriculumItems/CreateCurriculumItem/UpdateCurriculumItem/DeleteCurriculumItem() (integration) — P2
+[ ] internal/schedule/repository_curricula.go: ListCurriculumItemAllocations/UpsertCurriculumItemAllocations() (integration) — P2
 
 Файл: internal/schedule/repository_push.go — P2
-[ ] internal/schedule/repository_push.go: RegisterDeviceToken() / UnregisterDeviceToken() — P2
-[ ] internal/schedule/repository_push.go: ListDeviceTokensByGroup() — P2
+[ ] internal/schedule/repository_push.go: RegisterDeviceToken/UnregisterDeviceToken() (integration) — P2
+[ ] internal/schedule/repository_push.go: ListDeviceTokensByGroup() (integration) — P2
 
 Файл: internal/schedule/repository_refresh_tokens.go — P1
-[ ] internal/schedule/repository_refresh_tokens.go: CreateRefreshToken() — P1
-[ ] internal/schedule/repository_refresh_tokens.go: GetRefreshTokenByHash() — P1
-[ ] internal/schedule/repository_refresh_tokens.go: RevokeRefreshToken() — P1
-[ ] internal/schedule/repository_refresh_tokens.go: RevokeAllRefreshTokensForUser() — P1
+[ ] internal/schedule/repository_refresh_tokens.go: CreateRefreshToken() (integration) — P1
+[ ] internal/schedule/repository_refresh_tokens.go: GetRefreshTokenByHash() (integration) — P1
+[ ] internal/schedule/repository_refresh_tokens.go: RevokeRefreshToken() (integration) — P1
+[ ] internal/schedule/repository_refresh_tokens.go: RevokeAllRefreshTokensForUser() (integration) — P1
 
 Файл: internal/schedule/repository_teachers.go — P2
-[ ] internal/schedule/repository_teachers.go: GetOrCreateTeacherID() — P2
-[ ] internal/schedule/repository_teachers.go: GetTeacherSubjects() / CreateTeacherSubject() / DeleteTeacherSubject() — P2
+[ ] internal/schedule/repository_teachers.go: GetOrCreateTeacherID() (integration) — P2
+[ ] internal/schedule/repository_teachers.go: GetTeacherSubjects/CreateTeacherSubject/DeleteTeacherSubject() (integration) — P2
 
 ----------------------------------------------------------------------
 10.5) SERVICE LAYER (частичное покрытие) — P0/P1
