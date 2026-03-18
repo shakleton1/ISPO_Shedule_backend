@@ -16,6 +16,28 @@ import (
 	"ispo-schedule/internal/schedule"
 )
 
+// Exported handlers for integration tests
+
+// HandleAdminCreateGroupForTest exports handleAdminCreateGroup for integration tests
+func HandleAdminCreateGroupForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminCreateGroup(repo, nil)
+}
+
+// HandleAdminListGroupsForTest exports handleAdminListGroups for integration tests
+func HandleAdminListGroupsForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminListGroups(repo)
+}
+
+// HandleAdminUpdateGroupForTest exports handleAdminUpdateGroup for integration tests
+func HandleAdminUpdateGroupForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminUpdateGroup(repo, nil)
+}
+
+// HandleAdminDeleteGroupForTest exports handleAdminDeleteGroup for integration tests
+func HandleAdminDeleteGroupForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminDeleteGroup(repo, nil)
+}
+
 // Day events
 
 func handleAdminListDayEvents(repo *schedule.Repository) gin.HandlerFunc {
@@ -524,7 +546,7 @@ func handleAdminListGroups(repo *schedule.Repository) gin.HandlerFunc {
 	}
 }
 
-func handleAdminCreateGroup(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminCreateGroup(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req schedule.Group
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -545,7 +567,7 @@ func handleAdminCreateGroup(repo *schedule.Repository) gin.HandlerFunc {
 	}
 }
 
-func handleAdminUpdateGroup(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminUpdateGroup(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
@@ -568,7 +590,7 @@ func handleAdminUpdateGroup(repo *schedule.Repository) gin.HandlerFunc {
 	}
 }
 
-func handleAdminDeleteGroup(repo *schedule.Repository) gin.HandlerFunc {
+func handleAdminDeleteGroup(repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {

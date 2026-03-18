@@ -195,9 +195,9 @@ func NewRouter(deps RouterDeps) http.Handler {
 			adminDictWrite := admin.Group("")
 			adminDictWrite.Use(requireAnyPermission(PermDictWrite))
 			{
-				adminDictWrite.POST("/groups", handleAdminCreateGroup(deps.Repo))
-				adminDictWrite.PUT("/groups/:id", handleAdminUpdateGroup(deps.Repo))
-				adminDictWrite.DELETE("/groups/:id", handleAdminDeleteGroup(deps.Repo))
+				adminDictWrite.POST("/groups", handleAdminCreateGroup(deps.Repo, deps.Push))
+				adminDictWrite.PUT("/groups/:id", handleAdminUpdateGroup(deps.Repo, deps.Push))
+				adminDictWrite.DELETE("/groups/:id", handleAdminDeleteGroup(deps.Repo, deps.Push))
 
 				adminDictWrite.POST("/teachers", handleAdminCreateTeacher(deps.Repo))
 				adminDictWrite.PUT("/teachers/:id", handleAdminUpdateTeacher(deps.Repo))
