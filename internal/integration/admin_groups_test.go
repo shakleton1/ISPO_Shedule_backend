@@ -5,8 +5,10 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -191,16 +193,17 @@ func TestHandleAdminUpdateGroup_Success(t *testing.T) {
 	defer db.Where("login = ?", adminUser.Login).Delete(&auth.User{})
 	
 	handler := httpapi.HandleAdminUpdateGroupForTest(repo)
-	
+
 	body := `{"name":"Updated Group","course":3}`
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodPut, "/api/v1/admin/groups/"+string(rune(group.ID)), bytes.NewReader([]byte(body)))
+	c.Params = []gin.Param{{Key: "id", Value: strconv.Itoa(int(group.ID))}}
+	c.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/admin/groups/%d", group.ID), bytes.NewReader([]byte(body)))
 	c.Request.Header.Set("Content-Type", "application/json")
 	c.Set("auth.user", adminUser)
-	
+
 	handler(c)
-	
+
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "Updated Group")
 }
@@ -209,9 +212,9 @@ func TestHandleAdminDeleteGroup_Success(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	
+
 	gin.SetMode(gin.TestMode)
-	
+
 	db := getTestDB(t)
 	repo := schedule.NewRepository(db)
 	
@@ -229,16 +232,17 @@ func TestHandleAdminDeleteGroup_Success(t *testing.T) {
 	defer db.Where("login = ?", adminUser.Login).Delete(&auth.User{})
 	
 	handler := httpapi.HandleAdminDeleteGroupForTest(repo)
-	
+
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodDelete, "/api/v1/admin/groups/"+string(rune(group.ID)), nil)
+	c.Params = []gin.Param{{Key: "id", Value: strconv.Itoa(int(group.ID))}}
+	c.Request = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/admin/groups/%d", group.ID), nil)
 	c.Set("auth.user", adminUser)
-	
+
 	handler(c)
-	
+
 	assert.Equal(t, http.StatusNoContent, w.Code)
-	
+
 	// Verify deleted
 	var count int64
 	db.Model(&schedule.Group{}).Where("id = ?", group.ID).Count(&count)
