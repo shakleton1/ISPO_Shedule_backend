@@ -53,7 +53,7 @@ func TestRepositoryCurricula_CurriculumCRUD(t *testing.T) {
 
 	c := &schedule.Curriculum{SpecialtyID: s.ID, AdmissionYear: 2024, Variant: "A", Title: "Curr", IsActive: true}
 	require.NoError(t, repo.CreateCurriculum(c))
-	t.Cleanup(func() { _ = db.Exec("UPDATE curricula SET deleted_at = now() WHERE id = ?", c.ID).Error })
+	t.Cleanup(func() { _ = db.Exec("DELETE FROM curricula WHERE id = ?", c.ID).Error })
 
 	updated, err := repo.UpdateCurriculum(c.ID, &schedule.Curriculum{SpecialtyID: s.ID, AdmissionYear: 2024, Variant: "B", Title: "Curr Updated", IsActive: false})
 	require.NoError(t, err)
@@ -80,7 +80,7 @@ func TestRepositoryCurricula_AcademicCalendarsAndWeeks(t *testing.T) {
 
 	c := &schedule.Curriculum{SpecialtyID: s.ID, AdmissionYear: 2025, Variant: "A", Title: "ACW Curr", IsActive: true}
 	require.NoError(t, db.Create(c).Error)
-	t.Cleanup(func() { _ = db.Exec("UPDATE curricula SET deleted_at = now() WHERE id = ?", c.ID).Error })
+	t.Cleanup(func() { _ = db.Exec("DELETE FROM curricula WHERE id = ?", c.ID).Error })
 
 	ac := &schedule.AcademicCalendar{CurriculumID: c.ID, AcademicYearStart: time.Date(2025, 9, 1, 0, 0, 0, 0, time.UTC), WeeksTotal: 52}
 	require.NoError(t, repo.CreateAcademicCalendar(ac))
@@ -115,17 +115,17 @@ func TestRepositoryCurricula_CurriculumItemsAndAllocations(t *testing.T) {
 
 	curr := &schedule.Curriculum{SpecialtyID: spec.ID, AdmissionYear: 2026, Variant: "A", Title: "CIA Curr", IsActive: true}
 	require.NoError(t, db.Create(curr).Error)
-	t.Cleanup(func() { _ = db.Exec("UPDATE curricula SET deleted_at = now() WHERE id = ?", curr.ID).Error })
+	t.Cleanup(func() { _ = db.Exec("DELETE FROM curricula WHERE id = ?", curr.ID).Error })
 
 	subject := &schedule.Subject{Name: fmt.Sprintf("CIA-subject-%d", time.Now().UnixNano())}
 	require.NoError(t, db.Create(subject).Error)
 	t.Cleanup(func() { _ = db.Exec("UPDATE subjects SET deleted_at = now() WHERE id = ?", subject.ID).Error })
 
-	item := &schedule.CurriculumItem{CurriculumID: curr.ID, ItemType: "subject", Name: "CIA Item", SubjectID: &subject.ID}
+	item := &schedule.CurriculumItem{CurriculumID: curr.ID, ItemType: "DISCIPLINE", Name: "CIA Item", SubjectID: &subject.ID}
 	require.NoError(t, repo.CreateCurriculumItem(item))
 	t.Cleanup(func() { _ = db.Where("id = ?", item.ID).Delete(&schedule.CurriculumItem{}).Error })
 
-	updatedItem, err := repo.UpdateCurriculumItem(item.ID, &schedule.CurriculumItem{CurriculumID: curr.ID, ItemType: "subject", Name: "CIA Item Updated", SubjectID: &subject.ID})
+	updatedItem, err := repo.UpdateCurriculumItem(item.ID, &schedule.CurriculumItem{CurriculumID: curr.ID, ItemType: "DISCIPLINE", Name: "CIA Item Updated", SubjectID: &subject.ID})
 	require.NoError(t, err)
 	assert.Equal(t, "CIA Item Updated", updatedItem.Name)
 

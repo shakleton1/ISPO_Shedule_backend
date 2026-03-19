@@ -159,13 +159,15 @@ func TestHandleAdminDeleteCurriculum_SoftDelete(t *testing.T) {
 	defer db.Exec("DELETE FROM curricula WHERE id = ?", curr.ID)
 
 	h := httpapi.HandleAdminDeleteCurriculumForTest(repo)
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		c.Set("auth.user", admin)
+		c.Next()
+	})
+	r.DELETE("/api/v1/admin/curricula/:id", h)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Params = []gin.Param{{Key: "id", Value: strconv.FormatInt(curr.ID, 10)}}
-	c.Request = httptest.NewRequest(http.MethodDelete, "/api/v1/admin/curricula/"+strconv.FormatInt(curr.ID, 10), nil)
-	c.Set("auth.user", admin)
-
-	h(c)
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/admin/curricula/"+strconv.FormatInt(curr.ID, 10), nil)
+	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
 	var cnt int64
@@ -266,7 +268,7 @@ func TestHandleAdminListCurriculumItems_Items(t *testing.T) {
 	require.NoError(t, db.Create(curr).Error)
 	defer db.Exec("DELETE FROM curricula WHERE id = ?", curr.ID)
 
-	item := &schedule.CurriculumItem{CurriculumID: curr.ID, ItemType: "subject", Name: "Algorithms"}
+	item := &schedule.CurriculumItem{CurriculumID: curr.ID, ItemType: "DISCIPLINE", Name: "Algorithms"}
 	require.NoError(t, db.Create(item).Error)
 	defer db.Where("id = ?", item.ID).Delete(&schedule.CurriculumItem{})
 
@@ -302,7 +304,7 @@ func TestHandleAdminUpsertCurriculumItemAllocations_Allocations(t *testing.T) {
 	require.NoError(t, db.Create(curr).Error)
 	defer db.Exec("DELETE FROM curricula WHERE id = ?", curr.ID)
 
-	item := &schedule.CurriculumItem{CurriculumID: curr.ID, ItemType: "subject", Name: "Math"}
+	item := &schedule.CurriculumItem{CurriculumID: curr.ID, ItemType: "DISCIPLINE", Name: "Math"}
 	require.NoError(t, db.Create(item).Error)
 	defer db.Where("id = ?", item.ID).Delete(&schedule.CurriculumItem{})
 

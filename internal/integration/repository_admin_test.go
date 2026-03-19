@@ -189,7 +189,7 @@ func TestRepositoryAdmin_ListTeachingWeeksForGroupBetween(t *testing.T) {
 
 	curr := &schedule.Curriculum{SpecialtyID: spec.ID, AdmissionYear: 2025, Variant: "A", Title: "Curr", IsActive: true}
 	require.NoError(t, db.Create(curr).Error)
-	t.Cleanup(func() { _ = db.Exec("UPDATE curricula SET deleted_at = now() WHERE id = ?", curr.ID).Error })
+	t.Cleanup(func() { _ = db.Exec("DELETE FROM curricula WHERE id = ?", curr.ID).Error })
 
 	group := &schedule.Group{Name: fmt.Sprintf("teach-weeks-group-%d", time.Now().UnixNano()), Course: 1, CurriculumID: &curr.ID}
 	require.NoError(t, db.Create(group).Error)
@@ -305,13 +305,13 @@ func TestRepositoryAdmin_ListAllocatedSubjectsBySemester(t *testing.T) {
 
 	curr := &schedule.Curriculum{SpecialtyID: spec.ID, AdmissionYear: 2024, Variant: "B", Title: "LAS Curr", IsActive: true}
 	require.NoError(t, db.Create(curr).Error)
-	t.Cleanup(func() { _ = db.Exec("UPDATE curricula SET deleted_at = now() WHERE id = ?", curr.ID).Error })
+	t.Cleanup(func() { _ = db.Exec("DELETE FROM curricula WHERE id = ?", curr.ID).Error })
 
 	subject := &schedule.Subject{Name: fmt.Sprintf("las-subject-%d", time.Now().UnixNano())}
 	require.NoError(t, db.Create(subject).Error)
 	t.Cleanup(func() { _ = db.Exec("UPDATE subjects SET deleted_at = now() WHERE id = ?", subject.ID).Error })
 
-	item := &schedule.CurriculumItem{CurriculumID: curr.ID, ItemType: "subject", Name: "Item", SubjectID: &subject.ID}
+	item := &schedule.CurriculumItem{CurriculumID: curr.ID, ItemType: "DISCIPLINE", Name: "Item", SubjectID: &subject.ID}
 	require.NoError(t, db.Create(item).Error)
 	t.Cleanup(func() { _ = db.Where("id = ?", item.ID).Delete(&schedule.CurriculumItem{}).Error })
 
