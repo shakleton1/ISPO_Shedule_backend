@@ -456,28 +456,28 @@ UX-контракт API
 [x] internal/schedule/repository.go: GetSystemState() — запись не создана (автоинициализация) (integration) — P0
 [x] internal/schedule/repository.go: BumpScheduleVersion() (integration) — P0
 
-[ ] internal/schedule/repository_admin.go: ListTemplatesForWeekStatus() (integration) — P1
-[ ] internal/schedule/repository_admin.go: ListOverridesBetween() (integration) — P1
-[ ] internal/schedule/repository_admin.go: ListOverlaysBetween() (integration) — P1
-[ ] internal/schedule/repository_admin.go: ListCalendarExceptionsBetween() (integration) — P1
-[ ] internal/schedule/repository_admin.go: ListDayEventsBetween() (integration) — P1
-[ ] internal/schedule/repository_admin.go: ListTeachingWeeksForGroupBetween() (integration) — P1
-[ ] internal/schedule/repository_admin.go: ListCourseAssignmentTeachersForGroup() (integration) — P1
-[ ] internal/schedule/repository_admin.go: GetGroup/CreateGroup/UpdateGroup/DeleteGroup() (integration) — P1
-[ ] internal/schedule/repository_admin.go: GetSubject/CreateSubject/UpdateSubject/DeleteSubject() (integration) — P1
-[ ] internal/schedule/repository_admin.go: GetLocation/CreateLocation/UpdateLocation/DeleteLocation() (integration) — P1
-[ ] internal/schedule/repository_admin.go: GetTeacher/CreateTeacher/UpdateTeacher/DeleteTeacher() (integration) — P1
-[ ] internal/schedule/repository_admin.go: ListAllocatedSubjectsBySemester() (integration) — P1
-[ ] internal/schedule/repository_admin.go: CreateDayEvent/UpdateDayEvent/DeleteDayEvent() (integration) — P1
-[ ] internal/schedule/repository_admin.go: ListDayEventsPaged() (integration) — P1
+[x] internal/schedule/repository_admin.go: ListTemplatesForWeekStatus() (integration) — P1
+[x] internal/schedule/repository_admin.go: ListOverridesBetween() (integration) — P1
+[x] internal/schedule/repository_admin.go: ListOverlaysBetween() (integration) — P1
+[x] internal/schedule/repository_admin.go: ListCalendarExceptionsBetween() (integration) — P1
+[x] internal/schedule/repository_admin.go: ListDayEventsBetween() (integration) — P1
+[x] internal/schedule/repository_admin.go: ListTeachingWeeksForGroupBetween() (integration) — P1
+[x] internal/schedule/repository_admin.go: ListCourseAssignmentTeachersForGroup() (integration) — P1
+[x] internal/schedule/repository_admin.go: GetGroup/CreateGroup/UpdateGroup/DeleteGroup() (integration) — P1
+[x] internal/schedule/repository_admin.go: GetSubject/CreateSubject/UpdateSubject/DeleteSubject() (integration) — P1
+[x] internal/schedule/repository_admin.go: GetLocation/CreateLocation/UpdateLocation/DeleteLocation() (integration) — P1
+[x] internal/schedule/repository_admin.go: GetTeacher/CreateTeacher/UpdateTeacher/DeleteTeacher() (integration) — P1
+[x] internal/schedule/repository_admin.go: ListAllocatedSubjectsBySemester() (integration) — P1
+[x] internal/schedule/repository_admin.go: CreateDayEvent/UpdateDayEvent/DeleteDayEvent() (integration) — P1
+[x] internal/schedule/repository_admin.go: ListDayEventsPaged() (integration) — P1
 
 Файл: internal/schedule/repository_curricula.go — P2
-[ ] internal/schedule/repository_curricula.go: GetSpecialty/CreateSpecialty/UpdateSpecialty/DeleteSpecialty() (integration) — P2
-[ ] internal/schedule/repository_curricula.go: GetCurriculum/CreateCurriculum/UpdateCurriculum/DeleteCurriculum() (integration) — P2
-[ ] internal/schedule/repository_curricula.go: ListAcademicCalendars/CreateAcademicCalendar/DeleteAcademicCalendar() (integration) — P2
-[ ] internal/schedule/repository_curricula.go: ListAcademicCalendarWeeks/UpsertAcademicCalendarWeeks() (integration) — P2
-[ ] internal/schedule/repository_curricula.go: ListCurriculumItems/CreateCurriculumItem/UpdateCurriculumItem/DeleteCurriculumItem() (integration) — P2
-[ ] internal/schedule/repository_curricula.go: ListCurriculumItemAllocations/UpsertCurriculumItemAllocations() (integration) — P2
+[x] internal/schedule/repository_curricula.go: GetSpecialty/CreateSpecialty/UpdateSpecialty/DeleteSpecialty() (integration) — P2
+[x] internal/schedule/repository_curricula.go: GetCurriculum/CreateCurriculum/UpdateCurriculum/DeleteCurriculum() (integration) — P2
+[x] internal/schedule/repository_curricula.go: ListAcademicCalendars/CreateAcademicCalendar/DeleteAcademicCalendar() (integration) — P2
+[x] internal/schedule/repository_curricula.go: ListAcademicCalendarWeeks/UpsertAcademicCalendarWeeks() (integration) — P2
+[x] internal/schedule/repository_curricula.go: ListCurriculumItems/CreateCurriculumItem/UpdateCurriculumItem/DeleteCurriculumItem() (integration) — P2
+[x] internal/schedule/repository_curricula.go: ListCurriculumItemAllocations/UpsertCurriculumItemAllocations() (integration) — P2
 
 Файл: internal/schedule/repository_push.go — P2
 [x] internal/schedule/repository_push.go: RegisterDeviceToken/UnregisterDeviceToken() (integration) — P2
@@ -490,8 +490,8 @@ UX-контракт API
 [x] internal/schedule/repository_refresh_tokens.go: RevokeAllRefreshTokensForUser() (integration) — P1
 
 Файл: internal/schedule/repository_teachers.go — P2
-[ ] internal/schedule/repository_teachers.go: GetOrCreateTeacherID() (integration) — P2
-[ ] internal/schedule/repository_teachers.go: GetTeacherSubjects/CreateTeacherSubject/DeleteTeacherSubject() (integration) — P2
+[x] internal/schedule/repository_teachers.go: GetOrCreateTeacherID() (integration) — P2
+[x] internal/schedule/repository_teachers.go: GetTeacherSubjects/CreateTeacherSubject/DeleteTeacherSubject() (integration) — P2
 
 ----------------------------------------------------------------------
 10.5) SERVICE LAYER (частичное покрытие) — P0/P1
