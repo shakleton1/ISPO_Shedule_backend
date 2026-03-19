@@ -146,7 +146,7 @@ func handleAdminDeleteDayEvent(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "delete", "schedule_day_events", strconv.FormatInt(id, 10), nil)
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -603,7 +603,7 @@ func handleAdminDeleteGroup(repo *schedule.Repository, pushSvc *push.Service) gi
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "delete", "groups", strconv.Itoa(id), nil)
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -691,7 +691,7 @@ func handleAdminDeleteSubject(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "delete", "subjects", strconv.Itoa(id), nil)
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -779,7 +779,7 @@ func handleAdminDeleteLocation(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "delete", "locations", strconv.Itoa(id), nil)
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -914,7 +914,7 @@ func handleAdminDeleteTemplate(repo *schedule.Repository, pushSvc *push.Service)
 			}
 		}
 		writeAudit(c, repo, "delete", "schedule_templates", strconv.FormatInt(id, 10), nil)
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -1138,7 +1138,7 @@ func handleAdminDeleteOverride(repo *schedule.Repository, pushSvc *push.Service)
 			pushSvc.NotifyScheduleUpdatedAsync(o.GroupID, ver)
 		}
 		writeAudit(c, repo, "delete", "schedule_overrides", strconv.FormatInt(id, 10), nil)
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -1297,6 +1297,6 @@ func handleAdminDeleteCalendarException(repo *schedule.Repository, pushSvc *push
 			pushSvc.NotifyScheduleUpdatedAllAsync(ver)
 		}
 		writeAudit(c, repo, "delete", "calendar_exceptions", dateStr, nil)
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }

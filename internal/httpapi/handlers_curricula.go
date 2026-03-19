@@ -99,7 +99,7 @@ func handleAdminDeleteSpecialty(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		writeAudit(c, repo, "delete", "specialties", strconv.Itoa(id), nil)
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -219,7 +219,7 @@ func handleAdminDeleteCurriculum(repo *schedule.Repository) gin.HandlerFunc {
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "delete", "curricula", strconv.FormatInt(id, 10), nil)
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -309,7 +309,7 @@ func handleAdminDeleteAcademicCalendar(repo *schedule.Repository) gin.HandlerFun
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "delete", "academic_calendars", strconv.FormatInt(id, 10), nil)
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -541,7 +541,7 @@ func handleAdminDeleteCurriculumItem(repo *schedule.Repository) gin.HandlerFunc 
 		}
 		_ = repo.BumpScheduleVersion()
 		writeAudit(c, repo, "delete", "curriculum_items", strconv.FormatInt(id, 10), nil)
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 

@@ -79,7 +79,7 @@ func corsMiddleware(cfg config.CORSConfig) gin.HandlerFunc {
 		c.Header("Access-Control-Expose-Headers", exposedHeaders)
 
 		if c.Request.Method == http.MethodOptions {
-			c.Status(http.StatusNoContent)
+			c.Writer.WriteHeader(http.StatusNoContent)
 			c.Abort()
 			return
 		}

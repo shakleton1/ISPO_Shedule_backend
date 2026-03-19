@@ -246,6 +246,7 @@ func TestHandleAdminDeleteGroup_Success(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
+	assert.Equal(t, 0, w.Body.Len())
 
 	// Verify deleted
 	var count int64

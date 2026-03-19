@@ -171,12 +171,12 @@ func handleLogout(repo *schedule.Repository) gin.HandlerFunc {
 		row, err := repo.GetRefreshTokenByHash(h)
 		if err != nil {
 			// Always return 204 to avoid leaking token existence.
-			c.Status(http.StatusNoContent)
+			c.Writer.WriteHeader(http.StatusNoContent)
 			return
 		}
 		_ = repo.RevokeRefreshToken(row.ID, nil)
 		writeAudit(c, repo, "logout", "auth", "refresh_token", nil)
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 

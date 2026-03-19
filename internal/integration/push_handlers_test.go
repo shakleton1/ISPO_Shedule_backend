@@ -40,7 +40,8 @@ func TestHandlePushRegister_Success(t *testing.T) {
 
 	handler(c)
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Contains(t, w.Body.String(), "registered")
 
 	// Cleanup
 	db.Where("token = ?", "test_device_token_123").Delete(&schedule.DeviceToken{})
@@ -70,7 +71,7 @@ func TestHandlePushRegister_InvalidToken(t *testing.T) {
 	handler(c)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "bad_request")
+	assert.Contains(t, w.Body.String(), "validation_error")
 }
 
 func TestHandlePushUnregister_Success(t *testing.T) {
@@ -104,6 +105,7 @@ func TestHandlePushUnregister_Success(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
+	assert.Equal(t, 0, w.Body.Len())
 
 	// Verify deleted
 	var count int64

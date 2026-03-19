@@ -36,11 +36,19 @@ func handlePushRegister(repo *schedule.Repository) gin.HandlerFunc {
 			writeInvalidJSON(c)
 			return
 		}
-		if err := repo.UpsertDeviceToken(req.GroupID, req.Token); err != nil {
-			writeError(c, http.StatusBadRequest, "bad_request", "", err.Error())
+		if req.GroupID <= 0 {
+			writeValidationError(c, "group_id", "group_id required")
 			return
 		}
-		c.Status(http.StatusCreated)
+		if req.Token == "" {
+			writeValidationError(c, "token", "token required")
+			return
+		}
+		if err := repo.UpsertDeviceToken(req.GroupID, req.Token); err != nil {
+			writeDBError(c, err)
+			return
+		}
+		c.JSON(http.StatusCreated, gin.H{"status": "registered", "group_id": req.GroupID})
 	}
 }
 
@@ -51,10 +59,14 @@ func handlePushUnregister(repo *schedule.Repository) gin.HandlerFunc {
 			writeInvalidJSON(c)
 			return
 		}
-		if err := repo.DeleteDeviceToken(req.Token); err != nil {
-			writeError(c, http.StatusBadRequest, "bad_request", "", err.Error())
+		if req.Token == "" {
+			writeValidationError(c, "token", "token required")
 			return
 		}
-		c.Status(http.StatusNoContent)
+		if err := repo.DeleteDeviceToken(req.Token); err != nil {
+			writeDBError(c, err)
+			return
+		}
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }

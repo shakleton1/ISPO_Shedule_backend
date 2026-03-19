@@ -98,7 +98,7 @@ func handleAdminDeleteTeacher(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		writeAudit(c, repo, "delete", "teachers", strconv.Itoa(id), gin.H{"id": id})
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -185,7 +185,7 @@ func handleAdminDeleteTeacherSubject(repo *schedule.Repository) gin.HandlerFunc 
 			return
 		}
 		writeAudit(c, repo, "delete", "teacher_subjects", strconv.Itoa(teacherID)+"/"+strconv.Itoa(subjectID), gin.H{"teacher_id": teacherID, "subject_id": subjectID})
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -351,7 +351,7 @@ func handleAdminDeleteCourseAssignment(repo *schedule.Repository, pushSvc *push.
 			}
 		}
 		writeAudit(c, repo, "delete", "course_assignments", strconv.FormatInt(id, 10), gin.H{"id": id})
-		c.Status(http.StatusNoContent)
+		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
 
