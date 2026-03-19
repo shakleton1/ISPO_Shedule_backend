@@ -34,6 +34,46 @@ func HandleAdminDeleteSpecialtyForTest(repo *schedule.Repository) gin.HandlerFun
 	return handleAdminDeleteSpecialty(repo)
 }
 
+// HandleAdminListCurriculaForTest exports handleAdminListCurricula for integration tests
+func HandleAdminListCurriculaForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminListCurricula(repo)
+}
+
+// HandleAdminCreateCurriculumForTest exports handleAdminCreateCurriculum for integration tests
+func HandleAdminCreateCurriculumForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminCreateCurriculum(repo)
+}
+
+// HandleAdminUpdateCurriculumForTest exports handleAdminUpdateCurriculum for integration tests
+func HandleAdminUpdateCurriculumForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminUpdateCurriculum(repo)
+}
+
+// HandleAdminDeleteCurriculumForTest exports handleAdminDeleteCurriculum for integration tests
+func HandleAdminDeleteCurriculumForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminDeleteCurriculum(repo)
+}
+
+// HandleAdminListAcademicCalendarsForTest exports handleAdminListAcademicCalendars for integration tests
+func HandleAdminListAcademicCalendarsForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminListAcademicCalendars(repo)
+}
+
+// HandleAdminUpsertAcademicCalendarWeeksForTest exports handleAdminUpsertAcademicCalendarWeeks for integration tests
+func HandleAdminUpsertAcademicCalendarWeeksForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminUpsertAcademicCalendarWeeks(repo)
+}
+
+// HandleAdminListCurriculumItemsForTest exports handleAdminListCurriculumItems for integration tests
+func HandleAdminListCurriculumItemsForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminListCurriculumItems(repo)
+}
+
+// HandleAdminUpsertCurriculumItemAllocationsForTest exports handleAdminUpsertCurriculumItemAllocations for integration tests
+func HandleAdminUpsertCurriculumItemAllocationsForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminUpsertCurriculumItemAllocations(repo)
+}
+
 // Specialties
 
 func handleAdminListSpecialties(repo *schedule.Repository) gin.HandlerFunc {

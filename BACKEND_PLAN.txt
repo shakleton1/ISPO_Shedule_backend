@@ -385,14 +385,14 @@ UX-контракт API
 [x] internal/httpapi/handlers_push.go: handlePushUnregister() — успешная отписка — P2
 
 Файл: internal/httpapi/handlers_curricula.go (400+ строк) — P2
-[ ] internal/httpapi/handlers_curricula.go: handleAdminListCurricula() — pagination — P2
-[ ] internal/httpapi/handlers_curricula.go: handleAdminCreateCurriculum() — успешное создание — P2
-[ ] internal/httpapi/handlers_curricula.go: handleAdminUpdateCurriculum() — обновление — P2
-[ ] internal/httpapi/handlers_curricula.go: handleAdminDeleteCurriculum() — soft delete — P2
-[ ] internal/httpapi/handlers_curricula.go: handleAdminListAcademicCalendars() — календари — P2
-[ ] internal/httpapi/handlers_curricula.go: handleAdminUpsertAcademicCalendarWeeks() — недели — P2
-[ ] internal/httpapi/handlers_curricula.go: handleAdminListCurriculumItems() — items — P2
-[ ] internal/httpapi/handlers_curricula.go: handleAdminUpsertCurriculumItemAllocations() — allocations — P2
+[x] internal/httpapi/handlers_curricula.go: handleAdminListCurricula() — pagination — P2
+[x] internal/httpapi/handlers_curricula.go: handleAdminCreateCurriculum() — успешное создание — P2
+[x] internal/httpapi/handlers_curricula.go: handleAdminUpdateCurriculum() — обновление — P2
+[x] internal/httpapi/handlers_curricula.go: handleAdminDeleteCurriculum() — soft delete — P2
+[x] internal/httpapi/handlers_curricula.go: handleAdminListAcademicCalendars() — календари — P2
+[x] internal/httpapi/handlers_curricula.go: handleAdminUpsertAcademicCalendarWeeks() — недели — P2
+[x] internal/httpapi/handlers_curricula.go: handleAdminListCurriculumItems() — items — P2
+[x] internal/httpapi/handlers_curricula.go: handleAdminUpsertCurriculumItemAllocations() — allocations — P2
 
 ----------------------------------------------------------------------
 10.3) MIDDLEWARE — P0/P1 [ВЫПОЛНЕНО: 26 тестов]
