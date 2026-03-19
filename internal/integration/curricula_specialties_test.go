@@ -164,15 +164,18 @@ func TestHandleAdminUpdateSpecialty_Success(t *testing.T) {
 	defer db.Where("login = ?", adminUser.Login).Delete(&auth.User{})
 
 	handler := httpapi.HandleAdminUpdateSpecialtyForTest(repo)
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		c.Set("auth.user", adminUser)
+		c.Next()
+	})
+	r.PUT("/api/v1/admin/specialties/:id", handler)
 
 	body := `{"code":"UPDATE-TEST-NEW","name":"Updated Specialty"}`
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/admin/specialties/%d", specialty.ID), bytes.NewReader([]byte(body)))
-	c.Request.Header.Set("Content-Type", "application/json")
-	c.Set("auth.user", adminUser)
-
-	handler(c)
+	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/admin/specialties/%d", specialty.ID), bytes.NewReader([]byte(body)))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "Updated Specialty")
