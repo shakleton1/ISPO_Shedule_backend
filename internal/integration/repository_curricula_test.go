@@ -133,7 +133,7 @@ func TestRepositoryCurricula_CurriculumItemsAndAllocations(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, items)
 
-	allocs, err := repo.UpsertCurriculumItemAllocations(item.ID, []schedule.CurriculumItemAllocation{{Semester: 1, AssessmentType: ptrString("exam")}})
+	allocs, err := repo.UpsertCurriculumItemAllocations(item.ID, []schedule.CurriculumItemAllocation{{Semester: 1, AssessmentType: ptrString("EXAM")}})
 	require.NoError(t, err)
 	require.NotEmpty(t, allocs)
 

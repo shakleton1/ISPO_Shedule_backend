@@ -309,7 +309,7 @@ func TestHandleAdminUpsertCurriculumItemAllocations_Allocations(t *testing.T) {
 	defer db.Where("id = ?", item.ID).Delete(&schedule.CurriculumItem{})
 
 	h := httpapi.HandleAdminUpsertCurriculumItemAllocationsForTest(repo)
-	body := `[{"semester":1,"weeks":16,"hours_total":64,"hours_lectures":32,"hours_practice":32,"assessment_type":"exam"}]`
+	body := `[{"semester":1,"weeks":16,"hours_total":64,"hours_lectures":32,"hours_practice":32,"assessment_type":"EXAM"}]`
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Params = []gin.Param{{Key: "id", Value: strconv.FormatInt(item.ID, 10)}}
