@@ -54,16 +54,12 @@ func handlePushRegister(repo *schedule.Repository) gin.HandlerFunc {
 
 func handlePushUnregister(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req pushUnregisterRequest
-		if err := c.ShouldBindJSON(&req); err != nil {
-			writeInvalidJSON(c)
-			return
-		}
-		if req.Token == "" {
+		token := c.Param("token")
+		if token == "" {
 			writeValidationError(c, "token", "token required")
 			return
 		}
-		if err := repo.DeleteDeviceToken(req.Token); err != nil {
+		if err := repo.DeleteDeviceToken(token); err != nil {
 			writeDBError(c, err)
 			return
 		}
