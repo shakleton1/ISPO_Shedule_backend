@@ -351,33 +351,33 @@ UX-контракт API
 [x] internal/httpapi/handlers_admin.go: handleAdminValidateSchedule() — warnings — P2
 
 Файл: internal/httpapi/handlers_admin.go (1281 строка) — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminListDayEvents() — pagination — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminListDayEvents() — filters (group_id, target_date) — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminCreateDayEvent() — успешное создание — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminCreateDayEvent() — валидация полей — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminUpdateDayEvent() — успешное обновление — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminUpdateDayEvent() — not found — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminDeleteDayEvent() — успешное удаление — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminListTemplates() — pagination — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminCreateTemplate() — успешное создание — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminCreateTemplate() — валидация (day_of_week, week_parity) — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminUpdateTemplate() — bump version + push — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminDeleteTemplate() — soft delete — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminListOverrides() — pagination — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminCreateOverride() — CANCEL/REPLACE/ADD — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminCreateOverride() — валидация (action_type, pair_number) — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminBulkOverrides() — массовое создание — P2
-[ ] internal/httpapi/handlers_admin.go: handleAdminMovePair() — атомарный перенос — P2
-[ ] internal/httpapi/handlers_admin.go: handleAdminUpsertOverlay() — overlay дня — P2
-[ ] internal/httpapi/handlers_admin.go: handleAdminUpsertCalendarException() — works_as_day — P2
-[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesCSV() — успешный импорт — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesCSV() — missing required column — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesCSV() — invalid day_of_week — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesXLSX() — успешный импорт — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesXLSX() — invalid pair_number — P1
-[ ] internal/httpapi/handlers_admin.go: handleAdminPublishDraftTemplates() — publish + bump version — P2
-[ ] internal/httpapi/handlers_admin.go: handleAdminDiscardDraftTemplates() — откат черновиков — P2
-[ ] internal/httpapi/handlers_admin.go: handleAdminValidateSchedule() — validation warnings — P2
+[x] internal/httpapi/handlers_admin.go: handleAdminListDayEvents() — pagination — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminListDayEvents() — filters (group_id, target_date) — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminCreateDayEvent() — успешное создание — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminCreateDayEvent() — валидация полей — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminUpdateDayEvent() — успешное обновление — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminUpdateDayEvent() — not found — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminDeleteDayEvent() — успешное удаление — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminListTemplates() — pagination — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminCreateTemplate() — успешное создание — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminCreateTemplate() — валидация (day_of_week, week_parity) — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminUpdateTemplate() — bump version + push — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminDeleteTemplate() — soft delete — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminListOverrides() — pagination — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminCreateOverride() — CANCEL/REPLACE/ADD — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminCreateOverride() — валидация (action_type, pair_number) — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminBulkOverrides() — массовое создание — P2
+[x] internal/httpapi/handlers_admin.go: handleAdminMovePair() — атомарный перенос — P2
+[x] internal/httpapi/handlers_admin.go: handleAdminUpsertOverlay() — overlay дня — P2
+[x] internal/httpapi/handlers_admin.go: handleAdminUpsertCalendarException() — works_as_day — P2
+[x] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesCSV() — успешный импорт — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesCSV() — missing required column — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesCSV() — invalid day_of_week — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesXLSX() — успешный импорт — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminImportTemplatesXLSX() — invalid pair_number — P1
+[x] internal/httpapi/handlers_admin.go: handleAdminPublishDraftTemplates() — publish + bump version — P2
+[x] internal/httpapi/handlers_admin.go: handleAdminDiscardDraftTemplates() — откат черновиков — P2
+[x] internal/httpapi/handlers_admin.go: handleAdminValidateSchedule() — validation warnings — P2
 
 Файл: internal/httpapi/handlers_push.go — P2
 [x] internal/httpapi/handlers_push.go: handlePushRegister() — успешная регистрация — P2
