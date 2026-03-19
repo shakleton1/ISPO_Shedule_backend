@@ -225,6 +225,29 @@ func TestRateLimitMiddleware_WithinLimit(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
+func TestRateLimitMiddleware_ExceedsLimit(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	store := newRateLimitStore(time.Minute)
+	rule := RateLimitRuleConfig{Enabled: true, RPS: 1, Burst: 1}
+
+	r := gin.New()
+	r.Use(rateLimitMiddleware(store, rule, "test"))
+	r.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
+
+	w1 := httptest.NewRecorder()
+	req1 := httptest.NewRequest(http.MethodGet, "/test", nil)
+	r.ServeHTTP(w1, req1)
+	assert.Equal(t, http.StatusOK, w1.Code)
+
+	w2 := httptest.NewRecorder()
+	req2 := httptest.NewRequest(http.MethodGet, "/test", nil)
+	r.ServeHTTP(w2, req2)
+
+	assert.Equal(t, http.StatusTooManyRequests, w2.Code)
+	assert.Contains(t, w2.Body.String(), "rate_limited")
+}
+
 func TestRateLimitStore_CleanupOldClients(t *testing.T) {
 	store := newRateLimitStore(10 * time.Millisecond)
 	now := time.Now()

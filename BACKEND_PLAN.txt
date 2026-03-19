@@ -380,9 +380,9 @@ UX-контракт API
 [ ] internal/httpapi/handlers_admin.go: handleAdminValidateSchedule() — validation warnings — P2
 
 Файл: internal/httpapi/handlers_push.go — P2
-[ ] internal/httpapi/handlers_push.go: handlePushRegister() — успешная регистрация — P2
-[ ] internal/httpapi/handlers_push.go: handlePushRegister() — invalid token — P2
-[ ] internal/httpapi/handlers_push.go: handlePushUnregister() — успешная отписка — P2
+[x] internal/httpapi/handlers_push.go: handlePushRegister() — успешная регистрация — P2
+[x] internal/httpapi/handlers_push.go: handlePushRegister() — invalid token — P2
+[x] internal/httpapi/handlers_push.go: handlePushUnregister() — успешная отписка — P2
 
 Файл: internal/httpapi/handlers_curricula.go (400+ строк) — P2
 [ ] internal/httpapi/handlers_curricula.go: handleAdminListCurricula() — pagination — P2
