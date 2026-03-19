@@ -421,20 +421,20 @@ UX-контракт API
 [x] internal/httpapi/mw_rate_limit.go: rateLimitMiddleware() — отключённый rate limit — P1 ✅
 [x] internal/httpapi/mw_rate_limit.go: rateLimitMiddleware() — в пределах лимита — P1 ✅
 [x] internal/httpapi/mw_rate_limit.go: rateLimitMiddleware() — превышение лимита (429) — P1
-[ ] internal/httpapi/mw_rate_limit.go: newRateLimitStore() — cleanup старых клиентов — P2
+[x] internal/httpapi/mw_rate_limit.go: newRateLimitStore() — cleanup старых клиентов — P2
 
 Файл: internal/httpapi/mw_cors.go — P2 [ВЫПОЛНЕНО: 3 теста]
 [x] internal/httpapi/mw_cors.go: corsMiddleware() — разрешённый origin — P2 ✅
 [x] internal/httpapi/mw_cors.go: corsMiddleware() — запрещённый origin — P2 ✅
 [x] internal/httpapi/mw_cors.go: corsMiddleware() — preflight request (OPTIONS) — P2 ✅
-[ ] internal/httpapi/mw_cors.go: corsMiddleware() — AllowCredentials=true — P2
+[x] internal/httpapi/mw_cors.go: corsMiddleware() — AllowCredentials=true — P2
 
 Файл: internal/httpapi/mw_security_headers.go — P2 [ВЫПОЛНЕНО: 1 тест]
 [x] internal/httpapi/mw_security_headers.go: securityHeadersMiddleware() — все заголовки — P2 ✅
 
 Файл: internal/httpapi/mw_body_limit.go — P2 [ВЫПОЛНЕНО: 1 тест]
 [x] internal/httpapi/mw_body_limit.go: maxBodyBytesMiddleware() — в пределах лимита — P2 ✅
-[ ] internal/httpapi/mw_body_limit.go: maxBodyBytesMiddleware() — превышение (413) — P2
+[x] internal/httpapi/mw_body_limit.go: maxBodyBytesMiddleware() — превышение (413) — P2
 
 Файл: internal/httpapi/mw_logging.go — P2
 [ ] internal/httpapi/mw_logging.go: requestLoggingMiddleware() — log с request_id — P2
@@ -445,8 +445,8 @@ UX-контракт API
 [x] internal/httpapi/mw_request_id.go: requestIDMiddleware() — использование существующего X-Request-ID — P2 ✅
 
 Файл: internal/httpapi/mw_admin_key.go — P2
-[ ] internal/httpapi/mw_admin_key.go: adminKeyMiddleware() — успешный ключ — P2
-[ ] internal/httpapi/mw_admin_key.go: adminKeyMiddleware() — неверный ключ — P2
+[x] internal/httpapi/mw_admin_key.go: adminKeyMiddleware() — успешный ключ — P2
+[x] internal/httpapi/mw_admin_key.go: adminKeyMiddleware() — неверный ключ — P2
 
 ----------------------------------------------------------------------
 10.4) REPOSITORY LAYER — P0/P1 [ВЫПОЛНЕНО: 5 тестов]

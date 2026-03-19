@@ -3,7 +3,9 @@ package httpapi
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -90,6 +92,26 @@ func TestCorsMiddleware_Preflight(t *testing.T) {
 	assert.Equal(t, "https://example.com", w.Header().Get("Access-Control-Allow-Origin"))
 }
 
+func TestCorsMiddleware_AllowCredentials(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	cfg := CORSConfig{
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: true,
+	}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/v1/health", nil)
+	c.Request.Header.Set("Origin", "https://allowed.example")
+
+	handler := corsMiddleware(cfg)
+	handler(c)
+
+	assert.Equal(t, "https://allowed.example", w.Header().Get("Access-Control-Allow-Origin"))
+	assert.Equal(t, "true", w.Header().Get("Access-Control-Allow-Credentials"))
+}
+
 func TestRequestIDMiddleware_GeneratesID(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -134,8 +156,33 @@ func TestMaxBodyBytesMiddleware_WithinLimit(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-// Note: TestMaxBodyBytesMiddleware_ExceedsLimit требует фактического чтения тела запроса
-// и тестируется в integration тестах
+func TestMaxBodyBytesMiddleware_ExceedsLimit(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	r := gin.New()
+	r.Use(maxBodyBytesMiddleware(8))
+	r.POST("/test", func(c *gin.Context) {
+		_, err := c.GetRawData()
+		if isRequestBodyTooLarge(err) {
+			writeError(c, http.StatusRequestEntityTooLarge, "payload_too_large", "body", "payload too large")
+			return
+		}
+		if err != nil {
+			writeError(c, http.StatusBadRequest, "bad_request", "body", "invalid body")
+			return
+		}
+		c.Status(http.StatusOK)
+	})
+
+	w := httptest.NewRecorder()
+	// 16 bytes > 8 bytes middleware limit
+	req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader("1234567890abcdef"))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusRequestEntityTooLarge, w.Code)
+	assert.Contains(t, w.Body.String(), "payload_too_large")
+}
 
 func TestRateLimitMiddleware_Disabled(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -170,6 +217,56 @@ func TestRateLimitMiddleware_WithinLimit(t *testing.T) {
 
 	// Первый запрос должен пройти
 	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestRateLimitStore_CleanupOldClients(t *testing.T) {
+	store := newRateLimitStore(10 * time.Millisecond)
+	now := time.Now()
+
+	store.clients["old"] = &rateLimitClient{lastSeen: now.Add(-time.Second)}
+	store.clients["fresh"] = &rateLimitClient{lastSeen: now}
+	store.nextCleanup = now.Add(-time.Millisecond)
+
+	_ = store.get("new", 1, 1)
+
+	_, hasOld := store.clients["old"]
+	_, hasFresh := store.clients["fresh"]
+	_, hasNew := store.clients["new"]
+
+	assert.False(t, hasOld)
+	assert.True(t, hasFresh)
+	assert.True(t, hasNew)
+}
+
+func TestAdminAuthMiddleware_Success(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	r := gin.New()
+	r.Use(adminAuthMiddleware("secret"))
+	r.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req.Header.Set("X-Admin-Key", "secret")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestAdminAuthMiddleware_InvalidKey(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	r := gin.New()
+	r.Use(adminAuthMiddleware("secret"))
+	r.GET("/test", func(c *gin.Context) { c.Status(http.StatusOK) })
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req.Header.Set("X-Admin-Key", "wrong")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	assert.Contains(t, w.Body.String(), "unauthorized")
 }
 
 // Note: TestRateLimitMiddleware_ExceedsLimit требует стабильного ClientIP
