@@ -13,6 +13,10 @@ import (
 	"ispo-schedule/internal/schedule"
 )
 
+func shortSpecialtyCode(prefix string) string {
+	return fmt.Sprintf("%s-%05d", prefix, time.Now().Unix()%100000)
+}
+
 func createAdminBaseData(t *testing.T) (*schedule.Repository, *schedule.Group, *schedule.Subject, *schedule.Location) {
 	t.Helper()
 	db := getTestDB(t)
@@ -134,7 +138,7 @@ func TestRepositoryAdmin_DayEvents_CRUDBetweenAndPaged(t *testing.T) {
 	e := &schedule.ScheduleDayEvent{
 		TargetDate: targetDate,
 		GroupID:    group.ID,
-		EventType:  "exam",
+		EventType:  "EXAM",
 		Title:      "Math exam",
 		Details:    &details,
 		LocationID: &location.ID,
@@ -151,7 +155,7 @@ func TestRepositoryAdmin_DayEvents_CRUDBetweenAndPaged(t *testing.T) {
 	updated, err := repo.UpdateDayEvent(e.ID, &schedule.ScheduleDayEvent{
 		TargetDate: targetDate,
 		GroupID:    group.ID,
-		EventType:  "exam",
+		EventType:  "EXAM",
 		Title:      newTitle,
 		Details:    &details,
 		LocationID: &location.ID,
@@ -179,7 +183,7 @@ func TestRepositoryAdmin_ListTeachingWeeksForGroupBetween(t *testing.T) {
 	db := getTestDB(t)
 	repo := schedule.NewRepository(db)
 
-	spec := &schedule.Specialty{Code: fmt.Sprintf("SP-%d", time.Now().UnixNano()), Name: "Spec"}
+	spec := &schedule.Specialty{Code: shortSpecialtyCode("SP"), Name: "Spec"}
 	require.NoError(t, db.Create(spec).Error)
 	t.Cleanup(func() { _ = db.Where("id = ?", spec.ID).Delete(&schedule.Specialty{}).Error })
 
@@ -295,7 +299,7 @@ func TestRepositoryAdmin_ListAllocatedSubjectsBySemester(t *testing.T) {
 	db := getTestDB(t)
 	repo := schedule.NewRepository(db)
 
-	spec := &schedule.Specialty{Code: fmt.Sprintf("LAS-%d", time.Now().UnixNano()), Name: "LAS Spec"}
+	spec := &schedule.Specialty{Code: shortSpecialtyCode("LAS"), Name: "LAS Spec"}
 	require.NoError(t, db.Create(spec).Error)
 	t.Cleanup(func() { _ = db.Where("id = ?", spec.ID).Delete(&schedule.Specialty{}).Error })
 

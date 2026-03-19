@@ -13,6 +13,10 @@ import (
 	"ispo-schedule/internal/schedule"
 )
 
+func shortCurriculaSpecialtyCode(prefix string) string {
+	return fmt.Sprintf("%s-%05d", prefix, time.Now().Unix()%100000)
+}
+
 func TestRepositoryCurricula_SpecialtyCRUD(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -21,7 +25,7 @@ func TestRepositoryCurricula_SpecialtyCRUD(t *testing.T) {
 	db := getTestDB(t)
 	repo := schedule.NewRepository(db)
 
-	s := &schedule.Specialty{Code: fmt.Sprintf("SPC-%d", time.Now().UnixNano()), Name: "Specialty"}
+	s := &schedule.Specialty{Code: shortCurriculaSpecialtyCode("SPC"), Name: "Specialty"}
 	require.NoError(t, repo.CreateSpecialty(s))
 	t.Cleanup(func() { _ = db.Where("id = ?", s.ID).Delete(&schedule.Specialty{}).Error })
 
@@ -43,7 +47,7 @@ func TestRepositoryCurricula_CurriculumCRUD(t *testing.T) {
 	db := getTestDB(t)
 	repo := schedule.NewRepository(db)
 
-	s := &schedule.Specialty{Code: fmt.Sprintf("CUR-SP-%d", time.Now().UnixNano()), Name: "Cur Spec"}
+	s := &schedule.Specialty{Code: shortCurriculaSpecialtyCode("CSP"), Name: "Cur Spec"}
 	require.NoError(t, db.Create(s).Error)
 	t.Cleanup(func() { _ = db.Where("id = ?", s.ID).Delete(&schedule.Specialty{}).Error })
 
@@ -70,7 +74,7 @@ func TestRepositoryCurricula_AcademicCalendarsAndWeeks(t *testing.T) {
 	db := getTestDB(t)
 	repo := schedule.NewRepository(db)
 
-	s := &schedule.Specialty{Code: fmt.Sprintf("ACW-SP-%d", time.Now().UnixNano()), Name: "ACW Spec"}
+	s := &schedule.Specialty{Code: shortCurriculaSpecialtyCode("AWS"), Name: "ACW Spec"}
 	require.NoError(t, db.Create(s).Error)
 	t.Cleanup(func() { _ = db.Where("id = ?", s.ID).Delete(&schedule.Specialty{}).Error })
 
@@ -105,7 +109,7 @@ func TestRepositoryCurricula_CurriculumItemsAndAllocations(t *testing.T) {
 	db := getTestDB(t)
 	repo := schedule.NewRepository(db)
 
-	spec := &schedule.Specialty{Code: fmt.Sprintf("CIA-SP-%d", time.Now().UnixNano()), Name: "CIA Spec"}
+	spec := &schedule.Specialty{Code: shortCurriculaSpecialtyCode("CIA"), Name: "CIA Spec"}
 	require.NoError(t, db.Create(spec).Error)
 	t.Cleanup(func() { _ = db.Where("id = ?", spec.ID).Delete(&schedule.Specialty{}).Error })
 

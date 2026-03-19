@@ -34,6 +34,10 @@ func makeAdminForCurriculaTests(t *testing.T, db *gorm.DB) *auth.User {
 	return u
 }
 
+func testSpecialtyCode(prefix string) string {
+	return fmt.Sprintf("%s-%05d", prefix, time.Now().Unix()%100000)
+}
+
 func TestHandleAdminListCurricula_Pagination(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -45,7 +49,7 @@ func TestHandleAdminListCurricula_Pagination(t *testing.T) {
 	admin := makeAdminForCurriculaTests(t, db)
 	defer db.Where("id = ?", admin.ID).Delete(&auth.User{})
 
-	spec := &schedule.Specialty{Code: "CURR-LIST-" + strconv.FormatInt(time.Now().UnixNano(), 10), Name: "Curricula List Spec"}
+	spec := &schedule.Specialty{Code: testSpecialtyCode("CL"), Name: "Curricula List Spec"}
 	require.NoError(t, db.Create(spec).Error)
 	defer db.Where("id = ?", spec.ID).Delete(&schedule.Specialty{})
 
@@ -79,7 +83,7 @@ func TestHandleAdminCreateCurriculum_Success(t *testing.T) {
 	admin := makeAdminForCurriculaTests(t, db)
 	defer db.Where("id = ?", admin.ID).Delete(&auth.User{})
 
-	spec := &schedule.Specialty{Code: "CURR-CREATE-" + strconv.FormatInt(time.Now().UnixNano(), 10), Name: "Curricula Create Spec"}
+	spec := &schedule.Specialty{Code: testSpecialtyCode("CC"), Name: "Curricula Create Spec"}
 	require.NoError(t, db.Create(spec).Error)
 	defer db.Where("id = ?", spec.ID).Delete(&schedule.Specialty{})
 
@@ -112,7 +116,7 @@ func TestHandleAdminUpdateCurriculum_Update(t *testing.T) {
 	admin := makeAdminForCurriculaTests(t, db)
 	defer db.Where("id = ?", admin.ID).Delete(&auth.User{})
 
-	spec := &schedule.Specialty{Code: "CURR-UPD-" + strconv.FormatInt(time.Now().UnixNano(), 10), Name: "Curricula Update Spec"}
+	spec := &schedule.Specialty{Code: testSpecialtyCode("CU"), Name: "Curricula Update Spec"}
 	require.NoError(t, db.Create(spec).Error)
 	defer db.Where("id = ?", spec.ID).Delete(&schedule.Specialty{})
 
@@ -146,7 +150,7 @@ func TestHandleAdminDeleteCurriculum_SoftDelete(t *testing.T) {
 	admin := makeAdminForCurriculaTests(t, db)
 	defer db.Where("id = ?", admin.ID).Delete(&auth.User{})
 
-	spec := &schedule.Specialty{Code: "CURR-DEL-" + strconv.FormatInt(time.Now().UnixNano(), 10), Name: "Curricula Delete Spec"}
+	spec := &schedule.Specialty{Code: testSpecialtyCode("CD"), Name: "Curricula Delete Spec"}
 	require.NoError(t, db.Create(spec).Error)
 	defer db.Where("id = ?", spec.ID).Delete(&schedule.Specialty{})
 
@@ -180,7 +184,7 @@ func TestHandleAdminListAcademicCalendars_List(t *testing.T) {
 	admin := makeAdminForCurriculaTests(t, db)
 	defer db.Where("id = ?", admin.ID).Delete(&auth.User{})
 
-	spec := &schedule.Specialty{Code: "AC-LIST-" + strconv.FormatInt(time.Now().UnixNano(), 10), Name: "AC List Spec"}
+	spec := &schedule.Specialty{Code: testSpecialtyCode("AL"), Name: "AC List Spec"}
 	require.NoError(t, db.Create(spec).Error)
 	defer db.Where("id = ?", spec.ID).Delete(&schedule.Specialty{})
 
@@ -216,7 +220,7 @@ func TestHandleAdminUpsertAcademicCalendarWeeks_Weeks(t *testing.T) {
 	admin := makeAdminForCurriculaTests(t, db)
 	defer db.Where("id = ?", admin.ID).Delete(&auth.User{})
 
-	spec := &schedule.Specialty{Code: "AC-WEEKS-" + strconv.FormatInt(time.Now().UnixNano(), 10), Name: "AC Weeks Spec"}
+	spec := &schedule.Specialty{Code: testSpecialtyCode("AW"), Name: "AC Weeks Spec"}
 	require.NoError(t, db.Create(spec).Error)
 	defer db.Where("id = ?", spec.ID).Delete(&schedule.Specialty{})
 
@@ -254,7 +258,7 @@ func TestHandleAdminListCurriculumItems_Items(t *testing.T) {
 	admin := makeAdminForCurriculaTests(t, db)
 	defer db.Where("id = ?", admin.ID).Delete(&auth.User{})
 
-	spec := &schedule.Specialty{Code: "ITEMS-LIST-" + strconv.FormatInt(time.Now().UnixNano(), 10), Name: "Items Spec"}
+	spec := &schedule.Specialty{Code: testSpecialtyCode("IL"), Name: "Items Spec"}
 	require.NoError(t, db.Create(spec).Error)
 	defer db.Where("id = ?", spec.ID).Delete(&schedule.Specialty{})
 
@@ -290,7 +294,7 @@ func TestHandleAdminUpsertCurriculumItemAllocations_Allocations(t *testing.T) {
 	admin := makeAdminForCurriculaTests(t, db)
 	defer db.Where("id = ?", admin.ID).Delete(&auth.User{})
 
-	spec := &schedule.Specialty{Code: "ALLOC-UPSERT-" + strconv.FormatInt(time.Now().UnixNano(), 10), Name: "Alloc Spec"}
+	spec := &schedule.Specialty{Code: testSpecialtyCode("AU"), Name: "Alloc Spec"}
 	require.NoError(t, db.Create(spec).Error)
 	defer db.Where("id = ?", spec.ID).Delete(&schedule.Specialty{})
 
