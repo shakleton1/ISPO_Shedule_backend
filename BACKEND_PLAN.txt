@@ -480,14 +480,14 @@ UX-контракт API
 [ ] internal/schedule/repository_curricula.go: ListCurriculumItemAllocations/UpsertCurriculumItemAllocations() (integration) — P2
 
 Файл: internal/schedule/repository_push.go — P2
-[ ] internal/schedule/repository_push.go: RegisterDeviceToken/UnregisterDeviceToken() (integration) — P2
-[ ] internal/schedule/repository_push.go: ListDeviceTokensByGroup() (integration) — P2
+[x] internal/schedule/repository_push.go: RegisterDeviceToken/UnregisterDeviceToken() (integration) — P2
+[x] internal/schedule/repository_push.go: ListDeviceTokensByGroup() (integration) — P2
 
 Файл: internal/schedule/repository_refresh_tokens.go — P1
-[ ] internal/schedule/repository_refresh_tokens.go: CreateRefreshToken() (integration) — P1
-[ ] internal/schedule/repository_refresh_tokens.go: GetRefreshTokenByHash() (integration) — P1
-[ ] internal/schedule/repository_refresh_tokens.go: RevokeRefreshToken() (integration) — P1
-[ ] internal/schedule/repository_refresh_tokens.go: RevokeAllRefreshTokensForUser() (integration) — P1
+[x] internal/schedule/repository_refresh_tokens.go: CreateRefreshToken() (integration) — P1
+[x] internal/schedule/repository_refresh_tokens.go: GetRefreshTokenByHash() (integration) — P1
+[x] internal/schedule/repository_refresh_tokens.go: RevokeRefreshToken() (integration) — P1
+[x] internal/schedule/repository_refresh_tokens.go: RevokeAllRefreshTokensForUser() (integration) — P1
 
 Файл: internal/schedule/repository_teachers.go — P2
 [ ] internal/schedule/repository_teachers.go: GetOrCreateTeacherID() (integration) — P2
