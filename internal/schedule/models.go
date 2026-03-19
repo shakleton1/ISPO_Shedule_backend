@@ -161,6 +161,8 @@ type Curriculum struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
+func (Curriculum) TableName() string { return "curricula" }
+
 type AcademicCalendar struct {
 	ID                int64     `gorm:"primaryKey" json:"id"`
 	CurriculumID      int64     `gorm:"not null" json:"curriculum_id"`
