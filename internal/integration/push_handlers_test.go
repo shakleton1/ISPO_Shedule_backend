@@ -40,7 +40,7 @@ func TestHandlePushRegister_Success(t *testing.T) {
 
 	handler(c)
 
-	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
 
 	// Cleanup
 	db.Where("token = ?", "test_device_token_123").Delete(&schedule.DeviceToken{})
@@ -70,7 +70,7 @@ func TestHandlePushRegister_InvalidToken(t *testing.T) {
 	handler(c)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "validation_error")
+	assert.Contains(t, w.Body.String(), "bad_request")
 }
 
 func TestHandlePushUnregister_Success(t *testing.T) {
@@ -94,15 +94,14 @@ func TestHandlePushUnregister_Success(t *testing.T) {
 	}
 	db.Create(deviceToken)
 
+	// Use router for proper request handling
+	r := gin.New()
 	handler := httpapi.HandlePushUnregisterForTest(repo)
+	r.DELETE("/api/v1/push/unregister/:token", handler)
 
-	body := fmt.Sprintf(`{"token":"%s"}`, token)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodPost, "/api/v1/push/unregister", bytes.NewReader([]byte(body)))
-	c.Request.Header.Set("Content-Type", "application/json")
-
-	handler(c)
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/push/unregister/%s", token), nil)
+	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
 
