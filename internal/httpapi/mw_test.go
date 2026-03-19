@@ -1,6 +1,8 @@
 package httpapi
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -8,7 +10,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace"
 
 	"ispo-schedule/internal/config"
 )
@@ -267,6 +273,76 @@ func TestAdminAuthMiddleware_InvalidKey(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 	assert.Contains(t, w.Body.String(), "unauthorized")
+}
+
+func TestRequestLoggingMiddleware_LogsRequestID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	var buf bytes.Buffer
+	prev := log.Logger
+	log.Logger = zerolog.New(&buf)
+	defer func() { log.Logger = prev }()
+
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		c.Set(ctxRequestIDKey, "rid-123")
+		c.Next()
+	})
+	r.Use(requestLoggingMiddleware())
+	r.GET("/ping", func(c *gin.Context) { c.Status(http.StatusNoContent) })
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/ping", nil)
+	r.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusNoContent, w.Code)
+
+	var event map[string]any
+	require.NoError(t, json.Unmarshal(bytes.TrimSpace(buf.Bytes()), &event))
+
+	assert.Equal(t, "rid-123", event["request_id"])
+	assert.Equal(t, "GET", event["method"])
+	assert.Equal(t, "/ping", event["path"])
+	assert.Equal(t, "http_request", event["message"])
+}
+
+func TestRequestLoggingMiddleware_LogsTraceAndSpanID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	var buf bytes.Buffer
+	prev := log.Logger
+	log.Logger = zerolog.New(&buf)
+	defer func() { log.Logger = prev }()
+
+	traceID, err := trace.TraceIDFromHex("11111111111111111111111111111111")
+	require.NoError(t, err)
+	spanID, err := trace.SpanIDFromHex("2222222222222222")
+	require.NoError(t, err)
+
+	sc := trace.NewSpanContext(trace.SpanContextConfig{
+		TraceID: traceID,
+		SpanID:  spanID,
+	})
+
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		c.Request = c.Request.WithContext(trace.ContextWithSpanContext(c.Request.Context(), sc))
+		c.Next()
+	})
+	r.Use(requestLoggingMiddleware())
+	r.GET("/trace", func(c *gin.Context) { c.Status(http.StatusOK) })
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/trace", nil)
+	r.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var event map[string]any
+	require.NoError(t, json.Unmarshal(bytes.TrimSpace(buf.Bytes()), &event))
+
+	assert.Equal(t, traceID.String(), event["trace_id"])
+	assert.Equal(t, spanID.String(), event["span_id"])
 }
 
 // Note: TestRateLimitMiddleware_ExceedsLimit требует стабильного ClientIP

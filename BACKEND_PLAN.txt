@@ -437,8 +437,8 @@ UX-контракт API
 [x] internal/httpapi/mw_body_limit.go: maxBodyBytesMiddleware() — превышение (413) — P2
 
 Файл: internal/httpapi/mw_logging.go — P2
-[ ] internal/httpapi/mw_logging.go: requestLoggingMiddleware() — log с request_id — P2
-[ ] internal/httpapi/mw_logging.go: requestLoggingMiddleware() — trace_id/span_id при включённом tracing — P2
+[x] internal/httpapi/mw_logging.go: requestLoggingMiddleware() — log с request_id — P2
+[x] internal/httpapi/mw_logging.go: requestLoggingMiddleware() — trace_id/span_id при включённом tracing — P2
 
 Файл: internal/httpapi/mw_request_id.go — P2 [ВЫПОЛНЕНО: 2 теста]
 [x] internal/httpapi/mw_request_id.go: requestIDMiddleware() — генерация нового ID — P2 ✅
