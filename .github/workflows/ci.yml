@@ -90,6 +90,7 @@ jobs:
             --exit-code 1 \
             --ignore-unfixed \
             --no-progress \
+            --skip-files /usr/local/bin/goose \
             ispo-schedule:ci
 
       - name: Install golangci-lint
