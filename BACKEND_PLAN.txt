@@ -290,8 +290,8 @@ UX-контракт API
 [x] internal/auth/refresh_tokens.go: HashRefreshToken() — different tokens — P1
 
 Файл: internal/auth/user.go
-[ ] internal/auth/user.go: rolePermissions() — все 4 роли — P1
-[ ] internal/auth/user.go: rolePermissions() — неизвестная роль — P1
+[x] internal/auth/user.go: rolePermissions() — все 4 роли — P1
+[x] internal/auth/user.go: rolePermissions() — неизвестная роль — P1
 
 ----------------------------------------------------------------------
 10.2) HTTP HANDLERS — P0/P1 [ВЫПОЛНЕНО: 20 тестов]
@@ -860,22 +860,22 @@ UX-контракт API
 - Config: 10 тестов (internal/config/config_test.go)
 - Handler Auth: 5 тестов (internal/httpapi/handlers_auth_test.go)
 - Handler Client: 9 тестов (internal/httpapi/handlers_client_test.go)
-- Import Parsers: 5 тестов (internal/httpapi/handlers_import_parse_test.go)
-- Contract Tests: 4 теста (error, pagination)
-- Curricula Tree: 1 тест
-- DB Schema: 3 теста
-- Import Parsers: 13 тестов (handlers_import_test.go)
+- Import Parsers: 13 тестов (handlers_import_parse_test.go + handlers_import_test.go)
 - Error Handling: 8 тестов (api_error_test.go)
 - Pagination: 10 тестов (pagination_test.go)
 - Week Cache: 8 тестов (repository_test.go + week_cache_test.go)
 - DTOs: 2 теста (dto_test.go)
 - Integration (Groups CRUD): 6 тестов (admin_groups_test.go)
+- Integration (Push): 3 теста (push_handlers_test.go)
 
-ИТОГО: 154 unit/integration тестов
+ИТОГО: 157 тестов (145 unit + 12 integration)
 
 Integration тесты (с реальной БД, build tag "integration"):
 [✓] internal/integration/smoke_test.go — Postgres migrations smoke
-[✓] internal/integration/auth_middleware_test.go — auth middleware + service tests
+[✓] internal/integration/auth_middleware_test.go — auth middleware + service tests (2 теста)
+[✓] internal/integration/admin_groups_test.go — admin groups CRUD (6 тестов)
+[✓] internal/integration/push_handlers_test.go — push register/unregister (3 теста)
+[✓] internal/integration/service_test.go — service integration (4 теста)
 
 ----------------------------------------------------------------------
 13.3) РЕКОМЕНДУЕМЫЕ УЛУЧШЕНИЯ CI (ПРИМЕРЫ)

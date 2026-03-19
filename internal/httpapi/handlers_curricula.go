@@ -12,6 +12,28 @@ import (
 	"ispo-schedule/internal/schedule"
 )
 
+// Exported handlers for integration tests
+
+// HandleAdminCreateSpecialtyForTest exports handleAdminCreateSpecialty for integration tests
+func HandleAdminCreateSpecialtyForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminCreateSpecialty(repo)
+}
+
+// HandleAdminListSpecialtiesForTest exports handleAdminListSpecialties for integration tests
+func HandleAdminListSpecialtiesForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminListSpecialties(repo)
+}
+
+// HandleAdminUpdateSpecialtyForTest exports handleAdminUpdateSpecialty for integration tests
+func HandleAdminUpdateSpecialtyForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminUpdateSpecialty(repo)
+}
+
+// HandleAdminDeleteSpecialtyForTest exports handleAdminDeleteSpecialty for integration tests
+func HandleAdminDeleteSpecialtyForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminDeleteSpecialty(repo)
+}
+
 // Specialties
 
 func handleAdminListSpecialties(repo *schedule.Repository) gin.HandlerFunc {
