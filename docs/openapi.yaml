@@ -2554,6 +2554,8 @@ components:
               group_floating_day_off,
               teacher_floating_day_off,
               physical_education_fifth_pair,
+              physical_education_location_kind,
+              physical_education_room_group_limit,
               three_pairs_requires_practice,
               multiple_campuses_day,
             ]

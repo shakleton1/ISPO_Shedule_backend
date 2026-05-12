@@ -77,6 +77,50 @@ func TestValidateScheduleBusinessRules_PEPracticeAndCampus(t *testing.T) {
 	assert.Contains(t, codes, "multiple_campuses_day")
 }
 
+func TestValidatePhysicalEducationFacilityRules(t *testing.T) {
+	targetGroup := Group{ID: 1, Course: 1}
+	otherGroups := []Group{{ID: 2, Course: 1}, {ID: 3, Course: 1}, {ID: 4, Course: 1}}
+	peID := 20
+	classroomID := 100
+	gymID := 101
+	groupsByID := map[int]Group{targetGroup.ID: targetGroup}
+	for _, group := range otherGroups {
+		groupsByID[group.ID] = group
+	}
+
+	allDaysByGroup := map[int][]DaySchedule{
+		targetGroup.ID: {
+			{
+				Date: "2026-09-07",
+				Lessons: []Lesson{
+					{PairNumber: 1, SubjectID: &peID, SubjectName: "physical education", LocationID: &classroomID},
+					{PairNumber: 2, SubjectID: &peID, SubjectName: "physical education", LocationID: &gymID},
+				},
+			},
+		},
+	}
+	for _, group := range otherGroups {
+		allDaysByGroup[group.ID] = []DaySchedule{
+			{
+				Date: "2026-09-07",
+				Lessons: []Lesson{
+					{PairNumber: 2, SubjectID: &peID, SubjectName: "physical education", LocationID: &gymID},
+				},
+			},
+		}
+	}
+	meta := map[int]LocationMeta{
+		classroomID: {ID: classroomID, LocationKind: "classroom"},
+		gymID:       {ID: gymID, LocationKind: "gym"},
+	}
+
+	warnings := validatePhysicalEducationFacilityRules(targetGroup.ID, groupsByID, allDaysByGroup, meta)
+	codes := warningCodes(warnings)
+
+	assert.Contains(t, codes, "physical_education_location_kind")
+	assert.Contains(t, codes, "physical_education_room_group_limit")
+}
+
 func lessonsForPairs(subjectID int, subjectName, teacherName string, pairs ...int16) []Lesson {
 	lessons := make([]Lesson, 0, len(pairs))
 	for _, pair := range pairs {

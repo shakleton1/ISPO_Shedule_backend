@@ -8,9 +8,10 @@ import (
 )
 
 const (
-	studentWeeklyHoursLimit = 36
-	teacherWeeklyHoursLimit = 40
-	academicHoursPerPair    = 2
+	studentWeeklyHoursLimit         = 36
+	teacherWeeklyHoursLimit         = 40
+	physicalEducationRoomGroupLimit = 3
+	academicHoursPerPair            = 2
 )
 
 type ScheduleValidationWarning struct {
@@ -62,6 +63,12 @@ func (s *Service) ValidateScheduleRange(groupID int, startDate, endDate time.Tim
 		return nil, err
 	}
 	resp.Warnings = append(resp.Warnings, validateScheduleBusinessRules(days, *group, locationMeta)...)
+
+	peFacilityWarnings, err := s.validatePhysicalEducationFacilitySchedule(groupID, *group, startDate, endDate, days)
+	if err != nil {
+		return nil, err
+	}
+	resp.Warnings = append(resp.Warnings, peFacilityWarnings...)
 
 	if group.CurriculumID == nil {
 		resp.NoCurriculum = true
@@ -190,6 +197,47 @@ func (s *Service) locationMetaForDays(days []DaySchedule) (map[int]LocationMeta,
 	return s.repo.ListLocationMetaByIDs(ids)
 }
 
+func (s *Service) validatePhysicalEducationFacilitySchedule(groupID int, group Group, startDate, endDate time.Time, targetDays []DaySchedule) ([]ScheduleValidationWarning, error) {
+	if !hasPhysicalEducationLessons(targetDays) {
+		return nil, nil
+	}
+
+	groups, err := s.repo.ListGroups()
+	if err != nil {
+		return nil, err
+	}
+
+	groupsByID := map[int]Group{groupID: group}
+	allDaysByGroup := map[int][]DaySchedule{groupID: targetDays}
+	locationIDs := map[int]bool{}
+	collectLocationIDsFromDays(targetDays, locationIDs)
+
+	for _, g := range groups {
+		groupsByID[g.ID] = g
+		if g.ID == groupID {
+			continue
+		}
+		days, err := s.buildDays(g.ID, startDate, endDate)
+		if err != nil {
+			return nil, err
+		}
+		allDaysByGroup[g.ID] = days
+		collectLocationIDsFromDays(days, locationIDs)
+	}
+
+	ids := make([]int, 0, len(locationIDs))
+	for id := range locationIDs {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+
+	locationMeta, err := s.repo.ListLocationMetaByIDs(ids)
+	if err != nil {
+		return nil, err
+	}
+	return validatePhysicalEducationFacilityRules(groupID, groupsByID, allDaysByGroup, locationMeta), nil
+}
+
 func validateScheduleBusinessRules(days []DaySchedule, group Group, locationMeta map[int]LocationMeta) []ScheduleValidationWarning {
 	warnings := make([]ScheduleValidationWarning, 0)
 	warnings = append(warnings, validateWeeklyStudentHours(days)...)
@@ -198,6 +246,81 @@ func validateScheduleBusinessRules(days []DaySchedule, group Group, locationMeta
 	warnings = append(warnings, validatePhysicalEducationFifthPair(days, group)...)
 	warnings = append(warnings, validateThreePairsPracticeOnly(days, group)...)
 	warnings = append(warnings, validateSingleCampusPerDay(days, group, locationMeta)...)
+	return warnings
+}
+
+type physicalEducationRoomSlot struct {
+	Date       string
+	PairNumber int16
+	LocationID int
+}
+
+func validatePhysicalEducationFacilityRules(targetGroupID int, groupsByID map[int]Group, allDaysByGroup map[int][]DaySchedule, locationMeta map[int]LocationMeta) []ScheduleValidationWarning {
+	groupsByRoomSlot := map[physicalEducationRoomSlot]map[int]bool{}
+	for groupID, days := range allDaysByGroup {
+		for _, day := range days {
+			for _, lesson := range day.Lessons {
+				if lesson.LocationID == nil || !isPhysicalEducationSubject(lesson.SubjectName) {
+					continue
+				}
+				meta := locationMeta[*lesson.LocationID]
+				if !isPhysicalEducationFacilityKind(meta.LocationKind) {
+					continue
+				}
+				slot := physicalEducationRoomSlot{
+					Date:       day.Date,
+					PairNumber: lesson.PairNumber,
+					LocationID: *lesson.LocationID,
+				}
+				if _, ok := groupsByRoomSlot[slot]; !ok {
+					groupsByRoomSlot[slot] = map[int]bool{}
+				}
+				groupsByRoomSlot[slot][groupID] = true
+			}
+		}
+	}
+
+	targetGroup := groupsByID[targetGroupID]
+	var warnings []ScheduleValidationWarning
+	roomLimitWarned := map[physicalEducationRoomSlot]bool{}
+	for _, day := range allDaysByGroup[targetGroupID] {
+		for _, lesson := range day.Lessons {
+			if !isPhysicalEducationSubject(lesson.SubjectName) {
+				continue
+			}
+			if lesson.LocationID == nil {
+				warnings = append(warnings, warningFromLesson("physical_education_location_kind", day.Date, lesson, targetGroup, "physical education must be scheduled in gym or pool"))
+				continue
+			}
+
+			meta := locationMeta[*lesson.LocationID]
+			if !isPhysicalEducationFacilityKind(meta.LocationKind) {
+				warnings = append(warnings, warningFromLesson("physical_education_location_kind", day.Date, lesson, targetGroup, "physical education must be scheduled in gym or pool"))
+				continue
+			}
+
+			slot := physicalEducationRoomSlot{
+				Date:       day.Date,
+				PairNumber: lesson.PairNumber,
+				LocationID: *lesson.LocationID,
+			}
+			if roomLimitWarned[slot] {
+				continue
+			}
+			groupCount := len(groupsByRoomSlot[slot])
+			if groupCount <= physicalEducationRoomGroupLimit {
+				continue
+			}
+			roomLimitWarned[slot] = true
+			warnings = append(warnings, warningFromLesson(
+				"physical_education_room_group_limit",
+				day.Date,
+				lesson,
+				targetGroup,
+				fmt.Sprintf("physical education room has %d groups in one slot, limit is %d", groupCount, physicalEducationRoomGroupLimit),
+			))
+		}
+	}
 	return warnings
 }
 
@@ -440,6 +563,37 @@ func isPhysicalEducationSubject(name string) bool {
 		strings.Contains(normalized, "физра") ||
 		strings.Contains(normalized, "physical education") ||
 		normalized == "pe"
+}
+
+func isPhysicalEducationFacilityKind(kind string) bool {
+	switch strings.ToLower(strings.TrimSpace(kind)) {
+	case "gym", "pool":
+		return true
+	default:
+		return false
+	}
+}
+
+func hasPhysicalEducationLessons(days []DaySchedule) bool {
+	for _, day := range days {
+		for _, lesson := range day.Lessons {
+			if isPhysicalEducationSubject(lesson.SubjectName) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func collectLocationIDsFromDays(days []DaySchedule, out map[int]bool) {
+	for _, day := range days {
+		for _, lesson := range day.Lessons {
+			if lesson.LocationID == nil || *lesson.LocationID <= 0 {
+				continue
+			}
+			out[*lesson.LocationID] = true
+		}
+	}
 }
 
 func isPracticeLikeSubject(name string) bool {
