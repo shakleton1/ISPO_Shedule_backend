@@ -42,7 +42,9 @@ func newFCMNotifier(ctx context.Context, cfg fcmConfig) (Notifier, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read fcm credentials: %w", err)
 	}
-	creds, err := google.CredentialsFromJSON(ctx, b, fcmScope)
+	creds, err := google.CredentialsFromJSONWithTypeAndParams(ctx, b, google.ServiceAccount, google.CredentialsParams{
+		Scopes: []string{fcmScope},
+	})
 	if err != nil {
 		return nil, fmt.Errorf("parse fcm credentials: %w", err)
 	}

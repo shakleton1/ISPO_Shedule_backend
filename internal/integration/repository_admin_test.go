@@ -89,13 +89,13 @@ func TestRepositoryAdmin_OverridesOverlaysCalendarBetween(t *testing.T) {
 	exComment := "moved day"
 
 	o := &schedule.ScheduleOverride{
-		TargetDate:   targetDate,
-		GroupID:      group.ID,
-		PairNumber:   3,
-		ActionType:   schedule.OverrideReplace,
-		NewSubjectID: &subject.ID,
-		NewLocationID:&location.ID,
-		Comment:      &comment,
+		TargetDate:    targetDate,
+		GroupID:       group.ID,
+		PairNumber:    3,
+		ActionType:    schedule.OverrideReplace,
+		NewSubjectID:  &subject.ID,
+		NewLocationID: &location.ID,
+		Comment:       &comment,
 	}
 	require.NoError(t, repo.CreateOverride(o))
 	t.Cleanup(func() { _ = db.Where("id = ?", o.ID).Delete(&schedule.ScheduleOverride{}).Error })
