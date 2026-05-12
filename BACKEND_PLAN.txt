@@ -1080,7 +1080,7 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
     Где: internal/httpapi/pdf_template.go, pdf_helpers.go, отдельные export handlers.
 
 14.7) Нехватка персонала
-[ ] Добавить "заглушку" для дисциплины без преподавателя и учет часов до назначения преподавателя.
+[x] Добавить "заглушку" для дисциплины без преподавателя и учет часов до назначения преподавателя.
     Где: course_assignments teacher_id NULL + validation/report warnings.
 
 14.8) Тесты и CI

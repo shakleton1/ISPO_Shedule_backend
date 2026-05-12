@@ -2549,6 +2549,7 @@ components:
             [
               subject_not_in_curriculum,
               teacher_day_constraint,
+              missing_teacher_placeholder,
               student_week_hours_limit,
               teacher_week_hours_limit,
               group_floating_day_off,

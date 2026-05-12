@@ -47,6 +47,23 @@ func TestValidateScheduleBusinessRules_SubgroupPairsCountOnceForStudents(t *test
 	assert.NotContains(t, warningCodes(warnings), "student_week_hours_limit")
 }
 
+func TestValidateScheduleBusinessRules_MissingTeacherPlaceholder(t *testing.T) {
+	group := Group{ID: 1, Course: 1}
+	subjectID := 10
+	days := []DaySchedule{
+		{
+			Date: "2026-09-07",
+			Lessons: []Lesson{
+				{PairNumber: 1, SubjectID: &subjectID, SubjectName: "Math"},
+			},
+		},
+	}
+
+	warnings := validateScheduleBusinessRules(days, group, nil)
+
+	assert.Contains(t, warningCodes(warnings), "missing_teacher_placeholder")
+}
+
 func TestValidateScheduleBusinessRules_PEPracticeAndCampus(t *testing.T) {
 	group := Group{ID: 1, Course: 1}
 	peID := 20

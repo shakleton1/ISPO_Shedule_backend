@@ -241,11 +241,34 @@ func (s *Service) validatePhysicalEducationFacilitySchedule(groupID int, group G
 func validateScheduleBusinessRules(days []DaySchedule, group Group, locationMeta map[int]LocationMeta) []ScheduleValidationWarning {
 	warnings := make([]ScheduleValidationWarning, 0)
 	warnings = append(warnings, validateWeeklyStudentHours(days)...)
+	warnings = append(warnings, validateMissingTeachers(days, group)...)
 	warnings = append(warnings, validateWeeklyTeacherHours(days, group)...)
 	warnings = append(warnings, validateFloatingDayOff(days, group)...)
 	warnings = append(warnings, validatePhysicalEducationFifthPair(days, group)...)
 	warnings = append(warnings, validateThreePairsPracticeOnly(days, group)...)
 	warnings = append(warnings, validateSingleCampusPerDay(days, group, locationMeta)...)
+	return warnings
+}
+
+func validateMissingTeachers(days []DaySchedule, group Group) []ScheduleValidationWarning {
+	var warnings []ScheduleValidationWarning
+	for _, day := range days {
+		for _, lesson := range day.Lessons {
+			if strings.TrimSpace(lesson.TeacherName) != "" {
+				continue
+			}
+			if lesson.SubjectID == nil && strings.TrimSpace(lesson.SubjectName) == "" {
+				continue
+			}
+			warnings = append(warnings, warningFromLesson(
+				"missing_teacher_placeholder",
+				day.Date,
+				lesson,
+				group,
+				fmt.Sprintf("lesson has no assigned teacher; pending load is %d hours", academicHoursPerPair),
+			))
+		}
+	}
 	return warnings
 }
 
