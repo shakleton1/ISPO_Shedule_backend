@@ -64,6 +64,12 @@ func (s *Service) ValidateScheduleRange(groupID int, startDate, endDate time.Tim
 	}
 	resp.Warnings = append(resp.Warnings, validateScheduleBusinessRules(days, *group, locationMeta)...)
 
+	locationOccupancyWarnings, err := s.validateLocationOccupancySchedule(groupID, *group, startDate, endDate, days)
+	if err != nil {
+		return nil, err
+	}
+	resp.Warnings = append(resp.Warnings, locationOccupancyWarnings...)
+
 	peFacilityWarnings, err := s.validatePhysicalEducationFacilitySchedule(groupID, *group, startDate, endDate, days)
 	if err != nil {
 		return nil, err
@@ -276,6 +282,115 @@ type physicalEducationRoomSlot struct {
 	Date       string
 	PairNumber int16
 	LocationID int
+}
+
+type roomOccupancySlot struct {
+	Date       string
+	PairNumber int16
+	LocationID int
+}
+
+type roomOccupancyEntry struct {
+	GroupID int
+	Lesson  Lesson
+}
+
+func (s *Service) validateLocationOccupancySchedule(groupID int, group Group, startDate, endDate time.Time, targetDays []DaySchedule) ([]ScheduleValidationWarning, error) {
+	if !hasLocationLessons(targetDays) {
+		return nil, nil
+	}
+
+	groups, err := s.repo.ListGroups()
+	if err != nil {
+		return nil, err
+	}
+
+	groupsByID := map[int]Group{groupID: group}
+	allDaysByGroup := map[int][]DaySchedule{groupID: targetDays}
+	locationIDs := map[int]bool{}
+	collectLocationIDsFromDays(targetDays, locationIDs)
+
+	for _, g := range groups {
+		groupsByID[g.ID] = g
+		if g.ID == groupID {
+			continue
+		}
+		days, err := s.buildDays(g.ID, startDate, endDate)
+		if err != nil {
+			return nil, err
+		}
+		allDaysByGroup[g.ID] = days
+		collectLocationIDsFromDays(days, locationIDs)
+	}
+
+	ids := make([]int, 0, len(locationIDs))
+	for id := range locationIDs {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+
+	locationMeta, err := s.repo.ListLocationMetaByIDs(ids)
+	if err != nil {
+		return nil, err
+	}
+	return validateLocationOccupancyRules(groupID, groupsByID, allDaysByGroup, locationMeta), nil
+}
+
+func validateLocationOccupancyRules(targetGroupID int, groupsByID map[int]Group, allDaysByGroup map[int][]DaySchedule, locationMeta map[int]LocationMeta) []ScheduleValidationWarning {
+	entriesBySlot := map[roomOccupancySlot][]roomOccupancyEntry{}
+	for groupID, days := range allDaysByGroup {
+		for _, day := range days {
+			for _, lesson := range day.Lessons {
+				if lesson.LocationID == nil || *lesson.LocationID <= 0 || lesson.PairNumber <= 0 {
+					continue
+				}
+				meta := locationMeta[*lesson.LocationID]
+				if strings.EqualFold(strings.TrimSpace(meta.LocationKind), "virtual") {
+					continue
+				}
+				slot := roomOccupancySlot{Date: day.Date, PairNumber: lesson.PairNumber, LocationID: *lesson.LocationID}
+				entriesBySlot[slot] = append(entriesBySlot[slot], roomOccupancyEntry{GroupID: groupID, Lesson: lesson})
+			}
+		}
+	}
+
+	targetGroup := groupsByID[targetGroupID]
+	var warnings []ScheduleValidationWarning
+	for _, slot := range sortedRoomOccupancySlots(entriesBySlot) {
+		entries := entriesBySlot[slot]
+		groupIDs := uniqueGroupIDsForEntries(entries)
+		if len(groupIDs) <= 1 {
+			continue
+		}
+		meta := locationMeta[slot.LocationID]
+		if isPhysicalEducationFacilityKind(meta.LocationKind) && allEntriesPhysicalEducation(entries) {
+			continue
+		}
+		if entriesHaveSharedFlow(entries) {
+			continue
+		}
+
+		var targetLesson *Lesson
+		for i := range entries {
+			if entries[i].GroupID == targetGroupID {
+				targetLesson = &entries[i].Lesson
+				break
+			}
+		}
+		if targetLesson == nil {
+			continue
+		}
+
+		names := groupNamesForIDs(groupIDs, groupsByID)
+		warnings = append(warnings, warningFromLesson(
+			"location_group_conflict",
+			slot.Date,
+			*targetLesson,
+			targetGroup,
+			fmt.Sprintf("location is occupied by %d groups in one slot without shared flow: %s", len(groupIDs), strings.Join(names, ", ")),
+		))
+	}
+	return warnings
 }
 
 func validatePhysicalEducationFacilityRules(targetGroupID int, groupsByID map[int]Group, allDaysByGroup map[int][]DaySchedule, locationMeta map[int]LocationMeta) []ScheduleValidationWarning {
@@ -617,6 +732,97 @@ func collectLocationIDsFromDays(days []DaySchedule, out map[int]bool) {
 			out[*lesson.LocationID] = true
 		}
 	}
+}
+
+func hasLocationLessons(days []DaySchedule) bool {
+	for _, day := range days {
+		for _, lesson := range day.Lessons {
+			if lesson.LocationID != nil && *lesson.LocationID > 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func sortedRoomOccupancySlots(m map[roomOccupancySlot][]roomOccupancyEntry) []roomOccupancySlot {
+	slots := make([]roomOccupancySlot, 0, len(m))
+	for slot := range m {
+		slots = append(slots, slot)
+	}
+	sort.Slice(slots, func(i, j int) bool {
+		if slots[i].Date != slots[j].Date {
+			return slots[i].Date < slots[j].Date
+		}
+		if slots[i].PairNumber != slots[j].PairNumber {
+			return slots[i].PairNumber < slots[j].PairNumber
+		}
+		return slots[i].LocationID < slots[j].LocationID
+	})
+	return slots
+}
+
+func uniqueGroupIDsForEntries(entries []roomOccupancyEntry) []int {
+	seen := map[int]bool{}
+	for _, entry := range entries {
+		seen[entry.GroupID] = true
+	}
+	ids := make([]int, 0, len(seen))
+	for id := range seen {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	return ids
+}
+
+func groupNamesForIDs(ids []int, groupsByID map[int]Group) []string {
+	names := make([]string, 0, len(ids))
+	for _, id := range ids {
+		name := strings.TrimSpace(groupsByID[id].Name)
+		if name == "" {
+			name = fmt.Sprintf("group:%d", id)
+		}
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+func allEntriesPhysicalEducation(entries []roomOccupancyEntry) bool {
+	if len(entries) == 0 {
+		return false
+	}
+	for _, entry := range entries {
+		if !isPhysicalEducationSubject(entry.Lesson.SubjectName) {
+			return false
+		}
+	}
+	return true
+}
+
+func entriesHaveSharedFlow(entries []roomOccupancyEntry) bool {
+	var flow string
+	for _, entry := range entries {
+		key := normalizedFlowKey(entry.Lesson.FlowKey)
+		if key == "" {
+			return false
+		}
+		if flow == "" {
+			flow = key
+			continue
+		}
+		if key != flow {
+			return false
+		}
+	}
+	return flow != ""
+}
+
+func normalizedFlowKey(flow *string) string {
+	if flow == nil {
+		return ""
+	}
+	return strings.ToLower(strings.TrimSpace(*flow))
 }
 
 func isPracticeLikeSubject(name string) bool {

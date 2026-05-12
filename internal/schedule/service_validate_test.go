@@ -138,6 +138,67 @@ func TestValidatePhysicalEducationFacilityRules(t *testing.T) {
 	assert.Contains(t, codes, "physical_education_room_group_limit")
 }
 
+func TestValidateLocationOccupancyRules_ConflictsWithoutSharedFlow(t *testing.T) {
+	targetGroup := Group{ID: 1, Name: "G1", Course: 1}
+	otherGroup := Group{ID: 2, Name: "G2", Course: 1}
+	subjectID := 10
+	locationID := 100
+	groupsByID := map[int]Group{
+		targetGroup.ID: targetGroup,
+		otherGroup.ID:  otherGroup,
+	}
+	allDaysByGroup := map[int][]DaySchedule{
+		targetGroup.ID: {{Date: "2026-09-07", Lessons: []Lesson{{PairNumber: 1, SubjectID: &subjectID, SubjectName: "Math", LocationID: &locationID}}}},
+		otherGroup.ID:  {{Date: "2026-09-07", Lessons: []Lesson{{PairNumber: 1, SubjectID: &subjectID, SubjectName: "Math", LocationID: &locationID}}}},
+	}
+	meta := map[int]LocationMeta{locationID: {ID: locationID, LocationKind: "classroom"}}
+
+	warnings := validateLocationOccupancyRules(targetGroup.ID, groupsByID, allDaysByGroup, meta)
+
+	assert.Contains(t, warningCodes(warnings), "location_group_conflict")
+}
+
+func TestValidateLocationOccupancyRules_AllowsSharedFlow(t *testing.T) {
+	targetGroup := Group{ID: 1, Name: "G1", Course: 1}
+	otherGroup := Group{ID: 2, Name: "G2", Course: 1}
+	subjectID := 10
+	locationID := 100
+	flow := "lecture-stream-1"
+	groupsByID := map[int]Group{
+		targetGroup.ID: targetGroup,
+		otherGroup.ID:  otherGroup,
+	}
+	allDaysByGroup := map[int][]DaySchedule{
+		targetGroup.ID: {{Date: "2026-09-07", Lessons: []Lesson{{PairNumber: 1, SubjectID: &subjectID, SubjectName: "Math", LocationID: &locationID, FlowKey: &flow}}}},
+		otherGroup.ID:  {{Date: "2026-09-07", Lessons: []Lesson{{PairNumber: 1, SubjectID: &subjectID, SubjectName: "Math", LocationID: &locationID, FlowKey: &flow}}}},
+	}
+	meta := map[int]LocationMeta{locationID: {ID: locationID, LocationKind: "classroom"}}
+
+	warnings := validateLocationOccupancyRules(targetGroup.ID, groupsByID, allDaysByGroup, meta)
+
+	assert.NotContains(t, warningCodes(warnings), "location_group_conflict")
+}
+
+func TestValidateLocationOccupancyRules_SkipsPhysicalEducationFacilities(t *testing.T) {
+	targetGroup := Group{ID: 1, Name: "G1", Course: 1}
+	otherGroup := Group{ID: 2, Name: "G2", Course: 1}
+	subjectID := 20
+	locationID := 101
+	groupsByID := map[int]Group{
+		targetGroup.ID: targetGroup,
+		otherGroup.ID:  otherGroup,
+	}
+	allDaysByGroup := map[int][]DaySchedule{
+		targetGroup.ID: {{Date: "2026-09-07", Lessons: []Lesson{{PairNumber: 1, SubjectID: &subjectID, SubjectName: "physical education", LocationID: &locationID}}}},
+		otherGroup.ID:  {{Date: "2026-09-07", Lessons: []Lesson{{PairNumber: 1, SubjectID: &subjectID, SubjectName: "physical education", LocationID: &locationID}}}},
+	}
+	meta := map[int]LocationMeta{locationID: {ID: locationID, LocationKind: "gym"}}
+
+	warnings := validateLocationOccupancyRules(targetGroup.ID, groupsByID, allDaysByGroup, meta)
+
+	assert.NotContains(t, warningCodes(warnings), "location_group_conflict")
+}
+
 func lessonsForPairs(subjectID int, subjectName, teacherName string, pairs ...int16) []Lesson {
 	lessons := make([]Lesson, 0, len(pairs))
 	for _, pair := range pairs {

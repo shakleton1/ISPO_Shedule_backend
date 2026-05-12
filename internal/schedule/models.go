@@ -85,6 +85,7 @@ type ScheduleTemplate struct {
 	TeacherID      *int         `gorm:"" json:"-"`
 	TeacherName    string       `gorm:"column:teacher_name;->" json:"teacher_name"`
 	Subgroup       *int16       `gorm:"" json:"subgroup"` // nil = вся группа
+	FlowKey        *string      `gorm:"size:80" json:"flow_key"`
 	CreatedAt      time.Time    `json:"created_at"`
 	UpdatedAt      time.Time    `json:"updated_at"`
 }
@@ -102,6 +103,7 @@ type ScheduleOverride struct {
 	NewTeacherName   *string        `gorm:"column:new_teacher_name;->" json:"new_teacher_name"`
 	Comment          *string        `json:"comment"`
 	Subgroup         *int16         `json:"subgroup"` // nil = для всех
+	FlowKey          *string        `gorm:"size:80" json:"flow_key"`
 	CreatedAt        time.Time      `json:"created_at"`
 	UpdatedAt        time.Time      `json:"updated_at"`
 }

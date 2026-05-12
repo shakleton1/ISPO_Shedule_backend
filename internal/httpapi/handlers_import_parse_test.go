@@ -12,9 +12,9 @@ import (
 
 func TestParseTemplatesCSV_Comma(t *testing.T) {
 	csvData := strings.Join([]string{
-		"day_of_week,week_parity,pair_number,subject,location,teacher_name,subgroup",
-		"1,numerator,2,Math,101,Dr A,1",
-		"6,both,8,Physics,Lab,,",
+		"day_of_week,week_parity,pair_number,subject,location,teacher_name,subgroup,flow_key",
+		"1,numerator,2,Math,101,Dr A,1,math-flow-1",
+		"6,both,8,Physics,Lab,,,",
 		"",
 	}, "\n")
 
@@ -40,6 +40,9 @@ func TestParseTemplatesCSV_Comma(t *testing.T) {
 	}
 	if rows[0].Subgroup == nil || *rows[0].Subgroup != 1 {
 		t.Fatalf("expected subgroup=1, got %+v", rows[0].Subgroup)
+	}
+	if rows[0].FlowKey == nil || *rows[0].FlowKey != "math-flow-1" {
+		t.Fatalf("expected flow_key=math-flow-1, got %+v", rows[0].FlowKey)
 	}
 
 	if rows[1].DayOfWeek != 5 { // 6 => 5 (Sat)

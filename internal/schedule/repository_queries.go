@@ -7,7 +7,7 @@ import (
 func (r *Repository) ListTemplatesForWeekStatus(groupID int, parity WeekParity, status EntityStatus) ([]TemplateDayView, error) {
 	var rows []TemplateDayView
 	err := r.db.Table("schedule_templates st").
-		Select(`st.day_of_week, st.pair_number, st.subject_id, s.name AS subject_name, st.location_id, l.name AS location_name, COALESCE(t.name, '') AS teacher_name, st.teacher_manual, st.location_manual, st.subgroup`).
+		Select(`st.day_of_week, st.pair_number, st.subject_id, s.name AS subject_name, st.location_id, l.name AS location_name, COALESCE(t.name, '') AS teacher_name, st.teacher_manual, st.location_manual, st.subgroup, st.flow_key`).
 		Joins("JOIN subjects s ON s.id = st.subject_id").
 		Joins("JOIN locations l ON l.id = st.location_id").
 		Joins("LEFT JOIN teachers t ON t.id = st.teacher_id").
@@ -20,7 +20,7 @@ func (r *Repository) ListTemplatesForWeekStatus(groupID int, parity WeekParity, 
 func (r *Repository) ListOverridesBetween(groupID int, startDate, endDate time.Time) ([]OverrideDateView, error) {
 	var rows []OverrideDateView
 	err := r.db.Table("schedule_overrides so").
-		Select(`so.target_date, so.id, so.pair_number, so.action_type, so.new_subject_id, COALESCE(s.name, '') AS new_subject_name, so.new_location_id, COALESCE(l.name, '') AS new_location_name, so.new_teacher_manual, t.name AS new_teacher_name, so.comment, so.subgroup, so.updated_at`).
+		Select(`so.target_date, so.id, so.pair_number, so.action_type, so.new_subject_id, COALESCE(s.name, '') AS new_subject_name, so.new_location_id, COALESCE(l.name, '') AS new_location_name, so.new_teacher_manual, t.name AS new_teacher_name, so.comment, so.subgroup, so.flow_key, so.updated_at`).
 		Joins("LEFT JOIN subjects s ON s.id = so.new_subject_id").
 		Joins("LEFT JOIN locations l ON l.id = so.new_location_id").
 		Joins("LEFT JOIN teachers t ON t.id = so.new_teacher_id").
@@ -37,7 +37,7 @@ func (r *Repository) ListTemplatesFor(groupID int, dayOfWeek int16, parity WeekP
 func (r *Repository) ListTemplatesForStatus(groupID int, dayOfWeek int16, parity WeekParity, status EntityStatus) ([]TemplateView, error) {
 	var rows []TemplateView
 	err := r.db.Table("schedule_templates st").
-		Select(`st.pair_number, st.subject_id, s.name AS subject_name, st.location_id, l.name AS location_name, COALESCE(t.name, '') AS teacher_name, st.teacher_manual, st.location_manual, st.subgroup`).
+		Select(`st.pair_number, st.subject_id, s.name AS subject_name, st.location_id, l.name AS location_name, COALESCE(t.name, '') AS teacher_name, st.teacher_manual, st.location_manual, st.subgroup, st.flow_key`).
 		Joins("JOIN subjects s ON s.id = st.subject_id").
 		Joins("JOIN locations l ON l.id = st.location_id").
 		Joins("LEFT JOIN teachers t ON t.id = st.teacher_id").
@@ -49,7 +49,7 @@ func (r *Repository) ListTemplatesForStatus(groupID int, dayOfWeek int16, parity
 func (r *Repository) ListOverridesForDate(groupID int, date time.Time) ([]OverrideView, error) {
 	var rows []OverrideView
 	err := r.db.Table("schedule_overrides so").
-		Select(`so.id, so.pair_number, so.action_type, so.new_subject_id, COALESCE(s.name, '') AS new_subject_name, so.new_location_id, COALESCE(l.name, '') AS new_location_name, so.new_teacher_manual, t.name AS new_teacher_name, so.comment, so.subgroup, so.updated_at`).
+		Select(`so.id, so.pair_number, so.action_type, so.new_subject_id, COALESCE(s.name, '') AS new_subject_name, so.new_location_id, COALESCE(l.name, '') AS new_location_name, so.new_teacher_manual, t.name AS new_teacher_name, so.comment, so.subgroup, so.flow_key, so.updated_at`).
 		Joins("LEFT JOIN subjects s ON s.id = so.new_subject_id").
 		Joins("LEFT JOIN locations l ON l.id = so.new_location_id").
 		Joins("LEFT JOIN teachers t ON t.id = so.new_teacher_id").

@@ -183,6 +183,7 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 					TeacherManual:  r.TeacherManual,
 					LocationManual: r.LocationManual,
 					Subgroup:       r.Subgroup,
+					FlowKey:        r.FlowKey,
 				})
 			}
 			pm[p] = byDay
@@ -220,6 +221,7 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 				NewTeacherName:   r.NewTeacherName,
 				Comment:          r.Comment,
 				Subgroup:         r.Subgroup,
+				FlowKey:          r.FlowKey,
 				UpdatedAt:        r.UpdatedAt,
 			}
 		}

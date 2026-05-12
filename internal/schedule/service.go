@@ -36,6 +36,7 @@ type Lesson struct {
 	LocationName string  `json:"location_name"`
 	TeacherName  string  `json:"teacher_name"`
 	Subgroup     *int16  `json:"subgroup"` // nil/0=вся группа
+	FlowKey      *string `json:"flow_key,omitempty"`
 	IsChanged    bool    `json:"is_changed"`
 	IsAdded      bool    `json:"is_added"`
 	Comment      *string `json:"comment"`

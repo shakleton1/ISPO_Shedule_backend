@@ -5,28 +5,30 @@ import "time"
 // View structs with joined names for response building.
 
 type TemplateDayView struct {
-	DayOfWeek      int16  `gorm:"column:day_of_week"`
-	PairNumber     int16  `gorm:"column:pair_number"`
-	SubjectID      int    `gorm:"column:subject_id"`
-	SubjectName    string `gorm:"column:subject_name"`
-	LocationID     int    `gorm:"column:location_id"`
-	LocationName   string `gorm:"column:location_name"`
-	TeacherName    string `gorm:"column:teacher_name"`
-	TeacherManual  bool   `gorm:"column:teacher_manual"`
-	LocationManual bool   `gorm:"column:location_manual"`
-	Subgroup       *int16 `gorm:"column:subgroup"`
+	DayOfWeek      int16   `gorm:"column:day_of_week"`
+	PairNumber     int16   `gorm:"column:pair_number"`
+	SubjectID      int     `gorm:"column:subject_id"`
+	SubjectName    string  `gorm:"column:subject_name"`
+	LocationID     int     `gorm:"column:location_id"`
+	LocationName   string  `gorm:"column:location_name"`
+	TeacherName    string  `gorm:"column:teacher_name"`
+	TeacherManual  bool    `gorm:"column:teacher_manual"`
+	LocationManual bool    `gorm:"column:location_manual"`
+	Subgroup       *int16  `gorm:"column:subgroup"`
+	FlowKey        *string `gorm:"column:flow_key"`
 }
 
 type TemplateView struct {
-	PairNumber     int16  `json:"pair_number"`
-	SubjectID      int    `json:"subject_id"`
-	SubjectName    string `json:"subject_name"`
-	LocationID     int    `json:"location_id"`
-	LocationName   string `json:"location_name"`
-	TeacherName    string `json:"teacher_name"`
-	TeacherManual  bool   `json:"teacher_manual"`
-	LocationManual bool   `json:"location_manual"`
-	Subgroup       *int16 `json:"subgroup"`
+	PairNumber     int16   `json:"pair_number"`
+	SubjectID      int     `json:"subject_id"`
+	SubjectName    string  `json:"subject_name"`
+	LocationID     int     `json:"location_id"`
+	LocationName   string  `json:"location_name"`
+	TeacherName    string  `json:"teacher_name"`
+	TeacherManual  bool    `json:"teacher_manual"`
+	LocationManual bool    `json:"location_manual"`
+	Subgroup       *int16  `json:"subgroup"`
+	FlowKey        *string `json:"flow_key,omitempty"`
 }
 
 type OverrideView struct {
@@ -41,6 +43,7 @@ type OverrideView struct {
 	NewTeacherName   *string        `json:"new_teacher_name"`
 	Comment          *string        `json:"comment"`
 	Subgroup         *int16         `json:"subgroup"`
+	FlowKey          *string        `json:"flow_key,omitempty"`
 	UpdatedAt        time.Time      `json:"updated_at"`
 }
 
@@ -57,5 +60,6 @@ type OverrideDateView struct {
 	NewTeacherName   *string        `gorm:"column:new_teacher_name"`
 	Comment          *string        `gorm:"column:comment"`
 	Subgroup         *int16         `gorm:"column:subgroup"`
+	FlowKey          *string        `gorm:"column:flow_key"`
 	UpdatedAt        time.Time      `gorm:"column:updated_at"`
 }

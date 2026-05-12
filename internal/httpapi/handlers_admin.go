@@ -1015,6 +1015,7 @@ type adminOverrideRequest struct {
 	NewTeacherName   *string `json:"new_teacher_name"`
 	Comment          *string `json:"comment"`
 	Subgroup         *int16  `json:"subgroup"`
+	FlowKey          *string `json:"flow_key"`
 }
 
 func validateOverrideRequest(o schedule.ScheduleOverride) error {
@@ -1029,7 +1030,7 @@ func validateOverrideRequest(o schedule.ScheduleOverride) error {
 	}
 	switch o.ActionType {
 	case schedule.OverrideCancel:
-		if o.NewSubjectID != nil || o.NewLocationID != nil || o.NewTeacherName != nil || o.NewTeacherManual {
+		if o.NewSubjectID != nil || o.NewLocationID != nil || o.NewTeacherName != nil || o.NewTeacherManual || o.FlowKey != nil {
 			return errors.New("CANCEL must not include new_* fields")
 		}
 	case schedule.OverrideAdd:
@@ -1037,7 +1038,7 @@ func validateOverrideRequest(o schedule.ScheduleOverride) error {
 			return errors.New("ADD requires new_subject_id")
 		}
 	case schedule.OverrideReplace:
-		if o.NewSubjectID == nil && o.NewLocationID == nil && o.NewTeacherName == nil && o.Comment == nil && !o.NewTeacherManual {
+		if o.NewSubjectID == nil && o.NewLocationID == nil && o.NewTeacherName == nil && o.Comment == nil && !o.NewTeacherManual && o.FlowKey == nil {
 			return errors.New("REPLACE requires at least one change field")
 		}
 	default:
@@ -1069,6 +1070,7 @@ func handleAdminCreateOverride(repo *schedule.Repository, pushSvc *push.Service)
 			NewTeacherName:   req.NewTeacherName,
 			Comment:          req.Comment,
 			Subgroup:         req.Subgroup,
+			FlowKey:          req.FlowKey,
 		}
 		if err := validateOverrideRequest(o); err != nil {
 			writeValidationError(c, "", err.Error())

@@ -2305,6 +2305,7 @@ components:
         teacher_manual: { type: boolean }
         location_manual: { type: boolean }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        flow_key: { type: string, nullable: true, maxLength: 80 }
 
     OverrideView:
       type: object
@@ -2323,6 +2324,7 @@ components:
         new_teacher_name: { type: string, nullable: true }
         comment: { type: string, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        flow_key: { type: string, nullable: true, maxLength: 80 }
         updated_at: { type: string, format: date-time }
 
     Lesson:
@@ -2413,6 +2415,7 @@ components:
         location_name: { type: string }
         teacher_name: { type: string }
         subgroup: { type: integer, nullable: true }
+        flow_key: { type: string, nullable: true, maxLength: 80 }
         is_changed: { type: boolean }
         is_added: { type: boolean }
         comment: { type: string, nullable: true }
@@ -2489,6 +2492,7 @@ components:
         teacher_manual: { type: boolean }
         location_manual: { type: boolean }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        flow_key: { type: string, nullable: true, maxLength: 80 }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -2558,6 +2562,7 @@ components:
               physical_education_location_kind,
               physical_education_room_group_limit,
               three_pairs_requires_practice,
+              location_group_conflict,
               multiple_campuses_day,
             ]
         date: { type: string, format: date }
@@ -2611,6 +2616,7 @@ components:
         new_teacher_name: { type: string, nullable: true }
         comment: { type: string, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        flow_key: { type: string, nullable: true, maxLength: 80 }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -2630,6 +2636,7 @@ components:
         new_teacher_name: { type: string, nullable: true }
         comment: { type: string, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        flow_key: { type: string, nullable: true, maxLength: 80 }
 
     ScheduleDayOverlay:
       type: object

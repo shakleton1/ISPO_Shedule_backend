@@ -27,6 +27,7 @@ type importTemplateRow struct {
 	Location    string
 	TeacherName string
 	Subgroup    *int16
+	FlowKey     *string
 }
 
 type importCurriculumItemRow struct {
@@ -372,6 +373,7 @@ func importTemplatesReplace(c *gin.Context, repo *schedule.Repository, groupID i
 				Status:     status,
 				TeacherID:  teacherID,
 				Subgroup:   r.Subgroup,
+				FlowKey:    r.FlowKey,
 				CreatedAt:  time.Now().UTC(),
 				UpdatedAt:  time.Now().UTC(),
 			})
@@ -1019,6 +1021,8 @@ func mapHeaders(head []string) map[string]int {
 			m["teacher_name"] = i
 		case "subgroup", "подгруппа":
 			m["subgroup"] = i
+		case "flow_key", "flow", "stream", "РїРѕС‚РѕРє", "РєР»СЋС‡_РїРѕС‚РѕРєР°":
+			m["flow_key"] = i
 		case "discipline", "discipline_name", "наименование_дисциплины":
 			m["discipline"] = i
 		case "course", "курс":
@@ -1108,6 +1112,10 @@ func parseTemplateRecord(get func(string) string) (importTemplateRow, error) {
 		}
 		subgroup = &sg
 	}
+	var flowKey *string
+	if raw := strings.TrimSpace(get("flow_key")); raw != "" {
+		flowKey = &raw
+	}
 
 	return importTemplateRow{
 		DayOfWeek:   day,
@@ -1117,6 +1125,7 @@ func parseTemplateRecord(get func(string) string) (importTemplateRow, error) {
 		Location:    location,
 		TeacherName: teacher,
 		Subgroup:    subgroup,
+		FlowKey:     flowKey,
 	}, nil
 }
 

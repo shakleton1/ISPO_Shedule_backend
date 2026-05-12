@@ -195,6 +195,7 @@ func TestApplyOverrideReplace_FullReplace(t *testing.T) {
 	newLocID := 20
 	newTeacher := "New Teacher"
 	comment := "Test comment"
+	flow := "flow-1"
 	sg1 := int16(1)
 
 	lesson := &Lesson{
@@ -218,6 +219,7 @@ func TestApplyOverrideReplace_FullReplace(t *testing.T) {
 		NewTeacherName:  &newTeacher,
 		Comment:         &comment,
 		Subgroup:        &sg1,
+		FlowKey:         &flow,
 	}
 
 	applyOverrideReplace(lesson, override)
@@ -228,6 +230,7 @@ func TestApplyOverrideReplace_FullReplace(t *testing.T) {
 	assert.Equal(t, "New Location", lesson.LocationName)
 	assert.Equal(t, newTeacher, lesson.TeacherName)
 	assert.Equal(t, sg1, *lesson.Subgroup)
+	assert.Equal(t, flow, *lesson.FlowKey)
 	assert.True(t, lesson.IsChanged)
 	assert.Equal(t, &comment, lesson.Comment)
 }
@@ -269,6 +272,7 @@ func TestBuildLessonFromOverride_FullData(t *testing.T) {
 	newLocID := 20
 	newTeacher := "Teacher"
 	comment := "Comment"
+	flow := "flow-2"
 	sg1 := int16(1)
 
 	override := OverrideView{
@@ -281,6 +285,7 @@ func TestBuildLessonFromOverride_FullData(t *testing.T) {
 		NewTeacherName:  &newTeacher,
 		Comment:         &comment,
 		Subgroup:        &sg1,
+		FlowKey:         &flow,
 	}
 
 	lesson := buildLessonFromOverride(override, true)
@@ -292,6 +297,7 @@ func TestBuildLessonFromOverride_FullData(t *testing.T) {
 	assert.Equal(t, "New Location", lesson.LocationName)
 	assert.Equal(t, newTeacher, lesson.TeacherName)
 	assert.Equal(t, sg1, *lesson.Subgroup)
+	assert.Equal(t, flow, *lesson.FlowKey)
 	assert.True(t, lesson.IsAdded)
 	assert.False(t, lesson.IsChanged) // ADD не меняет, а добавляет
 	assert.Equal(t, &comment, lesson.Comment)

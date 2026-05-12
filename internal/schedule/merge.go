@@ -66,6 +66,7 @@ func mergeLessons(tpls []TemplateView, ovrs []OverrideView) ([]Lesson, error) {
 			LocationName: t.LocationName,
 			TeacherName:  t.TeacherName,
 			Subgroup:     t.Subgroup,
+			FlowKey:      t.FlowKey,
 		}
 		lessons = append(lessons, l)
 	}
@@ -144,6 +145,9 @@ func applyOverrideReplace(l *Lesson, o OverrideView) {
 	if o.NewTeacherName != nil {
 		l.TeacherName = *o.NewTeacherName
 	}
+	if o.FlowKey != nil {
+		l.FlowKey = o.FlowKey
+	}
 	l.IsChanged = true
 	l.Comment = o.Comment
 	if o.Subgroup != nil {
@@ -159,6 +163,7 @@ func buildLessonFromOverride(o OverrideView, isAdded bool) Lesson {
 		IsAdded:    isAdded,
 		IsChanged:  o.ActionType == OverrideReplace,
 		Comment:    o.Comment,
+		FlowKey:    o.FlowKey,
 	}
 	if o.NewSubjectID != nil {
 		lesson.SubjectID = o.NewSubjectID

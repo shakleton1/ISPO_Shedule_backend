@@ -294,6 +294,7 @@ type scheduleTemplateDTO struct {
 	LocationManual bool                  `json:"location_manual"`
 	TeacherName    string                `json:"teacher_name"`
 	Subgroup       *int16                `json:"subgroup"`
+	FlowKey        *string               `json:"flow_key,omitempty"`
 	CreatedAt      time.Time             `json:"created_at"`
 	UpdatedAt      time.Time             `json:"updated_at"`
 }
@@ -312,6 +313,7 @@ func toScheduleTemplateDTO(t schedule.ScheduleTemplate) scheduleTemplateDTO {
 		LocationManual: t.LocationManual,
 		TeacherName:    t.TeacherName,
 		Subgroup:       t.Subgroup,
+		FlowKey:        t.FlowKey,
 		CreatedAt:      t.CreatedAt,
 		UpdatedAt:      t.UpdatedAt,
 	}
@@ -329,6 +331,7 @@ type scheduleOverrideDTO struct {
 	NewTeacherName   *string                 `json:"new_teacher_name"`
 	Comment          *string                 `json:"comment"`
 	Subgroup         *int16                  `json:"subgroup"`
+	FlowKey          *string                 `json:"flow_key,omitempty"`
 	CreatedAt        time.Time               `json:"created_at"`
 	UpdatedAt        time.Time               `json:"updated_at"`
 }
@@ -346,6 +349,7 @@ func toScheduleOverrideDTO(o schedule.ScheduleOverride) scheduleOverrideDTO {
 		NewTeacherName:   o.NewTeacherName,
 		Comment:          o.Comment,
 		Subgroup:         o.Subgroup,
+		FlowKey:          o.FlowKey,
 		CreatedAt:        o.CreatedAt,
 		UpdatedAt:        o.UpdatedAt,
 	}
