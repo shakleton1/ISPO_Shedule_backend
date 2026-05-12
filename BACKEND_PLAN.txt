@@ -1068,7 +1068,8 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
     Где: internal/schedule/service_validate.go, отдельные warning codes, tests.
 
 14.4) Ручное распределение аудиторий
-[ ] Добавить недельный список доступных аудиторий/ВЦ и режим автозаполнения свободных аудиторий.
+[x] Добавить недельный список доступных аудиторий/ВЦ и режим автозаполнения свободных аудиторий.
+    Сделано: location_week_availability + admin API, автозаполнение свободных кабинетов через date-specific REPLACE overrides с dry_run и фильтрами campus/location_kind.
     Где: отдельная таблица room_week_availability или room_allocations; алгоритм после календаря/ограничений.
 
 14.5) Фильтрация и отображение

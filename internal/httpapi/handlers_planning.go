@@ -491,3 +491,181 @@ func handleAdminDeleteScheduleReplacement(repo *schedule.Repository) gin.Handler
 		c.Writer.WriteHeader(http.StatusNoContent)
 	}
 }
+
+func handleAdminListLocationWeekAvailability(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		p, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
+			return
+		}
+		var filters schedule.LocationWeekAvailabilityFilters
+		if v := c.Query("week_start_date"); v != "" {
+			d, err := time.Parse("2006-01-02", v)
+			if err != nil {
+				writeValidationError(c, "week_start_date", "week_start_date must be YYYY-MM-DD")
+				return
+			}
+			filters.WeekStartDate = &d
+		}
+		if v := c.Query("location_id"); v != "" {
+			id, err := strconv.Atoi(v)
+			if err != nil {
+				writeValidationError(c, "location_id", "invalid location_id")
+				return
+			}
+			filters.LocationID = &id
+		}
+
+		var (
+			rows []schedule.LocationWeekAvailability
+			err  error
+		)
+		if p.Limit != nil {
+			rows, err = repo.ListLocationWeekAvailabilityPaged(filters, p.Limit, p.Offset)
+		} else {
+			rows, err = repo.ListLocationWeekAvailability(filters)
+		}
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		out := make([]locationWeekAvailabilityDTO, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, toLocationWeekAvailabilityDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
+	}
+}
+
+type locationWeekAvailabilityReq struct {
+	LocationID  int     `json:"location_id"`
+	IsAvailable *bool   `json:"is_available"`
+	Comment     *string `json:"comment"`
+}
+
+func handleAdminUpsertLocationWeekAvailability(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		weekStartStr := c.Query("week_start_date")
+		if weekStartStr == "" {
+			writeValidationError(c, "week_start_date", "week_start_date required")
+			return
+		}
+		weekStart, err := time.Parse("2006-01-02", weekStartStr)
+		if err != nil {
+			writeValidationError(c, "week_start_date", "week_start_date must be YYYY-MM-DD")
+			return
+		}
+
+		var req []locationWeekAvailabilityReq
+		if err := c.ShouldBindJSON(&req); err != nil {
+			writeInvalidJSON(c)
+			return
+		}
+		rows := make([]schedule.LocationWeekAvailability, 0, len(req))
+		for _, item := range req {
+			available := true
+			if item.IsAvailable != nil {
+				available = *item.IsAvailable
+			}
+			rows = append(rows, schedule.LocationWeekAvailability{
+				LocationID:  item.LocationID,
+				IsAvailable: available,
+				Comment:     item.Comment,
+			})
+		}
+
+		saved, err := repo.UpsertLocationWeekAvailability(weekStart, rows)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		writeAudit(c, repo, "upsert", "location_week_availability", weekStart.Format("2006-01-02"), gin.H{"count": len(req)})
+		out := make([]locationWeekAvailabilityDTO, 0, len(saved))
+		for _, r := range saved {
+			out = append(out, toLocationWeekAvailabilityDTO(r))
+		}
+		c.JSON(http.StatusOK, out)
+	}
+}
+
+func handleAdminDeleteLocationWeekAvailability(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			writeValidationError(c, "id", "invalid id")
+			return
+		}
+		if err := repo.DeleteLocationWeekAvailability(id); err != nil {
+			writeDBError(c, err)
+			return
+		}
+		writeAudit(c, repo, "delete", "location_week_availability", strconv.FormatInt(id, 10), nil)
+		c.Writer.WriteHeader(http.StatusNoContent)
+	}
+}
+
+type locationAutofillReq struct {
+	GroupID        int     `json:"group_id"`
+	StartDate      string  `json:"start_date"`
+	EndDate        string  `json:"end_date"`
+	Campus         *string `json:"campus"`
+	LocationKind   *string `json:"location_kind"`
+	ReplaceVirtual *bool   `json:"replace_virtual"`
+	DryRun         bool    `json:"dry_run"`
+	Comment        *string `json:"comment"`
+}
+
+func handleAdminAutofillLocations(svc *schedule.Service, repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if svc == nil {
+			writeError(c, http.StatusInternalServerError, "internal_error", "", "schedule service not configured")
+			return
+		}
+		var req locationAutofillReq
+		if err := c.ShouldBindJSON(&req); err != nil {
+			writeInvalidJSON(c)
+			return
+		}
+		start, err := time.Parse("2006-01-02", req.StartDate)
+		if err != nil {
+			writeValidationError(c, "start_date", "start_date must be YYYY-MM-DD")
+			return
+		}
+		end, err := time.Parse("2006-01-02", req.EndDate)
+		if err != nil {
+			writeValidationError(c, "end_date", "end_date must be YYYY-MM-DD")
+			return
+		}
+		replaceVirtual := true
+		if req.ReplaceVirtual != nil {
+			replaceVirtual = *req.ReplaceVirtual
+		}
+
+		res, err := svc.AutofillLocations(schedule.LocationAutofillRequest{
+			GroupID:        req.GroupID,
+			StartDate:      start,
+			EndDate:        end,
+			Campus:         req.Campus,
+			LocationKind:   req.LocationKind,
+			ReplaceVirtual: replaceVirtual,
+			DryRun:         req.DryRun,
+			Comment:        req.Comment,
+		})
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		if !req.DryRun && (res.Created > 0 || res.Updated > 0) && pushSvc != nil {
+			if st, err := repo.GetSystemState(); err == nil {
+				pushSvc.NotifyScheduleUpdatedAsync(req.GroupID, st.ScheduleVersion)
+			}
+		}
+		writeAudit(c, repo, "autofill", "location_week_availability", strconv.Itoa(req.GroupID), gin.H{
+			"assigned": res.Assigned,
+			"created":  res.Created,
+			"updated":  res.Updated,
+			"dry_run":  res.DryRun,
+		})
+		c.JSON(http.StatusOK, res)
+	}
+}

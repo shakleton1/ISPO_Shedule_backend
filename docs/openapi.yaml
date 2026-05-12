@@ -1858,6 +1858,83 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ScheduleReplacement" }
 
+  /api/v1/admin/location-availability/weeks:
+    get:
+      tags: [Admin]
+      summary: List weekly location availability
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: week_start_date
+          schema: { type: string, format: date }
+        - in: query
+          name: location_id
+          schema: { type: integer, minimum: 1 }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LocationWeekAvailability" }
+    put:
+      tags: [Admin]
+      summary: Upsert weekly location availability
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: week_start_date
+          required: true
+          schema: { type: string, format: date }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: "#/components/schemas/LocationWeekAvailabilityRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LocationWeekAvailability" }
+
+  /api/v1/admin/location-availability/weeks/{id}:
+    delete:
+      tags: [Admin]
+      summary: Delete weekly location availability row
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Deleted }
+
+  /api/v1/admin/location-availability/autofill:
+    post:
+      tags: [Admin]
+      summary: Auto-fill free locations for a group date range
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LocationAutofillRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LocationAutofillResponse" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -2283,6 +2360,93 @@ components:
         replacement_teacher_id: { type: integer, nullable: true }
         reason: { type: string, nullable: true }
         schedule_override_id: { type: integer, format: int64, nullable: true }
+
+    LocationWeekAvailability:
+      type: object
+      required: [id, week_start_date, location_id, is_available]
+      properties:
+        id: { type: integer, format: int64 }
+        week_start_date: { type: string, format: date }
+        location_id: { type: integer }
+        is_available: { type: boolean }
+        comment: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    LocationWeekAvailabilityRequest:
+      type: object
+      required: [location_id]
+      properties:
+        location_id: { type: integer, minimum: 1 }
+        is_available: { type: boolean, default: true }
+        comment: { type: string, nullable: true }
+
+    LocationAutofillRequest:
+      type: object
+      required: [group_id, start_date, end_date]
+      properties:
+        group_id: { type: integer, minimum: 1 }
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date }
+        campus: { type: string, nullable: true }
+        location_kind:
+          type: string
+          nullable: true
+          enum: [classroom, computer_lab, gym, pool, other]
+        replace_virtual:
+          type: boolean
+          default: true
+          description: Treat virtual/current placeholder rooms as unassigned.
+        dry_run: { type: boolean, default: false }
+        comment: { type: string, nullable: true }
+
+    LocationAutofillAssignment:
+      type: object
+      required: [date, pair_number, subject_name, status]
+      properties:
+        date: { type: string, format: date }
+        pair_number: { type: integer, minimum: 1, maximum: 8 }
+        subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        subject_id: { type: integer, nullable: true }
+        subject_name: { type: string }
+        location_id: { type: integer, nullable: true }
+        location_name: { type: string }
+        status: { type: string, enum: [assigned, skipped] }
+        reason:
+          type: string
+          enum: [lesson_without_subject, no_available_location, cancel_override_exists]
+        override_action:
+          type: string
+          enum: [created, updated]
+
+    LocationAutofillResponse:
+      type: object
+      required:
+        [
+          group_id,
+          date_start,
+          date_end,
+          dry_run,
+          assigned,
+          skipped,
+          created,
+          updated,
+          data_version,
+          assignments,
+        ]
+      properties:
+        group_id: { type: integer }
+        date_start: { type: string, format: date }
+        date_end: { type: string, format: date }
+        dry_run: { type: boolean }
+        assigned: { type: integer }
+        skipped: { type: integer }
+        created: { type: integer }
+        updated: { type: integer }
+        data_version: { type: string }
+        assignments:
+          type: array
+          items: { $ref: "#/components/schemas/LocationAutofillAssignment" }
 
     TemplateView:
       type: object

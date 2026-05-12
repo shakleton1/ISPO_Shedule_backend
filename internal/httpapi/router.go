@@ -180,6 +180,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminRead.GET("/study-calendar-weeks", handleAdminListStudyCalendarWeeks(deps.Repo))
 				adminRead.GET("/teacher-day-constraints", handleAdminListTeacherDayConstraints(deps.Repo))
 				adminRead.GET("/replacements", handleAdminListScheduleReplacements(deps.Repo))
+				adminRead.GET("/location-availability/weeks", handleAdminListLocationWeekAvailability(deps.Repo))
 
 				adminRead.GET("/db/schema", handleAdminDBSchema(deps.Repo.DB()))
 				adminRead.GET("/specialties", handleAdminListSpecialties(deps.Repo))
@@ -306,6 +307,9 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminScheduleWrite.POST("/replacements", handleAdminCreateScheduleReplacement(deps.Repo))
 				adminScheduleWrite.PUT("/replacements/:id", handleAdminUpdateScheduleReplacement(deps.Repo))
 				adminScheduleWrite.DELETE("/replacements/:id", handleAdminDeleteScheduleReplacement(deps.Repo))
+				adminScheduleWrite.PUT("/location-availability/weeks", handleAdminUpsertLocationWeekAvailability(deps.Repo))
+				adminScheduleWrite.DELETE("/location-availability/weeks/:id", handleAdminDeleteLocationWeekAvailability(deps.Repo))
+				adminScheduleWrite.POST("/location-availability/autofill", handleAdminAutofillLocations(deps.ScheduleSvc, deps.Repo, deps.Push))
 
 				adminScheduleWrite.POST("/override", handleAdminCreateOverride(deps.Repo, deps.Push))
 				adminScheduleWrite.PUT("/overrides/:id", handleAdminUpdateOverride(deps.Repo, deps.Push))

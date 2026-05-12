@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -21,6 +22,11 @@ type TeacherDayConstraintFilters struct {
 type ScheduleReplacementFilters struct {
 	GroupID    *int
 	TargetDate *time.Time
+}
+
+type LocationWeekAvailabilityFilters struct {
+	WeekStartDate *time.Time
+	LocationID    *int
 }
 
 type TeacherDayConstraintView struct {
@@ -55,6 +61,148 @@ func (r *Repository) ListLocationMetaByIDs(ids []int) (map[int]LocationMeta, err
 		out[row.ID] = row
 	}
 	return out, nil
+}
+
+func (r *Repository) ListLocationWeekAvailability(filters LocationWeekAvailabilityFilters) ([]LocationWeekAvailability, error) {
+	q := r.db.Model(&LocationWeekAvailability{}).Order("week_start_date desc, location_id asc")
+	if filters.WeekStartDate != nil {
+		q = q.Where("week_start_date = ?", mondayOfWeek(*filters.WeekStartDate))
+	}
+	if filters.LocationID != nil {
+		q = q.Where("location_id = ?", *filters.LocationID)
+	}
+	var rows []LocationWeekAvailability
+	err := q.Find(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) ListLocationWeekAvailabilityPaged(filters LocationWeekAvailabilityFilters, limit, offset *int) ([]LocationWeekAvailability, error) {
+	q := r.db.Model(&LocationWeekAvailability{}).Order("week_start_date desc, location_id asc")
+	if filters.WeekStartDate != nil {
+		q = q.Where("week_start_date = ?", mondayOfWeek(*filters.WeekStartDate))
+	}
+	if filters.LocationID != nil {
+		q = q.Where("location_id = ?", *filters.LocationID)
+	}
+	q = applyLimitOffset(q, limit, offset)
+	var rows []LocationWeekAvailability
+	err := q.Find(&rows).Error
+	return rows, err
+}
+
+func (r *Repository) UpsertLocationWeekAvailability(weekStart time.Time, rows []LocationWeekAvailability) ([]LocationWeekAvailability, error) {
+	weekStart = mondayOfWeek(weekStart)
+	if weekStart.IsZero() {
+		return nil, fmt.Errorf("week_start_date required")
+	}
+	if len(rows) == 0 {
+		return r.ListLocationWeekAvailability(LocationWeekAvailabilityFilters{WeekStartDate: &weekStart})
+	}
+
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		for _, row := range rows {
+			if row.LocationID <= 0 {
+				return fmt.Errorf("location_id required")
+			}
+			if err := tx.Exec(`
+INSERT INTO location_week_availability
+  (week_start_date, location_id, is_available, comment)
+VALUES
+  (?, ?, ?, ?)
+ON CONFLICT (week_start_date, location_id)
+DO UPDATE SET
+  is_available = EXCLUDED.is_available,
+  comment = EXCLUDED.comment`,
+				weekStart, row.LocationID, row.IsAvailable, row.Comment,
+			).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.ListLocationWeekAvailability(LocationWeekAvailabilityFilters{WeekStartDate: &weekStart})
+}
+
+func (r *Repository) DeleteLocationWeekAvailability(id int64) error {
+	return r.db.Delete(&LocationWeekAvailability{}, id).Error
+}
+
+func (r *Repository) UpsertLocationOverrideForSlot(groupID int, date time.Time, pairNumber int16, subgroup *int16, locationID int, comment *string) (string, error) {
+	if groupID <= 0 {
+		return "", fmt.Errorf("group_id required")
+	}
+	if pairNumber < 1 || pairNumber > 8 {
+		return "", fmt.Errorf("pair_number must be 1..8")
+	}
+	if locationID <= 0 {
+		return "", fmt.Errorf("location_id required")
+	}
+
+	date = dateOnly(date)
+	var row ScheduleOverride
+	q := r.db.Where("group_id = ? AND target_date = ? AND pair_number = ?", groupID, date, pairNumber)
+	if subgroup == nil {
+		q = q.Where("subgroup IS NULL")
+	} else {
+		q = q.Where("subgroup = ?", *subgroup)
+	}
+
+	err := q.First(&row).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			o := &ScheduleOverride{
+				TargetDate:    date,
+				GroupID:       groupID,
+				PairNumber:    pairNumber,
+				ActionType:    OverrideReplace,
+				NewLocationID: &locationID,
+				Comment:       comment,
+				Subgroup:      subgroup,
+			}
+			if err := r.CreateOverride(o); err != nil {
+				return "", err
+			}
+			return "created", nil
+		}
+		return "", err
+	}
+
+	if row.ActionType == OverrideCancel {
+		return "blocked_cancel", nil
+	}
+
+	updates := map[string]any{"new_location_id": locationID}
+	if comment != nil {
+		updates["comment"] = comment
+	}
+	if err := r.db.Model(&ScheduleOverride{}).Where("id = ?", row.ID).Updates(updates).Error; err != nil {
+		return "", err
+	}
+	return "updated", nil
+}
+
+func (r *Repository) ListAvailableLocationsForWeek(weekStart time.Time, campus, locationKind *string) ([]Location, error) {
+	weekStart = mondayOfWeek(weekStart)
+	q := r.db.Table("location_week_availability lwa").
+		Select("l.id, l.name, l.is_virtual, l.campus, l.location_kind, l.capacity, l.created_at, l.updated_at").
+		Joins("JOIN locations l ON l.id = lwa.location_id").
+		Where("lwa.week_start_date = ? AND lwa.is_available = TRUE", weekStart)
+
+	if campus != nil && strings.TrimSpace(*campus) != "" {
+		q = q.Where("l.campus = ?", strings.TrimSpace(*campus))
+	}
+	if locationKind != nil && strings.TrimSpace(*locationKind) != "" {
+		q = q.Where("l.location_kind = ?", strings.TrimSpace(*locationKind))
+	} else {
+		q = q.Where("l.location_kind <> ?", "virtual")
+	}
+
+	var rows []Location
+	err := q.Order("l.name asc, l.id asc").Scan(&rows).Error
+	return rows, err
 }
 
 func (r *Repository) ListStudyActivities() ([]StudyActivity, error) {

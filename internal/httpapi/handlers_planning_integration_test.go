@@ -133,6 +133,33 @@ func TestHandleAdminScheduleReplacementCRUD(t *testing.T) {
 	assert.Contains(t, w2.Body.String(), "teacher replacement")
 }
 
+func TestHandleAdminLocationWeekAvailability(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	gin.SetMode(gin.TestMode)
+
+	db := integrationDB(t)
+	repo := schedule.NewRepository(db)
+	location := makeLocation(t, db)
+
+	upsertH := handleAdminUpsertLocationWeekAvailability(repo)
+	body := fmt.Sprintf(`[{"location_id":%d,"is_available":true,"comment":"week list"}]`, location.ID)
+	c1, w1 := testCtx(http.MethodPut, "/api/v1/admin/location-availability/weeks?week_start_date=2026-09-09", bytes.NewReader([]byte(body)))
+	upsertH(c1)
+	require.Equal(t, http.StatusOK, w1.Code)
+	assert.Contains(t, w1.Body.String(), "week list")
+	t.Cleanup(func() {
+		_ = db.Where("location_id = ?", location.ID).Delete(&schedule.LocationWeekAvailability{}).Error
+	})
+
+	listH := handleAdminListLocationWeekAvailability(repo)
+	c2, w2 := testCtx(http.MethodGet, "/api/v1/admin/location-availability/weeks?week_start_date=2026-09-07", nil)
+	listH(c2)
+	assert.Equal(t, http.StatusOK, w2.Code)
+	assert.Contains(t, w2.Body.String(), `"location_id":`+strconv.Itoa(location.ID))
+}
+
 func TestHandleAdminScheduleViewTeacherAndLocation(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")

@@ -269,3 +269,15 @@ type ScheduleReplacement struct {
 	CreatedAt             time.Time `json:"created_at"`
 	UpdatedAt             time.Time `json:"updated_at"`
 }
+
+type LocationWeekAvailability struct {
+	ID            int64     `gorm:"primaryKey" json:"id"`
+	WeekStartDate time.Time `gorm:"type:date;not null" json:"week_start_date"`
+	LocationID    int       `gorm:"not null" json:"location_id"`
+	IsAvailable   bool      `gorm:"not null;default:true" json:"is_available"`
+	Comment       *string   `json:"comment"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+func (LocationWeekAvailability) TableName() string { return "location_week_availability" }

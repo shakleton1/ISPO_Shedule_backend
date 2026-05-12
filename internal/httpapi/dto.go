@@ -530,3 +530,25 @@ func toScheduleReplacementDTO(r schedule.ScheduleReplacement) scheduleReplacemen
 		UpdatedAt:             r.UpdatedAt,
 	}
 }
+
+type locationWeekAvailabilityDTO struct {
+	ID            int64     `json:"id"`
+	WeekStartDate time.Time `json:"week_start_date"`
+	LocationID    int       `json:"location_id"`
+	IsAvailable   bool      `json:"is_available"`
+	Comment       *string   `json:"comment"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+func toLocationWeekAvailabilityDTO(a schedule.LocationWeekAvailability) locationWeekAvailabilityDTO {
+	return locationWeekAvailabilityDTO{
+		ID:            a.ID,
+		WeekStartDate: a.WeekStartDate,
+		LocationID:    a.LocationID,
+		IsAvailable:   a.IsAvailable,
+		Comment:       a.Comment,
+		CreatedAt:     a.CreatedAt,
+		UpdatedAt:     a.UpdatedAt,
+	}
+}
