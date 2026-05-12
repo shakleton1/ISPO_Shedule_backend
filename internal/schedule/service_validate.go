@@ -1,16 +1,27 @@
 package schedule
 
 import (
+	"fmt"
+	"sort"
+	"strings"
 	"time"
 )
 
+const (
+	studentWeeklyHoursLimit = 36
+	teacherWeeklyHoursLimit = 40
+	academicHoursPerPair    = 2
+)
+
 type ScheduleValidationWarning struct {
+	Code        string `json:"code"`
 	Date        string `json:"date"`
 	PairNumber  int16  `json:"pair_number"`
 	Subgroup    *int16 `json:"subgroup"`
 	SubjectID   int    `json:"subject_id"`
 	SubjectName string `json:"subject_name"`
 	Semester    int16  `json:"semester"`
+	Message     string `json:"message"`
 }
 
 type ScheduleValidationResponse struct {
@@ -41,59 +52,117 @@ func (s *Service) ValidateScheduleRange(groupID int, startDate, endDate time.Tim
 		NoCurriculum: false,
 	}
 
-	if group.CurriculumID == nil {
-		resp.NoCurriculum = true
-		return resp, nil
-	}
-
 	days, err := s.buildDays(groupID, startDate, endDate)
 	if err != nil {
 		return nil, err
 	}
 
-	// Gather semesters we can infer for the requested date range.
-	semSet := map[int16]bool{}
-	for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
-		sem := inferSemesterForDate(d, group.Course)
-		if sem != nil {
-			semSet[*sem] = true
-		}
-	}
-	semList := make([]int16, 0, len(semSet))
-	for sem := range semSet {
-		semList = append(semList, sem)
-	}
-
-	allowedBySem, err := s.repo.ListAllocatedSubjectsBySemester(*group.CurriculumID, semList)
+	locationMeta, err := s.locationMetaForDays(days)
 	if err != nil {
 		return nil, err
 	}
+	resp.Warnings = append(resp.Warnings, validateScheduleBusinessRules(days, *group, locationMeta)...)
+
+	if group.CurriculumID == nil {
+		resp.NoCurriculum = true
+	} else {
+		// Gather semesters we can infer for the requested date range.
+		semSet := map[int16]bool{}
+		for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
+			sem := inferSemesterForDate(d, group.Course)
+			if sem != nil {
+				semSet[*sem] = true
+			}
+		}
+		semList := make([]int16, 0, len(semSet))
+		for sem := range semSet {
+			semList = append(semList, sem)
+		}
+
+		allowedBySem, err := s.repo.ListAllocatedSubjectsBySemester(*group.CurriculumID, semList)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, day := range days {
+			d, err := time.Parse("2006-01-02", day.Date)
+			if err != nil {
+				continue
+			}
+			sem := inferSemesterForDate(d, group.Course)
+			if sem == nil {
+				continue
+			}
+			allowed := allowedBySem[*sem]
+			for _, l := range day.Lessons {
+				if l.SubjectID == nil {
+					continue
+				}
+				if allowed != nil && allowed[*l.SubjectID] {
+					continue
+				}
+				// If allowed is nil/empty: treat as not allocated.
+				resp.Warnings = append(resp.Warnings, ScheduleValidationWarning{
+					Code:        "subject_not_in_curriculum",
+					Date:        day.Date,
+					PairNumber:  l.PairNumber,
+					Subgroup:    l.Subgroup,
+					SubjectID:   *l.SubjectID,
+					SubjectName: l.SubjectName,
+					Semester:    *sem,
+					Message:     "subject is not allocated in curriculum for semester",
+				})
+			}
+		}
+	}
+
+	blockedTeachers, err := s.repo.ListBlockingTeacherConstraintsBetween(startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+	blockedByDateName := map[string]map[string]TeacherDayConstraintView{}
+	for _, b := range blockedTeachers {
+		dateKey := dateOnly(b.TargetDate).Format("2006-01-02")
+		m, ok := blockedByDateName[dateKey]
+		if !ok {
+			m = map[string]TeacherDayConstraintView{}
+			blockedByDateName[dateKey] = m
+		}
+		m[b.TeacherName] = b
+	}
 
 	for _, day := range days {
-		d, err := time.Parse("2006-01-02", day.Date)
-		if err != nil {
+		blocked := blockedByDateName[day.Date]
+		if len(blocked) == 0 {
 			continue
 		}
-		sem := inferSemesterForDate(d, group.Course)
-		if sem == nil {
-			continue
-		}
-		allowed := allowedBySem[*sem]
 		for _, l := range day.Lessons {
-			if l.SubjectID == nil {
+			if l.TeacherName == "" {
 				continue
 			}
-			if allowed != nil && allowed[*l.SubjectID] {
+			b, ok := blocked[l.TeacherName]
+			if !ok {
 				continue
 			}
-			// If allowed is nil/empty: treat as not allocated.
+			subjectID := 0
+			if l.SubjectID != nil {
+				subjectID = *l.SubjectID
+			}
+			sem := int16(0)
+			if d, err := time.Parse("2006-01-02", day.Date); err == nil {
+				if inferred := inferSemesterForDate(d, group.Course); inferred != nil {
+					sem = *inferred
+				}
+			}
 			resp.Warnings = append(resp.Warnings, ScheduleValidationWarning{
+				Code:        "teacher_day_constraint",
 				Date:        day.Date,
 				PairNumber:  l.PairNumber,
 				Subgroup:    l.Subgroup,
-				SubjectID:   *l.SubjectID,
+				SubjectID:   subjectID,
 				SubjectName: l.SubjectName,
-				Semester:    *sem,
+				Semester:    sem,
+				Message:     "teacher is unavailable: " + b.Reason,
 			})
 		}
 	}
@@ -101,4 +170,333 @@ func (s *Service) ValidateScheduleRange(groupID int, startDate, endDate time.Tim
 	resp.WarnCount = len(resp.Warnings)
 	resp.Validated = true
 	return resp, nil
+}
+
+func (s *Service) locationMetaForDays(days []DaySchedule) (map[int]LocationMeta, error) {
+	seen := map[int]bool{}
+	ids := make([]int, 0)
+	for _, day := range days {
+		for _, lesson := range day.Lessons {
+			if lesson.LocationID == nil || *lesson.LocationID <= 0 {
+				continue
+			}
+			if seen[*lesson.LocationID] {
+				continue
+			}
+			seen[*lesson.LocationID] = true
+			ids = append(ids, *lesson.LocationID)
+		}
+	}
+	return s.repo.ListLocationMetaByIDs(ids)
+}
+
+func validateScheduleBusinessRules(days []DaySchedule, group Group, locationMeta map[int]LocationMeta) []ScheduleValidationWarning {
+	warnings := make([]ScheduleValidationWarning, 0)
+	warnings = append(warnings, validateWeeklyStudentHours(days)...)
+	warnings = append(warnings, validateWeeklyTeacherHours(days, group)...)
+	warnings = append(warnings, validateFloatingDayOff(days, group)...)
+	warnings = append(warnings, validatePhysicalEducationFifthPair(days, group)...)
+	warnings = append(warnings, validateThreePairsPracticeOnly(days, group)...)
+	warnings = append(warnings, validateSingleCampusPerDay(days, group, locationMeta)...)
+	return warnings
+}
+
+func validateWeeklyStudentHours(days []DaySchedule) []ScheduleValidationWarning {
+	pairsByWeek := map[string]map[string]bool{}
+	for _, day := range days {
+		weekKey := weekKeyFromDateString(day.Date)
+		if weekKey == "" {
+			continue
+		}
+		m := ensureStringBoolMap(pairsByWeek, weekKey)
+		for _, lesson := range day.Lessons {
+			if lesson.PairNumber <= 0 {
+				continue
+			}
+			m[fmt.Sprintf("%s:%d", day.Date, lesson.PairNumber)] = true
+		}
+	}
+
+	var warnings []ScheduleValidationWarning
+	for _, weekKey := range sortedMapKeys(pairsByWeek) {
+		hours := len(pairsByWeek[weekKey]) * academicHoursPerPair
+		if hours <= studentWeeklyHoursLimit {
+			continue
+		}
+		warnings = append(warnings, ScheduleValidationWarning{
+			Code:    "student_week_hours_limit",
+			Date:    weekKey,
+			Message: fmt.Sprintf("student weekly load is %d hours, limit is %d", hours, studentWeeklyHoursLimit),
+		})
+	}
+	return warnings
+}
+
+func validateWeeklyTeacherHours(days []DaySchedule, group Group) []ScheduleValidationWarning {
+	type weekTeacherKey struct {
+		Week    string
+		Teacher string
+	}
+	slotsByTeacherWeek := map[weekTeacherKey]map[string]bool{}
+	for _, day := range days {
+		weekKey := weekKeyFromDateString(day.Date)
+		if weekKey == "" {
+			continue
+		}
+		for _, lesson := range day.Lessons {
+			teacher := strings.TrimSpace(lesson.TeacherName)
+			if teacher == "" || lesson.PairNumber <= 0 {
+				continue
+			}
+			k := weekTeacherKey{Week: weekKey, Teacher: teacher}
+			m := ensureSlotMap(slotsByTeacherWeek, k)
+			m[fmt.Sprintf("%s:%d:%d", day.Date, lesson.PairNumber, subgroupKey(lesson.Subgroup))] = true
+		}
+	}
+
+	keys := make([]weekTeacherKey, 0, len(slotsByTeacherWeek))
+	for k := range slotsByTeacherWeek {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i].Week != keys[j].Week {
+			return keys[i].Week < keys[j].Week
+		}
+		return keys[i].Teacher < keys[j].Teacher
+	})
+
+	var warnings []ScheduleValidationWarning
+	for _, k := range keys {
+		hours := len(slotsByTeacherWeek[k]) * academicHoursPerPair
+		if hours <= teacherWeeklyHoursLimit {
+			continue
+		}
+		warnings = append(warnings, ScheduleValidationWarning{
+			Code:     "teacher_week_hours_limit",
+			Date:     k.Week,
+			Semester: semesterForDateString(k.Week, group.Course),
+			Message:  fmt.Sprintf("teacher %s weekly load is %d hours in validated schedule, limit is %d", k.Teacher, hours, teacherWeeklyHoursLimit),
+		})
+	}
+	return warnings
+}
+
+func validateFloatingDayOff(days []DaySchedule, group Group) []ScheduleValidationWarning {
+	type weekTeacherKey struct {
+		Week    string
+		Teacher string
+	}
+	coveredDays := map[string]map[string]bool{}
+	groupLessonDays := map[string]map[string]bool{}
+	teacherLessonDays := map[weekTeacherKey]map[string]bool{}
+
+	for _, day := range days {
+		weekKey := weekKeyFromDateString(day.Date)
+		if weekKey == "" {
+			continue
+		}
+		ensureStringBoolMap(coveredDays, weekKey)[day.Date] = true
+		if len(day.Lessons) > 0 {
+			ensureStringBoolMap(groupLessonDays, weekKey)[day.Date] = true
+		}
+		for _, lesson := range day.Lessons {
+			teacher := strings.TrimSpace(lesson.TeacherName)
+			if teacher == "" {
+				continue
+			}
+			k := weekTeacherKey{Week: weekKey, Teacher: teacher}
+			ensureSlotMap(teacherLessonDays, k)[day.Date] = true
+		}
+	}
+
+	var warnings []ScheduleValidationWarning
+	for _, weekKey := range sortedMapKeys(coveredDays) {
+		if len(coveredDays[weekKey]) < 6 {
+			continue
+		}
+		if len(groupLessonDays[weekKey]) >= 6 {
+			warnings = append(warnings, ScheduleValidationWarning{
+				Code:     "group_floating_day_off",
+				Date:     weekKey,
+				Semester: semesterForDateString(weekKey, group.Course),
+				Message:  "group has lessons on all six study days in the week",
+			})
+		}
+	}
+
+	keys := make([]weekTeacherKey, 0, len(teacherLessonDays))
+	for k := range teacherLessonDays {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i].Week != keys[j].Week {
+			return keys[i].Week < keys[j].Week
+		}
+		return keys[i].Teacher < keys[j].Teacher
+	})
+	for _, k := range keys {
+		if len(coveredDays[k.Week]) < 6 || len(teacherLessonDays[k]) < 6 {
+			continue
+		}
+		warnings = append(warnings, ScheduleValidationWarning{
+			Code:     "teacher_floating_day_off",
+			Date:     k.Week,
+			Semester: semesterForDateString(k.Week, group.Course),
+			Message:  "teacher " + k.Teacher + " has lessons on all six study days in the week",
+		})
+	}
+	return warnings
+}
+
+func validatePhysicalEducationFifthPair(days []DaySchedule, group Group) []ScheduleValidationWarning {
+	var warnings []ScheduleValidationWarning
+	for _, day := range days {
+		for _, lesson := range day.Lessons {
+			if lesson.PairNumber != 5 || !isPhysicalEducationSubject(lesson.SubjectName) {
+				continue
+			}
+			warnings = append(warnings, warningFromLesson("physical_education_fifth_pair", day.Date, lesson, group, "physical education must not be scheduled as fifth pair"))
+		}
+	}
+	return warnings
+}
+
+func validateThreePairsPracticeOnly(days []DaySchedule, group Group) []ScheduleValidationWarning {
+	var warnings []ScheduleValidationWarning
+	for _, day := range days {
+		pairs := map[int16]bool{}
+		for _, lesson := range day.Lessons {
+			if lesson.PairNumber > 0 {
+				pairs[lesson.PairNumber] = true
+			}
+		}
+		if len(pairs) < 3 {
+			continue
+		}
+		for _, lesson := range day.Lessons {
+			if isPracticeLikeSubject(lesson.SubjectName) {
+				continue
+			}
+			warnings = append(warnings, warningFromLesson("three_pairs_requires_practice", day.Date, lesson, group, "three or more pairs in a day are allowed only for practice-like activities"))
+			break
+		}
+	}
+	return warnings
+}
+
+func validateSingleCampusPerDay(days []DaySchedule, group Group, locationMeta map[int]LocationMeta) []ScheduleValidationWarning {
+	var warnings []ScheduleValidationWarning
+	for _, day := range days {
+		campuses := map[string]bool{}
+		var first Lesson
+		hasFirst := false
+		for _, lesson := range day.Lessons {
+			if lesson.LocationID == nil {
+				continue
+			}
+			meta := locationMeta[*lesson.LocationID]
+			campus := strings.TrimSpace(meta.Campus)
+			if campus == "" {
+				continue
+			}
+			campuses[campus] = true
+			if !hasFirst {
+				first = lesson
+				hasFirst = true
+			}
+		}
+		if len(campuses) <= 1 {
+			continue
+		}
+		campusNames := sortedStringKeys(campuses)
+		w := warningFromLesson("multiple_campuses_day", day.Date, first, group, "group has lessons in multiple campuses in one day: "+strings.Join(campusNames, ", "))
+		warnings = append(warnings, w)
+	}
+	return warnings
+}
+
+func warningFromLesson(code, date string, lesson Lesson, group Group, message string) ScheduleValidationWarning {
+	subjectID := 0
+	if lesson.SubjectID != nil {
+		subjectID = *lesson.SubjectID
+	}
+	return ScheduleValidationWarning{
+		Code:        code,
+		Date:        date,
+		PairNumber:  lesson.PairNumber,
+		Subgroup:    lesson.Subgroup,
+		SubjectID:   subjectID,
+		SubjectName: lesson.SubjectName,
+		Semester:    semesterForDateString(date, group.Course),
+		Message:     message,
+	}
+}
+
+func isPhysicalEducationSubject(name string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(name))
+	return strings.Contains(normalized, "физическая культура") ||
+		strings.Contains(normalized, "физкультура") ||
+		strings.Contains(normalized, "физ-ра") ||
+		strings.Contains(normalized, "физра") ||
+		strings.Contains(normalized, "physical education") ||
+		normalized == "pe"
+}
+
+func isPracticeLikeSubject(name string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(name))
+	return strings.Contains(normalized, "практик") ||
+		strings.Contains(normalized, "practice") ||
+		strings.Contains(normalized, "стажиров")
+}
+
+func weekKeyFromDateString(date string) string {
+	d, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return ""
+	}
+	return mondayOfWeek(d).Format("2006-01-02")
+}
+
+func semesterForDateString(date string, course int) int16 {
+	d, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return 0
+	}
+	sem := inferSemesterForDate(d, course)
+	if sem == nil {
+		return 0
+	}
+	return *sem
+}
+
+func ensureStringBoolMap(m map[string]map[string]bool, key string) map[string]bool {
+	if _, ok := m[key]; !ok {
+		m[key] = map[string]bool{}
+	}
+	return m[key]
+}
+
+func ensureSlotMap[K comparable](m map[K]map[string]bool, key K) map[string]bool {
+	if _, ok := m[key]; !ok {
+		m[key] = map[string]bool{}
+	}
+	return m[key]
+}
+
+func sortedStringKeys(m map[string]bool) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func sortedMapKeys[V any](m map[string]V) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }

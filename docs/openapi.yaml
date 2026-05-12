@@ -1272,6 +1272,49 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ExplainSlotResponse" }
 
+  /api/v1/admin/schedule/view:
+    get:
+      tags: [Admin]
+      summary: Filter schedule view by group, teacher, or location
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: scope
+          required: true
+          schema:
+            type: string
+            enum: [group, teacher, location]
+        - in: query
+          name: group_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: teacher_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: teacher_name
+          required: false
+          schema: { type: string }
+        - in: query
+          name: location_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: date_start
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: date_end
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScheduleViewResponse" }
+
   /api/v1/admin/overrides:
     get:
       tags: [Admin]
@@ -1595,6 +1638,226 @@ paths:
               schema:
                 $ref: "#/components/schemas/ImportResponse"
 
+  /api/v1/admin/import/curriculum-items/csv:
+    post:
+      tags: [Admin]
+      summary: Import curriculum items from CSV (upsert by discipline and semester)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, curriculum_id]
+              properties:
+                curriculum_id: { type: integer, format: int64, minimum: 1 }
+                file: { type: string, format: binary }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportResponse" }
+
+  /api/v1/admin/import/curriculum-items/xlsx:
+    post:
+      tags: [Admin]
+      summary: Import curriculum items from XLSX (upsert by discipline and semester)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, curriculum_id]
+              properties:
+                curriculum_id: { type: integer, format: int64, minimum: 1 }
+                file: { type: string, format: binary }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportResponse" }
+
+  /api/v1/admin/import/study-calendar/csv:
+    post:
+      tags: [Admin]
+      summary: Import group study calendar weeks from CSV
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportResponse" }
+
+  /api/v1/admin/import/study-calendar/xlsx:
+    post:
+      tags: [Admin]
+      summary: Import group study calendar weeks from XLSX
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportResponse" }
+
+  /api/v1/admin/study-activities:
+    get:
+      tags: [Admin]
+      summary: List study activities
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StudyActivity" }
+    post:
+      tags: [Admin]
+      summary: Create study activity
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudyActivity" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudyActivity" }
+
+  /api/v1/admin/study-calendar-weeks:
+    get:
+      tags: [Admin]
+      summary: List group study calendar weeks
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: group_id
+          schema: { type: integer }
+        - in: query
+          name: week_number
+          schema: { type: integer, minimum: 1, maximum: 60 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StudyCalendarWeek" }
+
+  /api/v1/admin/groups/{id}/study-calendar-weeks:
+    put:
+      tags: [Admin]
+      summary: Upsert group study calendar weeks
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: "#/components/schemas/StudyCalendarWeekRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StudyCalendarWeek" }
+
+  /api/v1/admin/teacher-day-constraints:
+    get:
+      tags: [Admin]
+      summary: List teacher day constraints
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TeacherDayConstraint" }
+    post:
+      tags: [Admin]
+      summary: Create teacher day constraint
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TeacherDayConstraintRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherDayConstraint" }
+
+  /api/v1/admin/replacements:
+    get:
+      tags: [Admin]
+      summary: List replacement journal records
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ScheduleReplacement" }
+    post:
+      tags: [Admin]
+      summary: Create replacement journal record
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ScheduleReplacementRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScheduleReplacement" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1884,6 +2147,11 @@ components:
         id: { type: integer }
         name: { type: string }
         is_virtual: { type: boolean }
+        campus: { type: string }
+        location_kind:
+          type: string
+          enum: [classroom, computer_lab, gym, pool, virtual, other]
+        capacity: { type: integer, nullable: true }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -1919,6 +2187,102 @@ components:
         notes: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+
+    StudyActivity:
+      type: object
+      required: [code, name]
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        activity_kind:
+          type: string
+          enum: [TEACHING, PRACTICE, EXAM, VACATION, EVENT, OTHER]
+        allows_lessons: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    StudyCalendarWeek:
+      type: object
+      required: [id, group_id, week_number, allows_lessons]
+      properties:
+        id: { type: integer, format: int64 }
+        group_id: { type: integer }
+        week_number: { type: integer, minimum: 1, maximum: 60 }
+        week_start_date: { type: string, format: date, nullable: true }
+        activity_id: { type: integer, nullable: true }
+        allows_lessons: { type: boolean }
+        comment: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    StudyCalendarWeekRequest:
+      type: object
+      required: [week_number]
+      properties:
+        week_number: { type: integer, minimum: 1, maximum: 60 }
+        week_start_date: { type: string, format: date, nullable: true }
+        activity_id: { type: integer, nullable: true }
+        allows_lessons: { type: boolean }
+        comment: { type: string, nullable: true }
+
+    TeacherDayConstraint:
+      type: object
+      required: [id, teacher_id, target_date, allows_lessons]
+      properties:
+        id: { type: integer, format: int64 }
+        teacher_id: { type: integer }
+        target_date: { type: string, format: date }
+        reason: { type: string }
+        allows_lessons: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    TeacherDayConstraintRequest:
+      type: object
+      required: [teacher_id, date]
+      properties:
+        teacher_id: { type: integer }
+        date: { type: string, format: date }
+        reason: { type: string }
+        allows_lessons: { type: boolean }
+
+    ScheduleReplacement:
+      type: object
+      required: [id, target_date, group_id, pair_number]
+      properties:
+        id: { type: integer, format: int64 }
+        target_date: { type: string, format: date }
+        group_id: { type: integer }
+        pair_number: { type: integer, minimum: 1, maximum: 8 }
+        subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        source_subject_id: { type: integer, nullable: true }
+        source_location_id: { type: integer, nullable: true }
+        source_teacher_id: { type: integer, nullable: true }
+        replacement_subject_id: { type: integer, nullable: true }
+        replacement_location_id: { type: integer, nullable: true }
+        replacement_teacher_id: { type: integer, nullable: true }
+        reason: { type: string, nullable: true }
+        schedule_override_id: { type: integer, format: int64, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ScheduleReplacementRequest:
+      type: object
+      required: [date, group_id, pair_number]
+      properties:
+        date: { type: string, format: date }
+        group_id: { type: integer }
+        pair_number: { type: integer, minimum: 1, maximum: 8 }
+        subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        source_subject_id: { type: integer, nullable: true }
+        source_location_id: { type: integer, nullable: true }
+        source_teacher_id: { type: integer, nullable: true }
+        replacement_subject_id: { type: integer, nullable: true }
+        replacement_location_id: { type: integer, nullable: true }
+        replacement_teacher_id: { type: integer, nullable: true }
+        reason: { type: string, nullable: true }
+        schedule_override_id: { type: integer, format: int64, nullable: true }
 
     TemplateView:
       type: object
@@ -2026,6 +2390,66 @@ components:
           type: array
           items: { $ref: "#/components/schemas/DaySchedule" }
 
+    ScheduleViewLesson:
+      type: object
+      required:
+        [
+          group_id,
+          group_name,
+          pair_number,
+          subject_name,
+          location_name,
+          teacher_name,
+          is_changed,
+          is_added,
+        ]
+      properties:
+        group_id: { type: integer }
+        group_name: { type: string }
+        pair_number: { type: integer }
+        subject_id: { type: integer, nullable: true }
+        subject_name: { type: string }
+        location_id: { type: integer, nullable: true }
+        location_name: { type: string }
+        teacher_name: { type: string }
+        subgroup: { type: integer, nullable: true }
+        is_changed: { type: boolean }
+        is_added: { type: boolean }
+        comment: { type: string, nullable: true }
+
+    ScheduleViewDay:
+      type: object
+      required: [date, day_of_week, week_parity, lessons]
+      properties:
+        date: { type: string, format: date }
+        day_of_week: { type: integer, minimum: 0, maximum: 5 }
+        week_parity:
+          type: string
+          enum: [numerator, denominator, both]
+        lessons:
+          type: array
+          items: { $ref: "#/components/schemas/ScheduleViewLesson" }
+
+    ScheduleViewResponse:
+      type: object
+      required: [scope, date_start, date_end, data_version, days]
+      properties:
+        scope:
+          type: string
+          enum: [group, teacher, location]
+        date_start: { type: string, format: date }
+        date_end: { type: string, format: date }
+        data_version: { type: string }
+        group_id: { type: integer, nullable: true }
+        group_name: { type: string, nullable: true }
+        teacher_id: { type: integer, nullable: true }
+        teacher_name: { type: string, nullable: true }
+        location_id: { type: integer, nullable: true }
+        location_name: { type: string, nullable: true }
+        days:
+          type: array
+          items: { $ref: "#/components/schemas/ScheduleViewDay" }
+
     PushRegisterRequest:
       type: object
       required: [group_id, token]
@@ -2117,14 +2541,29 @@ components:
 
     ScheduleValidationWarning:
       type: object
-      required: [date, pair_number, subject_id, subject_name, semester]
+      required: [code, date, pair_number, subject_id, subject_name, semester]
       properties:
+        code:
+          type: string
+          enum:
+            [
+              subject_not_in_curriculum,
+              teacher_day_constraint,
+              student_week_hours_limit,
+              teacher_week_hours_limit,
+              group_floating_day_off,
+              teacher_floating_day_off,
+              physical_education_fifth_pair,
+              three_pairs_requires_practice,
+              multiple_campuses_day,
+            ]
         date: { type: string, format: date }
-        pair_number: { type: integer, minimum: 1, maximum: 8 }
+        pair_number: { type: integer, minimum: 0, maximum: 8 }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
         subject_id: { type: integer }
         subject_name: { type: string }
-        semester: { type: integer, minimum: 1, maximum: 12 }
+        semester: { type: integer, minimum: 0, maximum: 12 }
+        message: { type: string }
 
     ScheduleValidationResponse:
       type: object
@@ -2315,7 +2754,12 @@ components:
 
     ImportResponse:
       type: object
-      required: [inserted, schedule_version]
       properties:
         inserted: { type: integer }
+        imported: { type: integer }
+        curriculum_id: { type: integer, format: int64 }
+        group_ids:
+          type: array
+          items: { type: integer }
+        status: { type: string, enum: [draft, published] }
         schedule_version: { type: string }

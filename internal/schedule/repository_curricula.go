@@ -348,12 +348,31 @@ func (r *Repository) ListTeachingWeeksForGroupBetween(groupID int, startDate, en
 	if err := r.db.First(&group, groupID).Error; err != nil {
 		return nil, err
 	}
+	out := map[string]bool{}
+
+	var groupRows []teachingWeekRow
+	err := r.db.Raw(`
+SELECT COALESCE(scw.week_start_date, acw.week_start_date) AS week_start_date, scw.allows_lessons AS is_teaching
+FROM study_calendar_weeks scw
+JOIN groups g ON g.id = scw.group_id
+LEFT JOIN academic_calendars ac ON ac.curriculum_id = g.curriculum_id
+LEFT JOIN academic_calendar_weeks acw ON acw.calendar_id = ac.id AND acw.week_number = scw.week_number
+WHERE scw.group_id = ?
+  AND COALESCE(scw.week_start_date, acw.week_start_date) BETWEEN ? AND ?
+`, groupID, dateOnly(start), dateOnly(end)).Scan(&groupRows).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range groupRows {
+		out[dateOnly(r.WeekStartDate).Format("2006-01-02")] = r.IsTeaching
+	}
+
 	if group.CurriculumID == nil {
-		return map[string]bool{}, nil
+		return out, nil
 	}
 
 	var rows []teachingWeekRow
-	err := r.db.Raw(`
+	err = r.db.Raw(`
 SELECT w.week_start_date, w.is_teaching
 FROM groups g
 JOIN curricula c ON c.id = g.curriculum_id
@@ -366,9 +385,12 @@ WHERE g.id = ?
 		return nil, err
 	}
 
-	out := map[string]bool{}
 	for _, r := range rows {
-		out[dateOnly(r.WeekStartDate).Format("2006-01-02")] = r.IsTeaching
+		k := dateOnly(r.WeekStartDate).Format("2006-01-02")
+		if _, exists := out[k]; exists {
+			continue
+		}
+		out[k] = r.IsTeaching
 	}
 	return out, nil
 }

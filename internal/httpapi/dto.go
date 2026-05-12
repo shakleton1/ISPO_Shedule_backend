@@ -51,20 +51,26 @@ func toSubjectDTO(s schedule.Subject) subjectDTO {
 }
 
 type locationDTO struct {
-	ID        int       `json:"id"`
-	Name      string    `json:"name"`
-	IsVirtual bool      `json:"is_virtual"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID           int       `json:"id"`
+	Name         string    `json:"name"`
+	IsVirtual    bool      `json:"is_virtual"`
+	Campus       string    `json:"campus"`
+	LocationKind string    `json:"location_kind"`
+	Capacity     *int16    `json:"capacity"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 func toLocationDTO(l schedule.Location) locationDTO {
 	return locationDTO{
-		ID:        l.ID,
-		Name:      l.Name,
-		IsVirtual: l.IsVirtual,
-		CreatedAt: l.CreatedAt,
-		UpdatedAt: l.UpdatedAt,
+		ID:           l.ID,
+		Name:         l.Name,
+		IsVirtual:    l.IsVirtual,
+		Campus:       l.Campus,
+		LocationKind: l.LocationKind,
+		Capacity:     l.Capacity,
+		CreatedAt:    l.CreatedAt,
+		UpdatedAt:    l.UpdatedAt,
 	}
 }
 
@@ -410,5 +416,113 @@ func toScheduleDayEventDTO(e schedule.ScheduleDayEvent) scheduleDayEventDTO {
 		LocationID: e.LocationID,
 		CreatedAt:  e.CreatedAt,
 		UpdatedAt:  e.UpdatedAt,
+	}
+}
+
+type studyActivityDTO struct {
+	ID            int       `json:"id"`
+	Code          string    `json:"code"`
+	Name          string    `json:"name"`
+	ActivityKind  string    `json:"activity_kind"`
+	AllowsLessons bool      `json:"allows_lessons"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+func toStudyActivityDTO(a schedule.StudyActivity) studyActivityDTO {
+	return studyActivityDTO{
+		ID:            a.ID,
+		Code:          a.Code,
+		Name:          a.Name,
+		ActivityKind:  a.ActivityKind,
+		AllowsLessons: a.AllowsLessons,
+		CreatedAt:     a.CreatedAt,
+		UpdatedAt:     a.UpdatedAt,
+	}
+}
+
+type studyCalendarWeekDTO struct {
+	ID            int64      `json:"id"`
+	GroupID       int        `json:"group_id"`
+	WeekNumber    int16      `json:"week_number"`
+	WeekStartDate *time.Time `json:"week_start_date"`
+	ActivityID    *int       `json:"activity_id"`
+	AllowsLessons bool       `json:"allows_lessons"`
+	Comment       *string    `json:"comment"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+}
+
+func toStudyCalendarWeekDTO(w schedule.StudyCalendarWeek) studyCalendarWeekDTO {
+	return studyCalendarWeekDTO{
+		ID:            w.ID,
+		GroupID:       w.GroupID,
+		WeekNumber:    w.WeekNumber,
+		WeekStartDate: w.WeekStartDate,
+		ActivityID:    w.ActivityID,
+		AllowsLessons: w.AllowsLessons,
+		Comment:       w.Comment,
+		CreatedAt:     w.CreatedAt,
+		UpdatedAt:     w.UpdatedAt,
+	}
+}
+
+type teacherDayConstraintDTO struct {
+	ID            int64     `json:"id"`
+	TeacherID     int       `json:"teacher_id"`
+	TargetDate    time.Time `json:"target_date"`
+	Reason        string    `json:"reason"`
+	AllowsLessons bool      `json:"allows_lessons"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+func toTeacherDayConstraintDTO(d schedule.TeacherDayConstraint) teacherDayConstraintDTO {
+	return teacherDayConstraintDTO{
+		ID:            d.ID,
+		TeacherID:     d.TeacherID,
+		TargetDate:    d.TargetDate,
+		Reason:        d.Reason,
+		AllowsLessons: d.AllowsLessons,
+		CreatedAt:     d.CreatedAt,
+		UpdatedAt:     d.UpdatedAt,
+	}
+}
+
+type scheduleReplacementDTO struct {
+	ID                    int64     `json:"id"`
+	TargetDate            time.Time `json:"target_date"`
+	GroupID               int       `json:"group_id"`
+	PairNumber            int16     `json:"pair_number"`
+	Subgroup              *int16    `json:"subgroup"`
+	SourceSubjectID       *int      `json:"source_subject_id"`
+	SourceLocationID      *int      `json:"source_location_id"`
+	SourceTeacherID       *int      `json:"source_teacher_id"`
+	ReplacementSubjectID  *int      `json:"replacement_subject_id"`
+	ReplacementLocationID *int      `json:"replacement_location_id"`
+	ReplacementTeacherID  *int      `json:"replacement_teacher_id"`
+	Reason                *string   `json:"reason"`
+	ScheduleOverrideID    *int64    `json:"schedule_override_id"`
+	CreatedAt             time.Time `json:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at"`
+}
+
+func toScheduleReplacementDTO(r schedule.ScheduleReplacement) scheduleReplacementDTO {
+	return scheduleReplacementDTO{
+		ID:                    r.ID,
+		TargetDate:            r.TargetDate,
+		GroupID:               r.GroupID,
+		PairNumber:            r.PairNumber,
+		Subgroup:              r.Subgroup,
+		SourceSubjectID:       r.SourceSubjectID,
+		SourceLocationID:      r.SourceLocationID,
+		SourceTeacherID:       r.SourceTeacherID,
+		ReplacementSubjectID:  r.ReplacementSubjectID,
+		ReplacementLocationID: r.ReplacementLocationID,
+		ReplacementTeacherID:  r.ReplacementTeacherID,
+		Reason:                r.Reason,
+		ScheduleOverrideID:    r.ScheduleOverrideID,
+		CreatedAt:             r.CreatedAt,
+		UpdatedAt:             r.UpdatedAt,
 	}
 }

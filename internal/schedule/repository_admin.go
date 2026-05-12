@@ -187,7 +187,22 @@ func (r *Repository) ListLocationsPaged(limit, offset *int) ([]Location, error) 
 	return rows, err
 }
 
+func (r *Repository) GetLocation(id int) (*Location, error) {
+	var row Location
+	if err := r.db.First(&row, id).Error; err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
 func (r *Repository) CreateLocation(l *Location) error {
+	if l.LocationKind == "" {
+		if l.IsVirtual {
+			l.LocationKind = "virtual"
+		} else {
+			l.LocationKind = "classroom"
+		}
+	}
 	return r.db.Create(l).Error
 }
 
@@ -198,6 +213,16 @@ func (r *Repository) UpdateLocation(id int, patch *Location) (*Location, error) 
 	}
 	row.Name = patch.Name
 	row.IsVirtual = patch.IsVirtual
+	row.Campus = patch.Campus
+	row.LocationKind = patch.LocationKind
+	if row.LocationKind == "" {
+		if row.IsVirtual {
+			row.LocationKind = "virtual"
+		} else {
+			row.LocationKind = "classroom"
+		}
+	}
+	row.Capacity = patch.Capacity
 	if err := r.db.Save(&row).Error; err != nil {
 		return nil, err
 	}

@@ -177,3 +177,99 @@ func TestParseTemplatesXLSX_InvalidRow(t *testing.T) {
 		t.Fatalf("unexpected err: %v", err)
 	}
 }
+
+func TestParseCurriculumItemsCSV_Semicolon(t *testing.T) {
+	csvData := strings.Join([]string{
+		"дисциплина;курс;семестр;часы",
+		"Математика;1;1;72",
+	}, "\n")
+
+	rows, err := parseCurriculumItemsCSV(strings.NewReader(csvData))
+	if err != nil {
+		t.Fatalf("expected nil err, got %v", err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 row, got %d", len(rows))
+	}
+	if rows[0].Discipline != "Математика" || rows[0].Course != 1 || rows[0].Semester != 1 || rows[0].HoursTotal != 72 {
+		t.Fatalf("unexpected parsed row: %+v", rows[0])
+	}
+	if rows[0].ItemType != "DISCIPLINE" || rows[0].SubjectName != "Математика" {
+		t.Fatalf("unexpected defaults: %+v", rows[0])
+	}
+}
+
+func TestParseCurriculumItemsCSV_SemesterCourseMismatchDetectedByImportRecord(t *testing.T) {
+	get := func(key string) string {
+		switch key {
+		case "discipline":
+			return "History"
+		case "course":
+			return "1"
+		case "semester":
+			return "3"
+		case "hours_total":
+			return "40"
+		default:
+			return ""
+		}
+	}
+	row, err := parseCurriculumItemRecord(get)
+	if err != nil {
+		t.Fatalf("parse record should only validate field ranges: %v", err)
+	}
+	if row.Semester != 3 {
+		t.Fatalf("expected semester 3, got %d", row.Semester)
+	}
+}
+
+func TestParseStudyCalendarCSV_RussianBooleans(t *testing.T) {
+	csvData := strings.Join([]string{
+		"группа;неделя_номер;занятость;полное_наименование;разрешены_ли_пары",
+		"22290907/1095;1;PRACTICE;Производственная практика;Нет",
+		"22290907/1095;8;EXAM;Экзамен;Да",
+	}, "\n")
+
+	rows, err := parseStudyCalendarCSV(strings.NewReader(csvData))
+	if err != nil {
+		t.Fatalf("expected nil err, got %v", err)
+	}
+	if len(rows) != 2 {
+		t.Fatalf("expected 2 rows, got %d", len(rows))
+	}
+	if rows[0].GroupName != "22290907/1095" || rows[0].WeekNumber != 1 || rows[0].ActivityCode != "PRACTICE" || rows[0].AllowsLessons {
+		t.Fatalf("unexpected row[0]: %+v", rows[0])
+	}
+	if rows[1].ActivityName != "Экзамен" || !rows[1].AllowsLessons {
+		t.Fatalf("unexpected row[1]: %+v", rows[1])
+	}
+}
+
+func TestParseStudyCalendarXLSX_Basic(t *testing.T) {
+	f := excelize.NewFile()
+	defer func() { _ = f.Close() }()
+
+	sheet := f.GetSheetName(0)
+	_ = f.SetCellValue(sheet, "A1", "group_id")
+	_ = f.SetCellValue(sheet, "B1", "week_number")
+	_ = f.SetCellValue(sheet, "C1", "activity_code")
+	_ = f.SetCellValue(sheet, "D1", "activity_name")
+	_ = f.SetCellValue(sheet, "E1", "allows_lessons")
+	_ = f.SetCellValue(sheet, "A2", 10)
+	_ = f.SetCellValue(sheet, "B2", 2)
+	_ = f.SetCellValue(sheet, "C2", "PRACTICE")
+	_ = f.SetCellValue(sheet, "D2", "Practice")
+	_ = f.SetCellValue(sheet, "E2", "no")
+
+	buf, err := f.WriteToBuffer()
+	if err != nil {
+		t.Fatalf("WriteToBuffer: %v", err)
+	}
+	rows, err := parseStudyCalendarXLSX(bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		t.Fatalf("expected nil err, got %v", err)
+	}
+	if len(rows) != 1 || rows[0].GroupID == nil || *rows[0].GroupID != 10 || rows[0].AllowsLessons {
+		t.Fatalf("unexpected parsed rows: %+v", rows)
+	}
+}

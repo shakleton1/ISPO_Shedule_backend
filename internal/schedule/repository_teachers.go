@@ -23,6 +23,14 @@ func (r *Repository) ListTeachersPaged(limit, offset *int) ([]Teacher, error) {
 	return rows, err
 }
 
+func (r *Repository) GetTeacher(id int) (*Teacher, error) {
+	var row Teacher
+	if err := r.db.Where("deleted_at IS NULL").First(&row, id).Error; err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
 func (r *Repository) CreateTeacher(t *Teacher) error {
 	if t == nil {
 		return fmt.Errorf("teacher is nil")

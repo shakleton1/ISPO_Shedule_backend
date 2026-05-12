@@ -40,6 +40,10 @@ func uniqueSuffix() string {
 	return fmt.Sprintf("%d", time.Now().UnixNano())
 }
 
+func shortCode(prefix string) string {
+	return fmt.Sprintf("%s-%06d", prefix, time.Now().UnixNano()%1000000)
+}
+
 func makeAdminUser(t *testing.T, db *gorm.DB) *auth.User {
 	t.Helper()
 	u := &auth.User{
@@ -186,12 +190,12 @@ func TestHandleAdminUpdateDayEvent_SuccessAndNotFound(t *testing.T) {
 	t.Cleanup(func() { _ = db.Where("id = ?", e.ID).Delete(&schedule.ScheduleDayEvent{}).Error })
 
 	h := handleAdminUpdateDayEvent(repo)
-	okBody := fmt.Sprintf(`{"group_id":%d,"target_date":"2026-03-16T00:00:00Z","event_type":"holiday","title":"New"}`, g.ID)
+	okBody := fmt.Sprintf(`{"group_id":%d,"target_date":"2026-03-16T00:00:00Z","event_type":"other","title":"New"}`, g.ID)
 	c1, w1 := testCtx(http.MethodPut, "/api/v1/admin/day-events/"+strconv.FormatInt(e.ID, 10), bytes.NewReader([]byte(okBody)))
 	c1.Params = []gin.Param{{Key: "id", Value: strconv.FormatInt(e.ID, 10)}}
 	h(c1)
 	assert.Equal(t, http.StatusOK, w1.Code)
-	assert.Contains(t, w1.Body.String(), "HOLIDAY")
+	assert.Contains(t, w1.Body.String(), "OTHER")
 	assert.Contains(t, w1.Body.String(), "New")
 
 	missingID := strconv.FormatInt(e.ID+999999, 10)
@@ -217,6 +221,7 @@ func TestHandleAdminDeleteDayEvent_Success(t *testing.T) {
 	c, w := testCtx(http.MethodDelete, "/api/v1/admin/day-events/"+strconv.FormatInt(e.ID, 10), nil)
 	c.Params = []gin.Param{{Key: "id", Value: strconv.FormatInt(e.ID, 10)}}
 	h(c)
+	c.Writer.WriteHeaderNow()
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
 	var cnt int64
@@ -321,10 +326,12 @@ func TestHandleAdminDeleteTemplate_SoftDeleteBehavior(t *testing.T) {
 	c, w := testCtx(http.MethodDelete, "/api/v1/admin/templates/"+strconv.FormatInt(tpl.ID, 10), nil)
 	c.Params = []gin.Param{{Key: "id", Value: strconv.FormatInt(tpl.ID, 10)}}
 	h(c)
+	c.Writer.WriteHeaderNow()
 	assert.Equal(t, http.StatusNoContent, w.Code)
 
-	_, err := repo.GetTemplateByID(tpl.ID)
-	assert.Error(t, err)
+	var cnt int64
+	require.NoError(t, db.Model(&schedule.ScheduleTemplate{}).Where("id = ?", tpl.ID).Count(&cnt).Error)
+	assert.Equal(t, int64(0), cnt)
 }
 
 func TestHandleAdminListOverrides_Pagination(t *testing.T) {
@@ -460,6 +467,10 @@ func TestHandleAdminUpsertCalendarException_WorksAsDay(t *testing.T) {
 
 	db := integrationDB(t)
 	repo := schedule.NewRepository(db)
+	targetDate := time.Date(2026, 3, 16, 0, 0, 0, 0, time.UTC)
+	t.Cleanup(func() {
+		_ = db.Where("target_date = ?", targetDate).Delete(&schedule.CalendarException{}).Error
+	})
 
 	h := handleAdminUpsertCalendarException(repo, nil)
 	body := `{"date":"2026-03-16","works_as_day":4,"comment":"shift"}`
@@ -638,7 +649,7 @@ func TestHandleAdminValidateSchedule_Warnings(t *testing.T) {
 	repo := schedule.NewRepository(db)
 	svc := schedule.NewService(schedule.ServiceDeps{Repo: repo, SemesterStartDate: "2026-02-01", Now: time.Now})
 
-	spec := &schedule.Specialty{Code: "SP-" + uniqueSuffix(), Name: "Specialty"}
+	spec := &schedule.Specialty{Code: shortCode("SP"), Name: "Specialty"}
 	require.NoError(t, db.Create(spec).Error)
 	t.Cleanup(func() { _ = db.Where("id = ?", spec.ID).Delete(&schedule.Specialty{}).Error })
 

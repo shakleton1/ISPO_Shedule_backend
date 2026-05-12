@@ -30,11 +30,14 @@ type Subject struct {
 }
 
 type Location struct {
-	ID        int       `gorm:"primaryKey" json:"id"`
-	Name      string    `gorm:"size:50;not null" json:"name"`
-	IsVirtual bool      `gorm:"not null;default:false" json:"is_virtual"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID           int       `gorm:"primaryKey" json:"id"`
+	Name         string    `gorm:"size:50;not null" json:"name"`
+	IsVirtual    bool      `gorm:"not null;default:false" json:"is_virtual"`
+	Campus       string    `gorm:"size:50;not null;default:''" json:"campus"`
+	LocationKind string    `gorm:"type:text;not null;default:'classroom'" json:"location_kind"`
+	Capacity     *int16    `json:"capacity"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type Teacher struct {
@@ -213,4 +216,54 @@ type CurriculumItemAllocation struct {
 	Comment          *string   `json:"comment"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type StudyActivity struct {
+	ID            int       `gorm:"primaryKey" json:"id"`
+	Code          string    `gorm:"size:50;not null" json:"code"`
+	Name          string    `gorm:"size:200;not null" json:"name"`
+	ActivityKind  string    `gorm:"type:text;not null;default:'OTHER'" json:"activity_kind"`
+	AllowsLessons bool      `gorm:"not null;default:true" json:"allows_lessons"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type StudyCalendarWeek struct {
+	ID            int64      `gorm:"primaryKey" json:"id"`
+	GroupID       int        `gorm:"not null" json:"group_id"`
+	WeekNumber    int16      `gorm:"not null" json:"week_number"`
+	WeekStartDate *time.Time `gorm:"type:date" json:"week_start_date"`
+	ActivityID    *int       `json:"activity_id"`
+	AllowsLessons bool       `gorm:"not null;default:true" json:"allows_lessons"`
+	Comment       *string    `json:"comment"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+}
+
+type TeacherDayConstraint struct {
+	ID            int64     `gorm:"primaryKey" json:"id"`
+	TeacherID     int       `gorm:"not null" json:"teacher_id"`
+	TargetDate    time.Time `gorm:"type:date;not null" json:"target_date"`
+	Reason        string    `gorm:"size:255;not null;default:''" json:"reason"`
+	AllowsLessons bool      `gorm:"not null;default:false" json:"allows_lessons"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type ScheduleReplacement struct {
+	ID                    int64     `gorm:"primaryKey" json:"id"`
+	TargetDate            time.Time `gorm:"type:date;not null" json:"target_date"`
+	GroupID               int       `gorm:"not null" json:"group_id"`
+	PairNumber            int16     `gorm:"not null" json:"pair_number"`
+	Subgroup              *int16    `json:"subgroup"`
+	SourceSubjectID       *int      `json:"source_subject_id"`
+	SourceLocationID      *int      `json:"source_location_id"`
+	SourceTeacherID       *int      `json:"source_teacher_id"`
+	ReplacementSubjectID  *int      `json:"replacement_subject_id"`
+	ReplacementLocationID *int      `json:"replacement_location_id"`
+	ReplacementTeacherID  *int      `json:"replacement_teacher_id"`
+	Reason                *string   `json:"reason"`
+	ScheduleOverrideID    *int64    `json:"schedule_override_id"`
+	CreatedAt             time.Time `json:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at"`
 }

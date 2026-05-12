@@ -176,6 +176,10 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminRead.GET("/teachers", handleAdminListTeachers(deps.Repo))
 				adminRead.GET("/teacher-subjects", handleAdminListTeacherSubjects(deps.Repo))
 				adminRead.GET("/course-assignments", handleAdminListCourseAssignments(deps.Repo))
+				adminRead.GET("/study-activities", handleAdminListStudyActivities(deps.Repo))
+				adminRead.GET("/study-calendar-weeks", handleAdminListStudyCalendarWeeks(deps.Repo))
+				adminRead.GET("/teacher-day-constraints", handleAdminListTeacherDayConstraints(deps.Repo))
+				adminRead.GET("/replacements", handleAdminListScheduleReplacements(deps.Repo))
 
 				adminRead.GET("/db/schema", handleAdminDBSchema(deps.Repo.DB()))
 				adminRead.GET("/specialties", handleAdminListSpecialties(deps.Repo))
@@ -186,6 +190,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminRead.GET("/curriculum-items/:id/allocations", handleAdminListCurriculumItemAllocations(deps.Repo))
 
 				adminRead.GET("/templates", handleAdminListTemplates(deps.Repo))
+				adminRead.GET("/schedule/view", handleAdminScheduleView(deps.ScheduleSvc))
 				adminRead.GET("/schedule/explain", handleAdminExplainScheduleSlot(deps.ScheduleSvc, deps.Repo))
 				adminRead.GET("/overrides", handleAdminListOverrides(deps.Repo))
 				adminRead.GET("/calendar-exceptions", handleAdminListCalendarExceptions(deps.Repo))
@@ -205,6 +210,9 @@ func NewRouter(deps RouterDeps) http.Handler {
 
 				adminDictWrite.POST("/teacher-subjects", handleAdminCreateTeacherSubject(deps.Repo))
 				adminDictWrite.DELETE("/teacher-subjects/:teacher_id/:subject_id", handleAdminDeleteTeacherSubject(deps.Repo))
+				adminDictWrite.POST("/study-activities", handleAdminCreateStudyActivity(deps.Repo))
+				adminDictWrite.PUT("/study-activities/:id", handleAdminUpdateStudyActivity(deps.Repo))
+				adminDictWrite.DELETE("/study-activities/:id", handleAdminDeleteStudyActivity(deps.Repo))
 
 				adminDictWrite.POST("/specialties", handleAdminCreateSpecialty(deps.Repo))
 				adminDictWrite.PUT("/specialties/:id", handleAdminUpdateSpecialty(deps.Repo))
@@ -251,6 +259,30 @@ func NewRouter(deps RouterDeps) http.Handler {
 						rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
 						handleAdminImportTemplatesXLSX(deps.Repo, deps.Push),
 					)
+					adminImport.POST(
+						"/import/curriculum-items/csv",
+						maxBodyBytesMiddleware(deps.Config.Server.AdminImportMaxBodyBytes),
+						rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
+						handleAdminImportCurriculumItemsCSV(deps.Repo),
+					)
+					adminImport.POST(
+						"/import/curriculum-items/xlsx",
+						maxBodyBytesMiddleware(deps.Config.Server.AdminImportMaxBodyBytes),
+						rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
+						handleAdminImportCurriculumItemsXLSX(deps.Repo),
+					)
+					adminImport.POST(
+						"/import/study-calendar/csv",
+						maxBodyBytesMiddleware(deps.Config.Server.AdminImportMaxBodyBytes),
+						rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
+						handleAdminImportStudyCalendarCSV(deps.Repo, deps.Push),
+					)
+					adminImport.POST(
+						"/import/study-calendar/xlsx",
+						maxBodyBytesMiddleware(deps.Config.Server.AdminImportMaxBodyBytes),
+						rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
+						handleAdminImportStudyCalendarXLSX(deps.Repo, deps.Push),
+					)
 				}
 
 				adminScheduleWrite.POST("/templates", handleAdminCreateTemplate(deps.Repo, deps.Push))
@@ -264,6 +296,16 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminScheduleWrite.DELETE("/course-assignments/:id", handleAdminDeleteCourseAssignment(deps.Repo, deps.Push))
 				adminScheduleWrite.POST("/course-assignments/publish", handleAdminPublishDraftCourseAssignments(deps.Repo, deps.Push))
 				adminScheduleWrite.POST("/course-assignments/discard-drafts", handleAdminDiscardDraftCourseAssignments(deps.Repo))
+				adminScheduleWrite.PUT("/groups/:id/study-calendar-weeks", handleAdminUpsertStudyCalendarWeeks(deps.Repo, deps.Push))
+				adminScheduleWrite.DELETE("/study-calendar-weeks/:id", handleAdminDeleteStudyCalendarWeek(deps.Repo))
+
+				adminScheduleWrite.POST("/teacher-day-constraints", handleAdminCreateTeacherDayConstraint(deps.Repo))
+				adminScheduleWrite.PUT("/teacher-day-constraints/:id", handleAdminUpdateTeacherDayConstraint(deps.Repo))
+				adminScheduleWrite.DELETE("/teacher-day-constraints/:id", handleAdminDeleteTeacherDayConstraint(deps.Repo))
+
+				adminScheduleWrite.POST("/replacements", handleAdminCreateScheduleReplacement(deps.Repo))
+				adminScheduleWrite.PUT("/replacements/:id", handleAdminUpdateScheduleReplacement(deps.Repo))
+				adminScheduleWrite.DELETE("/replacements/:id", handleAdminDeleteScheduleReplacement(deps.Repo))
 
 				adminScheduleWrite.POST("/override", handleAdminCreateOverride(deps.Repo, deps.Push))
 				adminScheduleWrite.PUT("/overrides/:id", handleAdminUpdateOverride(deps.Repo, deps.Push))

@@ -1018,3 +1018,74 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
     
     // Run migrations, test queries, etc.
 }
+
+======================================================================
+14) НОВЫЙ БЛОК ТРЕБОВАНИЙ: ОГРАНИЧЕНИЯ, КАЛЕНДАРЬ, УЧЕБНЫЙ ПЛАН, ЗАМЕНЫ
+======================================================================
+
+Контекст уже есть в проекте:
+[x] Связь дисциплина -> преподаватель через teacher_subjects.
+[x] Связь группа + семестр + дисциплина -> преподаватель/аудитория/строка плана через course_assignments.
+[x] Учебные планы: curricula, curriculum_items, curriculum_item_allocations.
+[x] Академический календарь по учебному плану: academic_calendars, academic_calendar_weeks.
+[x] Замены частично покрываются schedule_overrides, но нет отдельного журнала замен "что на что заменили".
+[x] В CI уже есть GitHub Actions: go test, integration migrations, lint, OpenAPI validation, govulncheck, Trivy.
+
+14.1) Модель данных и миграции
+[x] Добавить корпуса к аудиториям без разделения БД: locations.campus/location_kind/capacity.
+    Где: db/migrations, internal/schedule/models.go, admin locations DTO.
+[x] Добавить справочник типов активности учебного календаря: practice/exam/vacation/teaching/etc.
+    Где: study_activities, CRUD/read endpoints, импорт календаря.
+[x] Добавить недельный календарь по группам: group_id + week_number + activity + allows_lessons.
+    Где: study_calendar_weeks; для примера "22290907/1095, неделя 1, Производственная практика, Нет".
+[x] Интегрировать group study calendar в сборку расписания: weeks allows_lessons=false блокируют шаблонные пары, но ручные overrides остаются возможны.
+    Где: internal/schedule/repository_curricula.go, service_build.go.
+[x] Добавить ограничения преподавателей на дату: teacher_id + target_date + reason + allows_lessons.
+    Где: teacher_day_constraints, admin CRUD, schedule validate warnings.
+[x] Добавить отдельный журнал замен: target_date + group + pair + исходная пара + новая пара + причина + override_id.
+    Где: schedule_replacements, admin CRUD/read, экспорт/отчеты позже.
+
+14.2) Импорт из файлов
+[x] Импорт учебного плана из CSV/XLSX.
+    Формат: discipline/дисциплина, course/курс, semester/семестр, hours/часы, item_type, subject.
+    Где: /api/v1/admin/import/curriculum-items/{csv|xlsx}?curriculum_id=...
+[x] Импорт календаря учебы из CSV/XLSX.
+    Формат: group/группа или group_id, week_number, activity_code/name, allows_lessons.
+    Где: /api/v1/admin/import/study-calendar/{csv|xlsx}
+[x] Импорт не должен ломать существующие импорты шаблонов; общие парсеры оставить совместимыми.
+    Где: internal/httpapi/handlers_import.go + parse tests.
+
+14.3) Ограничения расписания
+[x] Ученики: контроль не более 36 часов в неделю.
+[x] Преподаватели: контроль не более 40 часов в неделю.
+[x] Плавающий выходной: контроль наличия дня без пар по группе/преподавателю в неделе.
+[x] Физкультура не ставится пятой парой.
+[x] Три пары подряд/в день разрешать только для практик/учебных практик.
+[ ] Потоки: разрешить несколько групп в одном кабинете при явной общей активности/потоке.
+[ ] Физкультура: бассейн и зал, до 3 групп в помещении.
+[x] Корпуса: в один день группа должна быть в одном корпусе, если нет ручного исключения.
+    Где: internal/schedule/service_validate.go, отдельные warning codes, tests.
+
+14.4) Ручное распределение аудиторий
+[ ] Добавить недельный список доступных аудиторий/ВЦ и режим автозаполнения свободных аудиторий.
+    Где: отдельная таблица room_week_availability или room_allocations; алгоритм после календаря/ограничений.
+
+14.5) Фильтрация и отображение
+[x] API фильтров расписания: ученики/преподаватели/аудитории.
+    Где: client/admin schedule endpoints; для преподавателя/аудитории нужны read models.
+
+14.6) Выходные данные
+[ ] Excel export: расписание групп, преподавателей, аудиторий, замены, расписание дня с кабинетами.
+[ ] PDF: улучшить красивый формат для групп/преподавателей/замен/целого дня.
+    Где: internal/httpapi/pdf_template.go, pdf_helpers.go, отдельные export handlers.
+
+14.7) Нехватка персонала
+[ ] Добавить "заглушку" для дисциплины без преподавателя и учет часов до назначения преподавателя.
+    Где: course_assignments teacher_id NULL + validation/report warnings.
+
+14.8) Тесты и CI
+[x] Unit tests: парсеры импорта учебного плана и учебного календаря.
+[x] Unit tests: ограничения расписания 36/40 часов, выходной, физра, практики, корпуса.
+[x] Handler tests: новые import/CRUD endpoints.
+[x] Integration tests: миграции + repository для group calendar, teacher constraints, replacements.
+[x] OpenAPI должен обновляться вместе с endpoint-ами, CI должен валидировать docs/openapi.yaml.
