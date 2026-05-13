@@ -48,7 +48,8 @@ COPY db/migrations /app/db/migrations
 # Optional reference; runtime should mount a real config.yaml
 COPY configs/config.example.yaml /app/configs/config.example.yaml
 
-RUN chown -R app:app /app \
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
+  && chown -R app:app /app \
   && chmod +x /usr/local/bin/entrypoint.sh
 
 USER app
