@@ -1105,4 +1105,6 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
     Где: service_location_autofill.go, repository_planning.go, handlers_planning.go.
 [x] PLX "График" учитывает двухбуквенные коды УП и ПП.
     Где: handlers_import_plx.go + unit test.
+[x] PLX "График" сохраняет неучебные недели как is_teaching=false для П/УП/ПП/ГИА/каникул; продовая БД очищена и импортирована заново из 57 XLSX.
+    Где: handlers_import_plx.go + integration test; VDS 2026-05-13.
 [x] cmd/seed создает тестовые данные на две группы с преподавателями, аудиториями, типами помещений, учебным календарем, ограничением дня преподавателя, предпочтением кабинета и заявкой на ВЦ.
