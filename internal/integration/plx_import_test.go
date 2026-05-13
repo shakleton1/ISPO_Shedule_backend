@@ -67,6 +67,16 @@ func TestHandleAdminImportPLXCurriculumXLSX_Success(t *testing.T) {
 	var weeks int64
 	require.NoError(t, db.Model(&schedule.AcademicCalendarWeek{}).Where("calendar_id = ?", calendars[0].ID).Count(&weeks).Error)
 	assert.Equal(t, int64(52), weeks)
+
+	var practiceWeek schedule.AcademicCalendarWeek
+	require.NoError(t, db.Where("calendar_id = ? AND week_number = ?", calendars[0].ID, 2).First(&practiceWeek).Error)
+	assert.Equal(t, "PRACTICE", practiceWeek.ActivityCode)
+	assert.False(t, practiceWeek.IsTeaching)
+
+	var vacationWeek schedule.AcademicCalendarWeek
+	require.NoError(t, db.Where("calendar_id = ? AND week_number = ?", calendars[0].ID, 4).First(&vacationWeek).Error)
+	assert.Equal(t, "VACATION", vacationWeek.ActivityCode)
+	assert.False(t, vacationWeek.IsTeaching)
 }
 
 func multipartXLSXForIntegration(t *testing.T, field, filename string, f *excelize.File) (*bytes.Buffer, string) {

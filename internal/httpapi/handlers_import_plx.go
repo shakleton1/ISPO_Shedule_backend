@@ -808,7 +808,15 @@ func importPLXCurriculum(repo *schedule.Repository, parsed *plxParsedCurriculum,
 			calendarID = &cal.ID
 			for _, week := range parsed.CalendarWeeks {
 				week.CalendarID = cal.ID
-				if err := tx.Create(&week).Error; err != nil {
+				if err := tx.Select(
+					"CalendarID",
+					"WeekNumber",
+					"WeekStartDate",
+					"ActivityCode",
+					"ActivityName",
+					"IsTeaching",
+					"Comment",
+				).Create(&week).Error; err != nil {
 					return fmt.Errorf("calendar week %d: %w", week.WeekNumber, err)
 				}
 				result.CalendarWeeks++
