@@ -267,7 +267,7 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		{index: "1.2", name: "Информатика", subjectID: infID, hours: 72, assessment: "GRADED_CREDIT"},
 		{index: "1.3", name: "Иностранный язык", subjectID: englishID, hours: 48, assessment: "CREDIT"},
 		{index: "1.4", name: "Физическая культура", subjectID: peID, hours: 48, assessment: "CREDIT"},
-		{index: "1.5", name: "Учебная практика", subjectID: practiceID, hours: 36, assessment: "OTHER"},
+		{index: "1.5", name: "Учебная практика", subjectID: practiceID, hours: 36, assessment: "CREDIT"},
 	} {
 		subjectID := seed.subjectID
 		itemID, err := getOrCreateCurriculumItem(db, schedule.CurriculumItem{
