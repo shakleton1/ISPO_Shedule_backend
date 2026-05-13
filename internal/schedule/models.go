@@ -48,6 +48,8 @@ type Campus struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+func (Campus) TableName() string { return "campuses" }
+
 type LocationType struct {
 	ID        int       `gorm:"primaryKey" json:"id"`
 	Code      string    `gorm:"size:50;uniqueIndex;not null" json:"code"`
