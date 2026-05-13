@@ -256,12 +256,23 @@ func inferPLXMetadata(parsed *plxParsedCurriculum, filename string) {
 		parsed.SpecialtyCode = plxSpecialtyCodeRE.FindString(base)
 	}
 	nums := plxDigitsRE.FindAllString(base, -1)
-	// Typical PLX file name: 09.02.01_24_11.plx.xlsx -> 09,02,01,24,11.
+	// Typical PLX file names:
+	// 09.02.01_24_11.plx.xlsx -> 09,02,01,24,11
+	// 09.02.07 ... 2023 (4 курс).plx.xlsx -> 09,02,07,2023,4
 	if parsed.AdmissionYear == 0 {
 		for i := 3; i < len(nums); i++ {
 			v, err := strconv.Atoi(nums[i])
 			if err != nil {
 				continue
+			}
+			if v >= 2000 && v <= 2100 {
+				parsed.AdmissionYear = int16(v)
+				if parsed.BaseGrade == nil && i+1 < len(nums) {
+					if grade, ok := parsePLXBaseGradeToken(nums[i+1]); ok {
+						parsed.BaseGrade = &grade
+					}
+				}
+				break
 			}
 			if v >= 0 && v <= 99 {
 				parsed.AdmissionYear = int16(2000 + v)

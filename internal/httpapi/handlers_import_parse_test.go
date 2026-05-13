@@ -334,6 +334,32 @@ func TestParsePLXCurriculumXLSX_Basic(t *testing.T) {
 	}
 }
 
+func TestParsePLXCurriculumXLSX_InferFourDigitAdmissionYear(t *testing.T) {
+	f := newPLXTestWorkbook(t)
+	defer func() { _ = f.Close() }()
+
+	buf, err := f.WriteToBuffer()
+	if err != nil {
+		t.Fatalf("WriteToBuffer: %v", err)
+	}
+	academicStart, _ := time.Parse("2006-01-02", "2026-09-01")
+	parsed, err := parsePLXCurriculumXLSX(bytes.NewReader(buf.Bytes()), plxCurriculumImportOptions{
+		Filename:          "09.02.07 Инф.сист. и прогр. 2023 (4 курс).plx.xlsx",
+		BaseGrade:         int16Ptr(9),
+		AcademicYearStart: academicStart,
+		Replace:           true,
+	})
+	if err != nil {
+		t.Fatalf("expected nil err, got %v", err)
+	}
+	if parsed.AdmissionYear != 2023 {
+		t.Fatalf("expected admission year 2023, got %d", parsed.AdmissionYear)
+	}
+	if parsed.BaseGrade == nil || *parsed.BaseGrade != 9 {
+		t.Fatalf("expected base grade 9, got %+v", parsed.BaseGrade)
+	}
+}
+
 func newPLXTestWorkbook(t *testing.T) *excelize.File {
 	t.Helper()
 	f := excelize.NewFile()
