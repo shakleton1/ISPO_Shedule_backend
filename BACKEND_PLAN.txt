@@ -1049,6 +1049,8 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
 [x] Импорт учебного плана из CSV/XLSX.
     Формат: discipline/дисциплина, course/курс, semester/семестр, hours/часы, item_type, subject.
     Где: /api/v1/admin/import/curriculum-items/{csv|xlsx}?curriculum_id=...
+[x] Импорт реальных PLX/XLSX учебных планов с листами "План" и "График".
+    Сделано: /api/v1/admin/import/plx-curriculum/xlsx создает/обновляет specialty, curriculum, curriculum_items, curriculum_item_allocations, subjects и academic calendar weeks; метаданные берутся из имени файла 09.02.01_24_11.plx.xlsx или query/form параметров.
 [x] Импорт календаря учебы из CSV/XLSX.
     Формат: group/группа или group_id, week_number, activity_code/name, allows_lessons.
     Где: /api/v1/admin/import/study-calendar/{csv|xlsx}

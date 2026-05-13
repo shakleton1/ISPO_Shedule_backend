@@ -23,7 +23,7 @@ type Group struct {
 
 type Subject struct {
 	ID        int       `gorm:"primaryKey" json:"id"`
-	Name      string    `gorm:"size:100;not null" json:"name"`
+	Name      string    `gorm:"size:200;not null" json:"name"`
 	ShortName string    `gorm:"size:30" json:"short_name"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

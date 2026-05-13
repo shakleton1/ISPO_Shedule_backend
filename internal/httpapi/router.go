@@ -273,6 +273,12 @@ func NewRouter(deps RouterDeps) http.Handler {
 						handleAdminImportCurriculumItemsXLSX(deps.Repo),
 					)
 					adminImport.POST(
+						"/import/plx-curriculum/xlsx",
+						maxBodyBytesMiddleware(deps.Config.Server.AdminImportMaxBodyBytes),
+						rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),
+						handleAdminImportPLXCurriculumXLSX(deps.Repo),
+					)
+					adminImport.POST(
 						"/import/study-calendar/csv",
 						maxBodyBytesMiddleware(deps.Config.Server.AdminImportMaxBodyBytes),
 						rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.AdminImport, "admin_import"),

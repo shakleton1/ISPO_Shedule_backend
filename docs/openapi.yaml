@@ -1682,6 +1682,54 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ImportResponse" }
 
+  /api/v1/admin/import/plx-curriculum/xlsx:
+    post:
+      tags: [Admin]
+      summary: Import PLX/XLSX curriculum and academic calendar
+      description: >
+        Parses PLX-style workbooks with sheets "План" and "График".
+        Creates or updates specialty, curriculum, curriculum items,
+        semester allocations, subjects and the curriculum academic calendar.
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+                specialty_code:
+                  type: string
+                  description: Optional; inferred from file name like 09.02.01_24_11.plx.xlsx.
+                specialty_name: { type: string }
+                admission_year:
+                  type: integer
+                  minimum: 2000
+                  maximum: 2100
+                  description: Optional; inferred from file name token like _24_.
+                base_grade:
+                  type: integer
+                  enum: [9, 11]
+                  description: Optional; inferred from file name token like _11.
+                variant:
+                  type: string
+                  description: Defaults to base_9/base_11 or plx.
+                academic_year_start:
+                  type: string
+                  format: date
+                  description: Defaults to 2026-09-01.
+                replace:
+                  type: boolean
+                  description: Defaults to true; clears existing items and same-year calendar for the curriculum.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportResponse" }
+
   /api/v1/admin/import/study-calendar/csv:
     post:
       tags: [Admin]
@@ -2931,7 +2979,16 @@ components:
       properties:
         inserted: { type: integer }
         imported: { type: integer }
+        specialty_id: { type: integer }
         curriculum_id: { type: integer, format: int64 }
+        items: { type: integer }
+        allocations: { type: integer }
+        calendar_id: { type: integer, format: int64 }
+        calendar_weeks: { type: integer }
+        academic_year_start: { type: string, format: date }
+        warnings:
+          type: array
+          items: { type: string }
         group_ids:
           type: array
           items: { type: integer }
