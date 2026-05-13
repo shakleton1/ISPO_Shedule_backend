@@ -11,9 +11,7 @@ type assignmentKey struct {
 }
 
 type assignmentResolve struct {
-	TeacherName  string
-	LocationID   *int
-	LocationName string
+	TeacherName string
 }
 
 type slotKey struct {
@@ -73,7 +71,7 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 	assignmentsBySemester := map[int16]map[assignmentKey]assignmentResolve{}
 	latestAssignments := map[assignmentKey]assignmentResolve{}
 	for _, a := range assignmentRows {
-		if (a.TeacherName == nil || *a.TeacherName == "") && a.LocationID == nil {
+		if a.TeacherName == nil || *a.TeacherName == "" {
 			continue
 		}
 		k := assignmentKey{SubjectID: a.SubjectID, Subgroup: subgroupKey(a.Subgroup)}
@@ -82,12 +80,9 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 			m = map[assignmentKey]assignmentResolve{}
 			assignmentsBySemester[a.Semester] = m
 		}
-		res := assignmentResolve{LocationID: a.LocationID}
+		res := assignmentResolve{}
 		if a.TeacherName != nil {
 			res.TeacherName = *a.TeacherName
-		}
-		if a.LocationName != nil {
-			res.LocationName = *a.LocationName
 		}
 		if _, exists := m[k]; !exists {
 			m[k] = res
@@ -352,50 +347,12 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 			}
 		}
 
-		// Auto-fill location from course_assignments when missing (e.g. ADD override without new_location_id).
+		// Auto-fill location from room data only. Course assignments resolve teachers, not rooms.
 		for i := range lessons {
 			if lessons[i].LocationID != nil {
 				continue
 			}
 			if lessons[i].SubjectID == nil {
-				continue
-			}
-
-			var candidates []assignmentKey
-			if lessons[i].Subgroup == nil {
-				candidates = []assignmentKey{{SubjectID: *lessons[i].SubjectID, Subgroup: 0}}
-			} else {
-				candidates = []assignmentKey{
-					{SubjectID: *lessons[i].SubjectID, Subgroup: subgroupKey(lessons[i].Subgroup)},
-					{SubjectID: *lessons[i].SubjectID, Subgroup: 0},
-				}
-			}
-
-			var resolved *int
-			var resolvedName string
-			if semesterAssignments != nil {
-				for _, k := range candidates {
-					if v, ok := semesterAssignments[k]; ok && v.LocationID != nil {
-						resolved = v.LocationID
-						resolvedName = v.LocationName
-						break
-					}
-				}
-			}
-			if resolved == nil {
-				for _, k := range candidates {
-					if v, ok := latestAssignments[k]; ok && v.LocationID != nil {
-						resolved = v.LocationID
-						resolvedName = v.LocationName
-						break
-					}
-				}
-			}
-			if resolved != nil {
-				lessons[i].LocationID = resolved
-				if resolvedName != "" {
-					lessons[i].LocationName = resolvedName
-				}
 				continue
 			}
 

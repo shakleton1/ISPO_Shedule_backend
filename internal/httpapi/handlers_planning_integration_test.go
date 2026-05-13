@@ -90,7 +90,7 @@ func TestHandleAdminTeacherDayConstraintCRUD(t *testing.T) {
 	t.Cleanup(func() { _ = db.Exec("UPDATE teachers SET deleted_at = now() WHERE id = ?", teacher.ID).Error })
 
 	createH := handleAdminCreateTeacherDayConstraint(repo)
-	body := fmt.Sprintf(`{"teacher_id":%d,"date":"2026-09-08","reason":"illness","allows_lessons":false}`, teacher.ID)
+	body := fmt.Sprintf(`{"teacher_id":%d,"date":"2026-09-08","reason":"illness","constraint_level":"warning","requires_confirmation":true}`, teacher.ID)
 	c1, w1 := testCtx(http.MethodPost, "/api/v1/admin/teacher-day-constraints", bytes.NewReader([]byte(body)))
 	createH(c1)
 	require.Equal(t, http.StatusCreated, w1.Code)
@@ -104,6 +104,7 @@ func TestHandleAdminTeacherDayConstraintCRUD(t *testing.T) {
 	listH(c2)
 	assert.Equal(t, http.StatusOK, w2.Code)
 	assert.Contains(t, w2.Body.String(), "illness")
+	assert.Contains(t, w2.Body.String(), `"constraint_level":"warning"`)
 }
 
 func TestHandleAdminScheduleReplacementCRUD(t *testing.T) {
@@ -182,7 +183,7 @@ func TestHandleAdminScheduleViewTeacherAndLocation(t *testing.T) {
 		WeekParity:  schedule.WeekParityBoth,
 		PairNumber:  1,
 		SubjectID:   subject.ID,
-		LocationID:  location.ID,
+		LocationID:  &location.ID,
 		TeacherName: teacher.Name,
 		Status:      schedule.StatusPublished,
 	}

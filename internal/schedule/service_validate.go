@@ -175,7 +175,7 @@ func (s *Service) ValidateScheduleRange(groupID int, startDate, endDate time.Tim
 				SubjectID:   subjectID,
 				SubjectName: l.SubjectName,
 				Semester:    sem,
-				Message:     "teacher is unavailable: " + b.Reason,
+				Message:     "teacher day constraint (" + b.ConstraintLevel + "): " + b.Reason,
 			})
 		}
 	}

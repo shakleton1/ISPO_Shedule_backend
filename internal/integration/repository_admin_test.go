@@ -221,21 +221,18 @@ func TestRepositoryAdmin_ListCourseAssignmentTeachersForGroup(t *testing.T) {
 
 	group := &schedule.Group{Name: fmt.Sprintf("ca-group-%d", time.Now().UnixNano()), Course: 1}
 	subject := &schedule.Subject{Name: fmt.Sprintf("ca-subject-%d", time.Now().UnixNano())}
-	location := &schedule.Location{Name: fmt.Sprintf("ca-location-%d", time.Now().UnixNano())}
 	teacher := &schedule.Teacher{Name: fmt.Sprintf("ca-teacher-%d", time.Now().UnixNano())}
 	require.NoError(t, db.Create(group).Error)
 	require.NoError(t, db.Create(subject).Error)
-	require.NoError(t, db.Create(location).Error)
 	require.NoError(t, db.Create(teacher).Error)
 	t.Cleanup(func() {
 		_ = db.Where("group_id = ?", group.ID).Delete(&schedule.CourseAssignment{}).Error
 		_ = db.Where("id = ?", group.ID).Delete(&schedule.Group{}).Error
 		_ = db.Exec("UPDATE subjects SET deleted_at = now() WHERE id = ?", subject.ID).Error
-		_ = db.Where("id = ?", location.ID).Delete(&schedule.Location{}).Error
 		_ = db.Exec("UPDATE teachers SET deleted_at = now() WHERE id = ?", teacher.ID).Error
 	})
 
-	assignment := &schedule.CourseAssignment{GroupID: group.ID, Semester: 1, SubjectID: subject.ID, Status: schedule.StatusPublished, TeacherID: &teacher.ID, LocationID: &location.ID}
+	assignment := &schedule.CourseAssignment{GroupID: group.ID, Semester: 1, SubjectID: subject.ID, Status: schedule.StatusPublished, TeacherID: &teacher.ID}
 	require.NoError(t, repo.CreateCourseAssignment(assignment))
 
 	rows, err := repo.ListCourseAssignmentTeachersForGroup(group.ID)
@@ -243,8 +240,6 @@ func TestRepositoryAdmin_ListCourseAssignmentTeachersForGroup(t *testing.T) {
 	require.NotEmpty(t, rows)
 	require.NotNil(t, rows[0].TeacherName)
 	assert.Equal(t, teacher.Name, *rows[0].TeacherName)
-	require.NotNil(t, rows[0].LocationName)
-	assert.Equal(t, location.Name, *rows[0].LocationName)
 }
 
 func TestRepositoryAdmin_GroupSubjectLocationTeacherCRUD(t *testing.T) {

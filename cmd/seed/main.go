@@ -170,6 +170,17 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	teacherIDs := []int{mathTeacherID, infTeacherID, englishTeacherID, peTeacherID}
+	for i := 5; i <= 80; i++ {
+		id, err := getOrCreateTeacher(db, schedule.Teacher{Name: fmt.Sprintf("Тестовый преподаватель %02d", i)})
+		if err != nil {
+			return nil, err
+		}
+		teacherIDs = append(teacherIDs, id)
+	}
+	onlineTeacherIDs := teacherIDs[30:33]
+	onlineTeacherID := onlineTeacherIDs[0]
+
 	for _, ts := range []schedule.TeacherSubject{
 		{TeacherID: mathTeacherID, SubjectID: mathID},
 		{TeacherID: infTeacherID, SubjectID: infID},
@@ -181,13 +192,23 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 			return nil, err
 		}
 	}
+	seedSubjects := []int{mathID, infID, englishID, peID, practiceID}
+	for i, teacherID := range teacherIDs {
+		if err := repo.CreateTeacherSubject(&schedule.TeacherSubject{TeacherID: teacherID, SubjectID: seedSubjects[i%len(seedSubjects)]}); err != nil {
+			return nil, err
+		}
+	}
+	for _, teacherID := range onlineTeacherIDs {
+		if err := repo.CreateTeacherSubject(&schedule.TeacherSubject{TeacherID: teacherID, SubjectID: englishID}); err != nil {
+			return nil, err
+		}
+	}
 
 	specID, err := getOrCreateSpecialty(db, schedule.Specialty{Code: "09.02.07", Name: "Информационные системы и программирование"})
 	if err != nil {
 		return nil, err
 	}
-	now := time.Now().UTC()
-	admissionYear := defaultAdmissionYear(now)
+	admissionYear := int16(2022)
 	currID, err := getOrCreateCurriculum(db, schedule.Curriculum{
 		SpecialtyID:   specID,
 		AdmissionYear: admissionYear,
@@ -225,8 +246,8 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	}
 
 	group1ID, err := getOrCreateGroup(db, schedule.Group{
-		Name:          "ИСПО-11-1",
-		Course:        1,
+		Name:          "22290907/1095",
+		Course:        4,
 		CurriculumID:  &currID,
 		AdmissionYear: &admissionYear,
 		SpecialtyID:   &specID,
@@ -235,8 +256,8 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		return nil, err
 	}
 	group2ID, err := getOrCreateGroup(db, schedule.Group{
-		Name:          "ИСПО-11-2",
-		Course:        1,
+		Name:          "22290907/1096",
+		Course:        4,
 		CurriculumID:  &currID,
 		AdmissionYear: &admissionYear,
 		SpecialtyID:   &specID,
@@ -318,14 +339,14 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	}
 
 	for _, a := range []schedule.CourseAssignment{
-		{GroupID: group1ID, Semester: 1, SubjectID: mathID, Status: schedule.StatusPublished, TeacherID: &mathTeacherID, LocationID: &loc101ID},
-		{GroupID: group1ID, Semester: 1, SubjectID: infID, Status: schedule.StatusPublished, TeacherID: &infTeacherID, LocationID: &locComputerID},
-		{GroupID: group1ID, Semester: 1, SubjectID: englishID, Status: schedule.StatusPublished, TeacherID: &englishTeacherID, LocationID: &locOnlineID},
-		{GroupID: group1ID, Semester: 1, SubjectID: peID, Status: schedule.StatusPublished, TeacherID: &peTeacherID, LocationID: &locGymID},
-		{GroupID: group2ID, Semester: 1, SubjectID: mathID, Status: schedule.StatusPublished, TeacherID: &mathTeacherID, LocationID: &loc102ID},
-		{GroupID: group2ID, Semester: 1, SubjectID: infID, Status: schedule.StatusPublished, TeacherID: &infTeacherID, LocationID: &locComputerID},
-		{GroupID: group2ID, Semester: 1, SubjectID: englishID, Status: schedule.StatusPublished, TeacherID: &englishTeacherID, LocationID: &locOnlineID},
-		{GroupID: group2ID, Semester: 1, SubjectID: peID, Status: schedule.StatusPublished, TeacherID: &peTeacherID, LocationID: &locPoolID},
+		{GroupID: group1ID, Semester: 1, SubjectID: mathID, Status: schedule.StatusPublished, TeacherID: &mathTeacherID},
+		{GroupID: group1ID, Semester: 1, SubjectID: infID, Status: schedule.StatusPublished, TeacherID: &infTeacherID},
+		{GroupID: group1ID, Semester: 1, SubjectID: englishID, Status: schedule.StatusPublished, TeacherID: &onlineTeacherID},
+		{GroupID: group1ID, Semester: 1, SubjectID: peID, Status: schedule.StatusPublished, TeacherID: &peTeacherID},
+		{GroupID: group2ID, Semester: 1, SubjectID: mathID, Status: schedule.StatusPublished, TeacherID: &mathTeacherID},
+		{GroupID: group2ID, Semester: 1, SubjectID: infID, Status: schedule.StatusPublished, TeacherID: &infTeacherID},
+		{GroupID: group2ID, Semester: 1, SubjectID: englishID, Status: schedule.StatusPublished, TeacherID: &onlineTeacherID},
+		{GroupID: group2ID, Semester: 1, SubjectID: peID, Status: schedule.StatusPublished, TeacherID: &peTeacherID},
 	} {
 		if _, err := getOrCreateCourseAssignment(db, a); err != nil {
 			return nil, err
@@ -336,11 +357,11 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	templateSeeds := []schedule.ScheduleTemplate{
 		{GroupID: group1ID, DayOfWeek: 0, WeekParity: schedule.WeekParityBoth, PairNumber: 1, SubjectID: mathID, LocationID: &loc101ID, Status: schedule.StatusPublished, TeacherID: &mathTeacherID},
 		{GroupID: group1ID, DayOfWeek: 0, WeekParity: schedule.WeekParityBoth, PairNumber: 2, SubjectID: infID, LocationID: &locComputerID, Status: schedule.StatusPublished, TeacherID: &infTeacherID},
-		{GroupID: group1ID, DayOfWeek: 1, WeekParity: schedule.WeekParityBoth, PairNumber: 1, SubjectID: englishID, LocationID: &locOnlineID, LessonFormat: online, Status: schedule.StatusPublished, TeacherID: &englishTeacherID},
+		{GroupID: group1ID, DayOfWeek: 1, WeekParity: schedule.WeekParityBoth, PairNumber: 1, SubjectID: englishID, LocationID: &locOnlineID, LessonFormat: online, Status: schedule.StatusPublished, TeacherID: &onlineTeacherID},
 		{GroupID: group1ID, DayOfWeek: 2, WeekParity: schedule.WeekParityBoth, PairNumber: 2, SubjectID: peID, LocationID: &locGymID, Status: schedule.StatusPublished, TeacherID: &peTeacherID},
 		{GroupID: group2ID, DayOfWeek: 0, WeekParity: schedule.WeekParityBoth, PairNumber: 1, SubjectID: mathID, LocationID: &loc102ID, Status: schedule.StatusPublished, TeacherID: &mathTeacherID},
 		{GroupID: group2ID, DayOfWeek: 0, WeekParity: schedule.WeekParityBoth, PairNumber: 2, SubjectID: infID, LocationID: &locComputerID, Status: schedule.StatusPublished, TeacherID: &infTeacherID, FlowKey: ptrString("stream-inf-1")},
-		{GroupID: group2ID, DayOfWeek: 1, WeekParity: schedule.WeekParityBoth, PairNumber: 1, SubjectID: englishID, LocationID: &locOnlineID, LessonFormat: online, Status: schedule.StatusPublished, TeacherID: &englishTeacherID},
+		{GroupID: group2ID, DayOfWeek: 1, WeekParity: schedule.WeekParityBoth, PairNumber: 1, SubjectID: englishID, LocationID: &locOnlineID, LessonFormat: online, Status: schedule.StatusPublished, TeacherID: &onlineTeacherID},
 		{GroupID: group2ID, DayOfWeek: 2, WeekParity: schedule.WeekParityBoth, PairNumber: 2, SubjectID: peID, LocationID: &locPoolID, Status: schedule.StatusPublished, TeacherID: &peTeacherID},
 	}
 	var infTemplateID int64
@@ -368,10 +389,11 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	}
 
 	if err := upsertTeacherDayConstraint(db, schedule.TeacherDayConstraint{
-		TeacherID:     englishTeacherID,
-		TargetDate:    acYearStart.AddDate(0, 0, 1),
-		Reason:        "Методический день",
-		AllowsLessons: false,
+		TeacherID:            onlineTeacherID,
+		TargetDate:           acYearStart.AddDate(0, 0, 1),
+		Reason:               "Методический день",
+		ConstraintLevel:      "warning",
+		RequiresConfirmation: true,
 	}); err != nil {
 		return nil, err
 	}
@@ -382,6 +404,27 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		Comment:    ptrString("Закрепленный кабинет"),
 	}); err != nil {
 		return nil, err
+	}
+	primorskayaPreferenceLocations := []int{loc101ID, loc102ID, locComputerID}
+	for i, teacherID := range teacherIDs[:30] {
+		if err := upsertTeacherLocationPreference(db, schedule.TeacherLocationPreference{
+			TeacherID:  teacherID,
+			LocationID: primorskayaPreferenceLocations[i%len(primorskayaPreferenceLocations)],
+			Priority:   1,
+			Comment:    ptrString("Только пары на Приморской площадке"),
+		}); err != nil {
+			return nil, err
+		}
+	}
+	for _, teacherID := range onlineTeacherIDs {
+		if err := upsertTeacherLocationPreference(db, schedule.TeacherLocationPreference{
+			TeacherID:  teacherID,
+			LocationID: locOnlineID,
+			Priority:   1,
+			Comment:    ptrString("Онлайн-пары"),
+		}); err != nil {
+			return nil, err
+		}
 	}
 	if err := upsertRoomRequest(db, schedule.RoomRequest{
 		TeacherID:      &infTeacherID,
@@ -688,7 +731,6 @@ func getOrCreateCourseAssignment(db *gorm.DB, a schedule.CourseAssignment) (int6
 	var row schedule.CourseAssignment
 	if err := q.First(&row).Error; err == nil {
 		row.TeacherID = a.TeacherID
-		row.LocationID = a.LocationID
 		row.CurriculumItemID = a.CurriculumItemID
 		row.Notes = a.Notes
 		if err := db.Save(&row).Error; err != nil {
@@ -739,12 +781,18 @@ func getOrCreateScheduleTemplate(db *gorm.DB, tpl schedule.ScheduleTemplate) (in
 }
 
 func upsertTeacherDayConstraint(db *gorm.DB, d schedule.TeacherDayConstraint) error {
+	if d.ConstraintLevel == "" {
+		d.ConstraintLevel = "warning"
+	}
+	if d.ConstraintLevel == "warning" {
+		d.RequiresConfirmation = true
+	}
 	return db.Exec(`
-INSERT INTO teacher_day_constraints (teacher_id, target_date, reason, allows_lessons)
-VALUES (?, ?, ?, ?)
+INSERT INTO teacher_day_constraints (teacher_id, target_date, reason, constraint_level, requires_confirmation)
+VALUES (?, ?, ?, ?, ?)
 ON CONFLICT (teacher_id, target_date)
-DO UPDATE SET reason = EXCLUDED.reason, allows_lessons = EXCLUDED.allows_lessons`,
-		d.TeacherID, dateOnly(d.TargetDate), d.Reason, d.AllowsLessons,
+DO UPDATE SET reason = EXCLUDED.reason, constraint_level = EXCLUDED.constraint_level, requires_confirmation = EXCLUDED.requires_confirmation`,
+		d.TeacherID, dateOnly(d.TargetDate), d.Reason, d.ConstraintLevel, d.RequiresConfirmation,
 	).Error
 }
 

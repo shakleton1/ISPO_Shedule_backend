@@ -30,12 +30,13 @@ type LocationWeekAvailabilityFilters struct {
 }
 
 type TeacherDayConstraintView struct {
-	ID            int64     `gorm:"column:id"`
-	TeacherID     int       `gorm:"column:teacher_id"`
-	TeacherName   string    `gorm:"column:teacher_name"`
-	TargetDate    time.Time `gorm:"column:target_date"`
-	Reason        string    `gorm:"column:reason"`
-	AllowsLessons bool      `gorm:"column:allows_lessons"`
+	ID                   int64     `gorm:"column:id"`
+	TeacherID            int       `gorm:"column:teacher_id"`
+	TeacherName          string    `gorm:"column:teacher_name"`
+	TargetDate           time.Time `gorm:"column:target_date"`
+	Reason               string    `gorm:"column:reason"`
+	ConstraintLevel      string    `gorm:"column:constraint_level"`
+	RequiresConfirmation bool      `gorm:"column:requires_confirmation"`
 }
 
 type LocationMeta struct {
@@ -444,6 +445,9 @@ func (r *Repository) CreateTeacherDayConstraint(d *TeacherDayConstraint) error {
 	if d.TeacherID <= 0 {
 		return fmt.Errorf("teacher_id required")
 	}
+	if err := normalizeTeacherDayConstraint(d); err != nil {
+		return err
+	}
 	d.TargetDate = dateOnly(d.TargetDate)
 	return r.db.Create(d).Error
 }
@@ -459,7 +463,11 @@ func (r *Repository) UpdateTeacherDayConstraint(id int64, patch *TeacherDayConst
 	row.TeacherID = patch.TeacherID
 	row.TargetDate = dateOnly(patch.TargetDate)
 	row.Reason = patch.Reason
-	row.AllowsLessons = patch.AllowsLessons
+	if err := normalizeTeacherDayConstraint(patch); err != nil {
+		return nil, err
+	}
+	row.ConstraintLevel = patch.ConstraintLevel
+	row.RequiresConfirmation = patch.RequiresConfirmation
 	if err := r.db.Save(&row).Error; err != nil {
 		return nil, err
 	}
@@ -473,12 +481,52 @@ func (r *Repository) DeleteTeacherDayConstraint(id int64) error {
 func (r *Repository) ListBlockingTeacherConstraintsBetween(startDate, endDate time.Time) ([]TeacherDayConstraintView, error) {
 	var rows []TeacherDayConstraintView
 	err := r.db.Table("teacher_day_constraints tdc").
-		Select("tdc.id, tdc.teacher_id, t.name AS teacher_name, tdc.target_date, tdc.reason, tdc.allows_lessons").
+		Select("tdc.id, tdc.teacher_id, t.name AS teacher_name, tdc.target_date, tdc.reason, tdc.constraint_level, tdc.requires_confirmation").
 		Joins("JOIN teachers t ON t.id = tdc.teacher_id").
-		Where("tdc.target_date BETWEEN ? AND ? AND tdc.allows_lessons = FALSE", dateOnly(startDate), dateOnly(endDate)).
+		Where("tdc.target_date BETWEEN ? AND ?", dateOnly(startDate), dateOnly(endDate)).
 		Order("tdc.target_date asc, t.name asc").
 		Scan(&rows).Error
 	return rows, err
+}
+
+func normalizeTeacherDayConstraint(d *TeacherDayConstraint) error {
+	d.Reason = strings.TrimSpace(d.Reason)
+	d.ConstraintLevel = strings.ToLower(strings.TrimSpace(d.ConstraintLevel))
+	if d.ConstraintLevel == "" {
+		d.ConstraintLevel = "warning"
+	}
+	switch d.ConstraintLevel {
+	case "warning":
+		d.RequiresConfirmation = true
+		return nil
+	case "hard_block":
+		d.RequiresConfirmation = false
+		return nil
+	default:
+		return fmt.Errorf("constraint_level must be warning or hard_block")
+	}
+}
+
+func (r *Repository) FindTeacherDayConstraintByName(teacherName string, targetDate time.Time) (*TeacherDayConstraintView, error) {
+	teacherName = strings.TrimSpace(teacherName)
+	if teacherName == "" {
+		return nil, nil
+	}
+	var row TeacherDayConstraintView
+	err := r.db.Table("teacher_day_constraints tdc").
+		Select("tdc.id, tdc.teacher_id, t.name AS teacher_name, tdc.target_date, tdc.reason, tdc.constraint_level, tdc.requires_confirmation").
+		Joins("JOIN teachers t ON t.id = tdc.teacher_id").
+		Where("t.name = ? AND tdc.target_date = ?", teacherName, dateOnly(targetDate)).
+		Order("CASE tdc.constraint_level WHEN 'hard_block' THEN 0 ELSE 1 END, tdc.id asc").
+		Limit(1).
+		Scan(&row).Error
+	if err != nil {
+		return nil, err
+	}
+	if row.ID == 0 {
+		return nil, nil
+	}
+	return &row, nil
 }
 
 func (r *Repository) ListScheduleReplacements(filters ScheduleReplacementFilters) ([]ScheduleReplacement, error) {

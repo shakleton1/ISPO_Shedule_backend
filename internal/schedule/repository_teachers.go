@@ -136,13 +136,11 @@ type CourseAssignmentFilters struct {
 }
 
 type CourseAssignmentTeacherView struct {
-	ID           int64  `gorm:"column:id"`
-	Semester     int16  `gorm:"column:semester"`
-	SubjectID    int    `gorm:"column:subject_id"`
-	Subgroup     *int16 `gorm:"column:subgroup"`
-	TeacherName  *string
-	LocationID   *int    `gorm:"column:location_id"`
-	LocationName *string `gorm:"column:location_name"`
+	ID          int64  `gorm:"column:id"`
+	Semester    int16  `gorm:"column:semester"`
+	SubjectID   int    `gorm:"column:subject_id"`
+	Subgroup    *int16 `gorm:"column:subgroup"`
+	TeacherName *string
 }
 
 func (r *Repository) ListCourseAssignments(filters CourseAssignmentFilters) ([]CourseAssignment, error) {
@@ -223,7 +221,6 @@ func (r *Repository) UpdateCourseAssignment(id int64, patch *CourseAssignment) (
 	row.SubjectID = patch.SubjectID
 	row.Status = patch.Status
 	row.TeacherID = patch.TeacherID
-	row.LocationID = patch.LocationID
 	row.CurriculumItemID = patch.CurriculumItemID
 	row.Subgroup = patch.Subgroup
 	row.Notes = patch.Notes
@@ -287,8 +284,8 @@ func (r *Repository) PublishDraftCourseAssignments(groupID int, semester *int16)
 		}
 
 		res := tx.Exec(`
-			INSERT INTO course_assignments (group_id, semester, subject_id, status, teacher_id, location_id, curriculum_item_id, subgroup, notes, created_at, updated_at)
-			SELECT group_id, semester, subject_id, 'published', teacher_id, location_id, curriculum_item_id, subgroup, notes, now(), now()
+			INSERT INTO course_assignments (group_id, semester, subject_id, status, teacher_id, curriculum_item_id, subgroup, notes, created_at, updated_at)
+			SELECT group_id, semester, subject_id, 'published', teacher_id, curriculum_item_id, subgroup, notes, now(), now()
 			FROM course_assignments
 			WHERE group_id = ? AND status = 'draft'`+func() string {
 			if semester != nil {
@@ -336,9 +333,8 @@ func (r *Repository) ListCourseAssignmentTeachersForGroup(groupID int) ([]Course
 
 	var rows []CourseAssignmentTeacherView
 	err := r.db.Table("course_assignments ca").
-		Select("ca.id, ca.semester, ca.subject_id, ca.subgroup, t.name as teacher_name, ca.location_id, l.name as location_name").
+		Select("ca.id, ca.semester, ca.subject_id, ca.subgroup, t.name as teacher_name").
 		Joins("LEFT JOIN teachers t ON t.id = ca.teacher_id").
-		Joins("LEFT JOIN locations l ON l.id = ca.location_id").
 		Where("ca.group_id = ? AND ca.status = ?", groupID, StatusPublished).
 		Order("ca.subject_id asc, COALESCE(ca.subgroup, 0) asc, ca.semester desc, ca.id desc").
 		Scan(&rows).Error

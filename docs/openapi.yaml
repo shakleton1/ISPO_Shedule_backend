@@ -2779,7 +2779,6 @@ components:
         subject_id: { type: integer }
         status: { type: string, enum: [draft, published] }
         teacher_id: { type: integer, nullable: true }
-        location_id: { type: integer, nullable: true }
         curriculum_item_id: { type: integer, format: int64, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
         notes: { type: string, nullable: true }
@@ -2827,7 +2826,7 @@ components:
         location_id: { type: integer }
         source:
           type: string
-          enum: [manual, auto, imported, teacher_preference, course_assignment, request]
+          enum: [manual, auto, imported, teacher_preference, request]
         status: { type: string, enum: [draft, published] }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
@@ -2872,13 +2871,16 @@ components:
 
     TeacherDayConstraint:
       type: object
-      required: [id, teacher_id, target_date, allows_lessons]
+      required: [id, teacher_id, target_date, constraint_level, requires_confirmation]
       properties:
         id: { type: integer, format: int64 }
         teacher_id: { type: integer }
         target_date: { type: string, format: date }
         reason: { type: string }
-        allows_lessons: { type: boolean }
+        constraint_level:
+          type: string
+          enum: [warning, hard_block]
+        requires_confirmation: { type: boolean }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -2889,7 +2891,10 @@ components:
         teacher_id: { type: integer }
         date: { type: string, format: date }
         reason: { type: string }
-        allows_lessons: { type: boolean }
+        constraint_level:
+          type: string
+          enum: [warning, hard_block]
+        requires_confirmation: { type: boolean }
 
     ScheduleReplacement:
       type: object
@@ -3354,6 +3359,7 @@ components:
         new_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
         new_teacher_manual: { type: boolean }
         new_teacher_name: { type: string, nullable: true }
+        confirm_constraints: { type: boolean }
         comment: { type: string, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
         flow_key: { type: string, nullable: true, maxLength: 80 }
@@ -3375,6 +3381,7 @@ components:
         new_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
         new_teacher_manual: { type: boolean }
         new_teacher_name: { type: string, nullable: true }
+        confirm_constraints: { type: boolean }
         comment: { type: string, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
         flow_key: { type: string, nullable: true, maxLength: 80 }
@@ -3478,6 +3485,7 @@ components:
         new_location_id: { type: integer, nullable: true }
         new_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
         new_teacher_name: { type: string, nullable: true }
+        confirm_constraints: { type: boolean }
         comment: { type: string, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
         only_teaching_days: { type: boolean, nullable: true }
@@ -3503,6 +3511,7 @@ components:
         to_pair_number: { type: integer, minimum: 1, maximum: 8 }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
         comment: { type: string, nullable: true }
+        confirm_constraints: { type: boolean }
 
     ImportResponse:
       type: object

@@ -87,7 +87,6 @@ type CourseAssignment struct {
 	SubjectID        int          `gorm:"not null" json:"subject_id"`
 	Status           EntityStatus `gorm:"type:text;not null;default:'published'" json:"status"`
 	TeacherID        *int         `json:"teacher_id"`
-	LocationID       *int         `json:"location_id"`
 	CurriculumItemID *int64       `json:"curriculum_item_id"`
 	Subgroup         *int16       `json:"subgroup"`
 	Notes            *string      `json:"notes"`
@@ -118,22 +117,23 @@ type ScheduleTemplate struct {
 }
 
 type ScheduleOverride struct {
-	ID               int64          `gorm:"primaryKey" json:"id"`
-	TargetDate       time.Time      `gorm:"type:date;not null;index:idx_ovr_query,priority:2" json:"target_date"`
-	GroupID          int            `gorm:"not null;index:idx_ovr_query,priority:1" json:"group_id"`
-	PairNumber       int16          `gorm:"not null" json:"pair_number"`
-	ActionType       OverrideAction `gorm:"type:text;not null" json:"action_type"`
-	NewSubjectID     *int           `json:"new_subject_id"`
-	NewLocationID    *int           `json:"new_location_id"`
-	NewLessonFormat  *string        `gorm:"type:text" json:"new_lesson_format"`
-	NewTeacherID     *int           `json:"-"`
-	NewTeacherManual bool           `gorm:"not null;default:false" json:"new_teacher_manual"`
-	NewTeacherName   *string        `gorm:"column:new_teacher_name;->" json:"new_teacher_name"`
-	Comment          *string        `json:"comment"`
-	Subgroup         *int16         `json:"subgroup"` // nil = для всех
-	FlowKey          *string        `gorm:"size:80" json:"flow_key"`
-	CreatedAt        time.Time      `json:"created_at"`
-	UpdatedAt        time.Time      `json:"updated_at"`
+	ID                 int64          `gorm:"primaryKey" json:"id"`
+	TargetDate         time.Time      `gorm:"type:date;not null;index:idx_ovr_query,priority:2" json:"target_date"`
+	GroupID            int            `gorm:"not null;index:idx_ovr_query,priority:1" json:"group_id"`
+	PairNumber         int16          `gorm:"not null" json:"pair_number"`
+	ActionType         OverrideAction `gorm:"type:text;not null" json:"action_type"`
+	NewSubjectID       *int           `json:"new_subject_id"`
+	NewLocationID      *int           `json:"new_location_id"`
+	NewLessonFormat    *string        `gorm:"type:text" json:"new_lesson_format"`
+	NewTeacherID       *int           `json:"-"`
+	NewTeacherManual   bool           `gorm:"not null;default:false" json:"new_teacher_manual"`
+	NewTeacherName     *string        `gorm:"column:new_teacher_name;->" json:"new_teacher_name"`
+	Comment            *string        `json:"comment"`
+	Subgroup           *int16         `json:"subgroup"` // nil = для всех
+	FlowKey            *string        `gorm:"size:80" json:"flow_key"`
+	ConfirmConstraints bool           `gorm:"-" json:"confirm_constraints,omitempty"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
 }
 
 type ScheduleDayOverlay struct {
@@ -271,13 +271,14 @@ type StudyCalendarWeek struct {
 }
 
 type TeacherDayConstraint struct {
-	ID            int64     `gorm:"primaryKey" json:"id"`
-	TeacherID     int       `gorm:"not null" json:"teacher_id"`
-	TargetDate    time.Time `gorm:"type:date;not null" json:"target_date"`
-	Reason        string    `gorm:"size:255;not null;default:''" json:"reason"`
-	AllowsLessons bool      `gorm:"not null;default:false" json:"allows_lessons"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID                   int64     `gorm:"primaryKey" json:"id"`
+	TeacherID            int       `gorm:"not null" json:"teacher_id"`
+	TargetDate           time.Time `gorm:"type:date;not null" json:"target_date"`
+	Reason               string    `gorm:"size:255;not null;default:''" json:"reason"`
+	ConstraintLevel      string    `gorm:"type:text;not null;default:'warning'" json:"constraint_level"`
+	RequiresConfirmation bool      `gorm:"not null;default:true" json:"requires_confirmation"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
 }
 
 type ScheduleReplacement struct {

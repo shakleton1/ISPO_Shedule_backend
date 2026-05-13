@@ -395,6 +395,57 @@ func TestHandleAdminCreateOverride_CancelReplaceAddAndValidation(t *testing.T) {
 	assert.Contains(t, w4.Body.String(), "validation_error")
 }
 
+func TestHandleAdminCreateOverride_TeacherDayConstraintRequiresConfirmation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	gin.SetMode(gin.TestMode)
+
+	db := integrationDB(t)
+	repo := schedule.NewRepository(db)
+	g := makeGroup(t, db)
+	s := makeSubject(t, db)
+	teacher := &schedule.Teacher{Name: "Constraint Teacher " + uniqueSuffix()}
+	require.NoError(t, repo.CreateTeacher(teacher))
+	t.Cleanup(func() { _ = db.Exec("UPDATE teachers SET deleted_at = now() WHERE id = ?", teacher.ID).Error })
+	constraint := &schedule.TeacherDayConstraint{
+		TeacherID:            teacher.ID,
+		TargetDate:           time.Date(2026, 3, 17, 0, 0, 0, 0, time.UTC),
+		Reason:               "method day",
+		ConstraintLevel:      "warning",
+		RequiresConfirmation: true,
+	}
+	require.NoError(t, repo.CreateTeacherDayConstraint(constraint))
+	t.Cleanup(func() { _ = db.Where("id = ?", constraint.ID).Delete(&schedule.TeacherDayConstraint{}).Error })
+
+	h := handleAdminCreateOverride(repo, nil)
+	body := fmt.Sprintf(`{"group_id":%d,"date":"2026-03-17","pair":1,"action":"ADD","new_subject_id":%d,"new_teacher_name":%q}`, g.ID, s.ID, teacher.Name)
+	c1, w1 := testCtx(http.MethodPost, "/api/v1/admin/override", bytes.NewReader([]byte(body)))
+	h(c1)
+	require.Equal(t, http.StatusConflict, w1.Code)
+	assert.Contains(t, w1.Body.String(), "teacher_day_constraint_confirmation_required")
+
+	confirmed := fmt.Sprintf(`{"group_id":%d,"date":"2026-03-17","pair":1,"action":"ADD","new_subject_id":%d,"new_teacher_name":%q,"confirm_constraints":true}`, g.ID, s.ID, teacher.Name)
+	c2, w2 := testCtx(http.MethodPost, "/api/v1/admin/override", bytes.NewReader([]byte(confirmed)))
+	h(c2)
+	assert.Equal(t, http.StatusCreated, w2.Code)
+
+	hardBlock := &schedule.TeacherDayConstraint{
+		TeacherID:       teacher.ID,
+		TargetDate:      time.Date(2026, 3, 18, 0, 0, 0, 0, time.UTC),
+		Reason:          "medical leave",
+		ConstraintLevel: "hard_block",
+	}
+	require.NoError(t, repo.CreateTeacherDayConstraint(hardBlock))
+	t.Cleanup(func() { _ = db.Where("id = ?", hardBlock.ID).Delete(&schedule.TeacherDayConstraint{}).Error })
+
+	blocked := fmt.Sprintf(`{"group_id":%d,"date":"2026-03-18","pair":1,"action":"ADD","new_subject_id":%d,"new_teacher_name":%q,"confirm_constraints":true}`, g.ID, s.ID, teacher.Name)
+	c3, w3 := testCtx(http.MethodPost, "/api/v1/admin/override", bytes.NewReader([]byte(blocked)))
+	h(c3)
+	assert.Equal(t, http.StatusConflict, w3.Code)
+	assert.Contains(t, w3.Body.String(), "teacher_day_constraint_hard_block")
+}
+
 func TestHandleAdminBulkOverrides_MassCreate(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")

@@ -54,10 +54,11 @@ func TestRepositoryPlanning_StudyCalendarTeacherConstraintsAndReplacements(t *te
 	t.Cleanup(func() { _ = db.Exec("UPDATE teachers SET deleted_at = now() WHERE id = ?", teacher.ID).Error })
 
 	constraint := &schedule.TeacherDayConstraint{
-		TeacherID:     teacher.ID,
-		TargetDate:    time.Date(2026, 9, 3, 0, 0, 0, 0, time.UTC),
-		Reason:        "Больничный",
-		AllowsLessons: false,
+		TeacherID:            teacher.ID,
+		TargetDate:           time.Date(2026, 9, 3, 0, 0, 0, 0, time.UTC),
+		Reason:               "Больничный",
+		ConstraintLevel:      "warning",
+		RequiresConfirmation: true,
 	}
 	require.NoError(t, repo.CreateTeacherDayConstraint(constraint))
 	t.Cleanup(func() { _ = db.Where("id = ?", constraint.ID).Delete(&schedule.TeacherDayConstraint{}).Error })

@@ -3,6 +3,7 @@ package httpapi
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -261,10 +262,11 @@ func handleAdminListTeacherDayConstraints(repo *schedule.Repository) gin.Handler
 }
 
 type teacherDayConstraintReq struct {
-	TeacherID     int    `json:"teacher_id"`
-	Date          string `json:"date"`
-	Reason        string `json:"reason"`
-	AllowsLessons *bool  `json:"allows_lessons"`
+	TeacherID            int    `json:"teacher_id"`
+	Date                 string `json:"date"`
+	Reason               string `json:"reason"`
+	ConstraintLevel      string `json:"constraint_level"`
+	RequiresConfirmation *bool  `json:"requires_confirmation"`
 }
 
 func toTeacherDayConstraint(req teacherDayConstraintReq) (*schedule.TeacherDayConstraint, error) {
@@ -272,15 +274,20 @@ func toTeacherDayConstraint(req teacherDayConstraintReq) (*schedule.TeacherDayCo
 	if err != nil {
 		return nil, err
 	}
-	allows := false
-	if req.AllowsLessons != nil {
-		allows = *req.AllowsLessons
+	level := strings.ToLower(strings.TrimSpace(req.ConstraintLevel))
+	if level == "" {
+		level = "warning"
+	}
+	requires := true
+	if req.RequiresConfirmation != nil {
+		requires = *req.RequiresConfirmation
 	}
 	return &schedule.TeacherDayConstraint{
-		TeacherID:     req.TeacherID,
-		TargetDate:    d,
-		Reason:        req.Reason,
-		AllowsLessons: allows,
+		TeacherID:            req.TeacherID,
+		TargetDate:           d,
+		Reason:               req.Reason,
+		ConstraintLevel:      level,
+		RequiresConfirmation: requires,
 	}, nil
 }
 

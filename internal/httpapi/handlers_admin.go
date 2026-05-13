@@ -153,22 +153,25 @@ func handleAdminDeleteDayEvent(repo *schedule.Repository) gin.HandlerFunc {
 // Bulk overrides
 
 type adminBulkOverridesRequest struct {
-	GroupID          int     `json:"group_id"`
-	StartDate        string  `json:"start_date"`
-	EndDate          string  `json:"end_date"`
-	DaysOfWeek       []int16 `json:"days_of_week"`
-	PairNumber       *int16  `json:"pair_number"`
-	PairNumbers      []int16 `json:"pair_numbers"`
-	ActionType       string  `json:"action_type"`
-	NewSubjectID     *int    `json:"new_subject_id"`
-	NewLocationID    *int    `json:"new_location_id"`
-	NewLessonFormat  *string `json:"new_lesson_format"`
-	NewTeacherName   *string `json:"new_teacher_name"`
-	Comment          *string `json:"comment"`
-	Subgroup         *int16  `json:"subgroup"`
-	OnlyTeachingDays *bool   `json:"only_teaching_days"`
-	OnConflict       string  `json:"on_conflict"` // error|skip
+	GroupID            int     `json:"group_id"`
+	StartDate          string  `json:"start_date"`
+	EndDate            string  `json:"end_date"`
+	DaysOfWeek         []int16 `json:"days_of_week"`
+	PairNumber         *int16  `json:"pair_number"`
+	PairNumbers        []int16 `json:"pair_numbers"`
+	ActionType         string  `json:"action_type"`
+	NewSubjectID       *int    `json:"new_subject_id"`
+	NewLocationID      *int    `json:"new_location_id"`
+	NewLessonFormat    *string `json:"new_lesson_format"`
+	NewTeacherName     *string `json:"new_teacher_name"`
+	Comment            *string `json:"comment"`
+	Subgroup           *int16  `json:"subgroup"`
+	OnlyTeachingDays   *bool   `json:"only_teaching_days"`
+	OnConflict         string  `json:"on_conflict"` // error|skip
+	ConfirmConstraints bool    `json:"confirm_constraints"`
 }
+
+var errTeacherDayConstraintResponseWritten = errors.New("teacher day constraint response written")
 
 func handleAdminBulkOverrides(repo *schedule.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -290,6 +293,9 @@ func handleAdminBulkOverrides(repo *schedule.Repository) gin.HandlerFunc {
 						Comment:         req.Comment,
 						Subgroup:        req.Subgroup,
 					}
+					if stop := enforceTeacherDayConstraintConfirmation(c, txRepo, req.NewTeacherName, d, req.ConfirmConstraints); stop {
+						return errTeacherDayConstraintResponseWritten
+					}
 					if err := txRepo.CreateOverride(o); err != nil {
 						return err
 					}
@@ -299,6 +305,9 @@ func handleAdminBulkOverrides(repo *schedule.Repository) gin.HandlerFunc {
 			return nil
 		})
 		if err != nil {
+			if errors.Is(err, errTeacherDayConstraintResponseWritten) {
+				return
+			}
 			writeDBError(c, err)
 			return
 		}
@@ -312,12 +321,13 @@ func handleAdminBulkOverrides(repo *schedule.Repository) gin.HandlerFunc {
 // Move pair (atomically: CANCEL + ADD)
 
 type adminMovePairRequest struct {
-	GroupID    int     `json:"group_id"`
-	TargetDate string  `json:"target_date"`
-	FromPair   int16   `json:"from_pair_number"`
-	ToPair     int16   `json:"to_pair_number"`
-	Subgroup   *int16  `json:"subgroup"`
-	Comment    *string `json:"comment"`
+	GroupID            int     `json:"group_id"`
+	TargetDate         string  `json:"target_date"`
+	FromPair           int16   `json:"from_pair_number"`
+	ToPair             int16   `json:"to_pair_number"`
+	Subgroup           *int16  `json:"subgroup"`
+	Comment            *string `json:"comment"`
+	ConfirmConstraints bool    `json:"confirm_constraints"`
 }
 
 func handleAdminMovePair(svc *schedule.Service, repo *schedule.Repository) gin.HandlerFunc {
@@ -369,8 +379,11 @@ func handleAdminMovePair(svc *schedule.Service, repo *schedule.Repository) gin.H
 			writeError(c, http.StatusBadRequest, "bad_request", "", "source lesson not found")
 			return
 		}
-		if found.SubjectID == nil || found.LocationID == nil {
-			writeError(c, http.StatusBadRequest, "bad_request", "", "source lesson has no subject/location ids")
+		if found.SubjectID == nil {
+			writeError(c, http.StatusBadRequest, "bad_request", "", "source lesson has no subject id")
+			return
+		}
+		if stop := enforceTeacherDayConstraintConfirmation(c, repo, &found.TeacherName, date, req.ConfirmConstraints); stop {
 			return
 		}
 
@@ -448,6 +461,41 @@ func scheduleMondayOfWeek(t time.Time) time.Time {
 	wd := int(d.Weekday())
 	offset := (wd + 6) % 7
 	return d.AddDate(0, 0, -offset)
+}
+
+func enforceTeacherDayConstraintConfirmation(c *gin.Context, repo *schedule.Repository, teacherName *string, targetDate time.Time, confirmed bool) bool {
+	if teacherName == nil || strings.TrimSpace(*teacherName) == "" || targetDate.IsZero() {
+		return false
+	}
+	constraint, err := repo.FindTeacherDayConstraintByName(*teacherName, targetDate)
+	if err != nil {
+		writeDBError(c, err)
+		return true
+	}
+	if constraint == nil {
+		return false
+	}
+	payload := gin.H{
+		"teacher_id":            constraint.TeacherID,
+		"teacher_name":          constraint.TeacherName,
+		"target_date":           dateOnlyHTTP(constraint.TargetDate).Format("2006-01-02"),
+		"reason":                constraint.Reason,
+		"constraint_level":      constraint.ConstraintLevel,
+		"requires_confirmation": constraint.RequiresConfirmation,
+	}
+	if constraint.ConstraintLevel == "hard_block" {
+		payload["code"] = "teacher_day_constraint_hard_block"
+		payload["message"] = "Teacher has a hard day constraint."
+		c.JSON(http.StatusConflict, payload)
+		return true
+	}
+	if constraint.RequiresConfirmation && !confirmed {
+		payload["code"] = "teacher_day_constraint_confirmation_required"
+		payload["message"] = "Teacher has a soft day constraint. Confirmation required."
+		c.JSON(http.StatusConflict, payload)
+		return true
+	}
+	return false
 }
 
 func scheduleDayOfWeekForDate(d time.Time, worksAs map[string]int16) int16 {
@@ -1008,18 +1056,19 @@ func handleAdminListOverrides(repo *schedule.Repository) gin.HandlerFunc {
 }
 
 type adminOverrideRequest struct {
-	GroupID          int     `json:"group_id"`
-	Date             string  `json:"date"`
-	Pair             int16   `json:"pair"`
-	Action           string  `json:"action"`
-	NewSubjectID     *int    `json:"new_subject_id"`
-	NewLocationID    *int    `json:"new_location_id"`
-	NewLessonFormat  *string `json:"new_lesson_format"`
-	NewTeacherManual bool    `json:"new_teacher_manual"`
-	NewTeacherName   *string `json:"new_teacher_name"`
-	Comment          *string `json:"comment"`
-	Subgroup         *int16  `json:"subgroup"`
-	FlowKey          *string `json:"flow_key"`
+	GroupID            int     `json:"group_id"`
+	Date               string  `json:"date"`
+	Pair               int16   `json:"pair"`
+	Action             string  `json:"action"`
+	NewSubjectID       *int    `json:"new_subject_id"`
+	NewLocationID      *int    `json:"new_location_id"`
+	NewLessonFormat    *string `json:"new_lesson_format"`
+	NewTeacherManual   bool    `json:"new_teacher_manual"`
+	NewTeacherName     *string `json:"new_teacher_name"`
+	Comment            *string `json:"comment"`
+	Subgroup           *int16  `json:"subgroup"`
+	FlowKey            *string `json:"flow_key"`
+	ConfirmConstraints bool    `json:"confirm_constraints"`
 }
 
 func validateOverrideRequest(o schedule.ScheduleOverride) error {
@@ -1081,6 +1130,9 @@ func handleAdminCreateOverride(repo *schedule.Repository, pushSvc *push.Service)
 			writeValidationError(c, "", err.Error())
 			return
 		}
+		if stop := enforceTeacherDayConstraintConfirmation(c, repo, req.NewTeacherName, d, req.ConfirmConstraints); stop {
+			return
+		}
 		if err := repo.CreateOverride(&o); err != nil {
 			writeDBError(c, err)
 			return
@@ -1108,6 +1160,9 @@ func handleAdminUpdateOverride(repo *schedule.Repository, pushSvc *push.Service)
 		}
 		if err := validateOverrideRequest(req); err != nil {
 			writeValidationError(c, "", err.Error())
+			return
+		}
+		if stop := enforceTeacherDayConstraintConfirmation(c, repo, req.NewTeacherName, req.TargetDate, req.ConfirmConstraints); stop {
 			return
 		}
 		row, err := repo.UpdateOverride(id, &req)

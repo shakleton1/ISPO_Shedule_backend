@@ -121,7 +121,7 @@ func normalizeRoomAssignment(row *RoomAssignment) error {
 		row.Source = "manual"
 	}
 	switch row.Source {
-	case "manual", "auto", "imported", "teacher_preference", "course_assignment", "request":
+	case "manual", "auto", "imported", "teacher_preference", "request":
 	default:
 		return fmt.Errorf("invalid room assignment source: %s", row.Source)
 	}

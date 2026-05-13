@@ -140,7 +140,6 @@ type courseAssignmentDTO struct {
 	SubjectID        int                   `json:"subject_id"`
 	Status           schedule.EntityStatus `json:"status"`
 	TeacherID        *int                  `json:"teacher_id"`
-	LocationID       *int                  `json:"location_id"`
 	CurriculumItemID *int64                `json:"curriculum_item_id"`
 	Subgroup         *int16                `json:"subgroup"`
 	Notes            *string               `json:"notes"`
@@ -156,7 +155,6 @@ func toCourseAssignmentDTO(a schedule.CourseAssignment) courseAssignmentDTO {
 		SubjectID:        a.SubjectID,
 		Status:           a.Status,
 		TeacherID:        a.TeacherID,
-		LocationID:       a.LocationID,
 		CurriculumItemID: a.CurriculumItemID,
 		Subgroup:         a.Subgroup,
 		Notes:            a.Notes,
@@ -510,24 +508,26 @@ func toStudyCalendarWeekDTO(w schedule.StudyCalendarWeek) studyCalendarWeekDTO {
 }
 
 type teacherDayConstraintDTO struct {
-	ID            int64     `json:"id"`
-	TeacherID     int       `json:"teacher_id"`
-	TargetDate    time.Time `json:"target_date"`
-	Reason        string    `json:"reason"`
-	AllowsLessons bool      `json:"allows_lessons"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID                   int64     `json:"id"`
+	TeacherID            int       `json:"teacher_id"`
+	TargetDate           time.Time `json:"target_date"`
+	Reason               string    `json:"reason"`
+	ConstraintLevel      string    `json:"constraint_level"`
+	RequiresConfirmation bool      `json:"requires_confirmation"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
 }
 
 func toTeacherDayConstraintDTO(d schedule.TeacherDayConstraint) teacherDayConstraintDTO {
 	return teacherDayConstraintDTO{
-		ID:            d.ID,
-		TeacherID:     d.TeacherID,
-		TargetDate:    d.TargetDate,
-		Reason:        d.Reason,
-		AllowsLessons: d.AllowsLessons,
-		CreatedAt:     d.CreatedAt,
-		UpdatedAt:     d.UpdatedAt,
+		ID:                   d.ID,
+		TeacherID:            d.TeacherID,
+		TargetDate:           d.TargetDate,
+		Reason:               d.Reason,
+		ConstraintLevel:      d.ConstraintLevel,
+		RequiresConfirmation: d.RequiresConfirmation,
+		CreatedAt:            d.CreatedAt,
+		UpdatedAt:            d.UpdatedAt,
 	}
 }
 

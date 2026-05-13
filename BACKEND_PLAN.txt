@@ -180,7 +180,7 @@ CRUD расписания:
 
 Связка план → назначения → расписание
 [x] Сделано: автоподстановка преподавателя из course_assignments (на этапе сборки ответа расписания, если teacher_name пустой; по subject+subgroup и семестру, с fallback).
-[x] Сделано: автоподстановка аудитории из course_assignments (если location_id отсутствует после merge, например ADD без new_location_id).
+[x] Сделано: аудитория больше не берется из course_assignments; место пары резолвится через override/room_assignment/template/teacher_location_preferences/room_requests.
 [x] Сделано: явный флаг “ручное переопределение” (teacher_manual/new_teacher_manual) — авто-резолв уважает “manual empty” и не подставляет преподавателя.
 [x] Сделано: проверки “предмет в расписании должен соответствовать curriculum_item_allocations/семестру” (admin endpoint /api/v1/admin/schedule/validate возвращает warnings).
 [x] Сделано: “потоки/объединение групп” через schedule_source_group_id у группы (наследование templates/assignments/overrides/day_events, приоритет группы выше источника).
@@ -252,7 +252,7 @@ UX-контракт API
 
 Приоритетно (максимум пользы / минимум риска)
 [x] Bump schedule_version + push при изменении course_assignments
-[x] Автоподстановка аудитории из course_assignments
+[x] Автоподстановка аудитории переведена с course_assignments на teacher_location_preferences/room_requests/room_assignments
 [x] "Manual override" флаг/поведение для teacher/location, чтобы отличать авто от ручного
 
 ======================================================================
@@ -1025,7 +1025,7 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
 
 Контекст уже есть в проекте:
 [x] Связь дисциплина -> преподаватель через teacher_subjects.
-[x] Связь группа + семестр + дисциплина -> преподаватель/аудитория/строка плана через course_assignments.
+[x] Связь группа + семестр + дисциплина -> преподаватель/строка плана через course_assignments; аудитории вынесены в room/teacher location сущности.
 [x] Учебные планы: curricula, curriculum_items, curriculum_item_allocations.
 [x] Академический календарь по учебному плану: academic_calendars, academic_calendar_weeks.
 [x] Замены частично покрываются schedule_overrides, но нет отдельного журнала замен "что на что заменили".
@@ -1040,8 +1040,8 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
     Где: study_calendar_weeks; для примера "22290907/1095, неделя 1, Производственная практика, Нет".
 [x] Интегрировать group study calendar в сборку расписания: weeks allows_lessons=false блокируют шаблонные пары, но ручные overrides остаются возможны.
     Где: internal/schedule/repository_curricula.go, service_build.go.
-[x] Добавить ограничения преподавателей на дату: teacher_id + target_date + reason + allows_lessons.
-    Где: teacher_day_constraints, admin CRUD, schedule validate warnings.
+[x] Добавить ограничения преподавателей на дату: teacher_id + target_date + reason + constraint_level + requires_confirmation.
+    Где: teacher_day_constraints, admin CRUD, schedule validate warnings, 409 confirmation flow для ручной постановки пары.
 [x] Добавить отдельный журнал замен: target_date + group + pair + исходная пара + новая пара + причина + override_id.
     Где: schedule_replacements, admin CRUD/read, экспорт/отчеты позже.
 
@@ -1100,7 +1100,7 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
 [x] Добавлены campuses, location_types и location_type_links.
     Где: repository_rooms.go, handlers_rooms.go, router.go, docs/openapi.yaml.
 [x] Добавлены teacher_location_preferences, room_requests, room_assignments.
-    Логика места пары: override/template/course_assignment -> room_assignment -> teacher preference -> room request.
+    Логика места пары: override/template -> room_assignment -> teacher preference -> room request; course_assignments используется только для преподавателя.
 [x] Автоподбор аудиторий переведен с location_kind на location_type_code.
     Где: service_location_autofill.go, repository_planning.go, handlers_planning.go.
 [x] PLX "График" учитывает двухбуквенные коды УП и ПП.
@@ -1108,3 +1108,7 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
 [x] PLX "График" сохраняет неучебные недели как is_teaching=false для П/УП/ПП/ГИА/каникул; продовая БД очищена и импортирована заново из 57 XLSX.
     Где: handlers_import_plx.go + integration test; VDS 2026-05-13.
 [x] cmd/seed создает тестовые данные на две группы с преподавателями, аудиториями, типами помещений, учебным календарем, ограничением дня преподавателя, предпочтением кабинета и заявкой на ВЦ.
+[x] cmd/seed расширен до 80 преподавателей: 30 с предпочтениями кабинетов на Приморской площадке и 3 с онлайн-парами.
+[x] course_assignments очищен от location_id как источника кабинета; миграция удаляет колонку, DTO/OpenAPI обновлены.
+[x] teacher_day_constraints переведены с allows_lessons на warning/hard_block + requires_confirmation; ручные overrides/move/bulk требуют confirm_constraints для warning.
+[x] Убраны шумные duplicate-key логи из integration-тестов campuses/location_types через idempotent INSERT ... ON CONFLICT.

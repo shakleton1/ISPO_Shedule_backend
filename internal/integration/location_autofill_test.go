@@ -133,17 +133,20 @@ func TestServiceAutofillLocations_CreatesLocationOverride(t *testing.T) {
 
 func ensureTestCampusAndLocationType(t *testing.T, repo *schedule.Repository, db *gorm.DB) (int, int) {
 	t.Helper()
-	campus := &schedule.Campus{Name: "main"}
-	if err := repo.CreateCampus(campus); err != nil {
-		var existing schedule.Campus
-		require.NoError(t, db.Where("name = ?", campus.Name).First(&existing).Error)
-		campus = &existing
-	}
-	locationType := &schedule.LocationType{Code: "computer_class", Name: "Computer class"}
-	if err := repo.CreateLocationType(locationType); err != nil {
-		var existing schedule.LocationType
-		require.NoError(t, db.Where("code = ?", locationType.Code).First(&existing).Error)
-		locationType = &existing
-	}
+	_ = repo
+	var campus schedule.Campus
+	require.NoError(t, db.Raw(`
+INSERT INTO campuses (name)
+VALUES ('main')
+ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+RETURNING id, name, address, created_at, updated_at`).Scan(&campus).Error)
+
+	var locationType schedule.LocationType
+	require.NoError(t, db.Raw(`
+INSERT INTO location_types (code, name)
+VALUES ('computer_class', 'Computer class')
+ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name
+RETURNING id, code, name, created_at, updated_at`).Scan(&locationType).Error)
+
 	return campus.ID, locationType.ID
 }
