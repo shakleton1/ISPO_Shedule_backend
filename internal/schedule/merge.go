@@ -62,8 +62,9 @@ func mergeLessons(tpls []TemplateView, ovrs []OverrideView) ([]Lesson, error) {
 			PairNumber:   t.PairNumber,
 			SubjectID:    &t.SubjectID,
 			SubjectName:  t.SubjectName,
-			LocationID:   &t.LocationID,
+			LocationID:   t.LocationID,
 			LocationName: t.LocationName,
+			LessonFormat: normalizeLessonFormat(t.LessonFormat),
 			TeacherName:  t.TeacherName,
 			Subgroup:     t.Subgroup,
 			FlowKey:      t.FlowKey,
@@ -142,6 +143,9 @@ func applyOverrideReplace(l *Lesson, o OverrideView) {
 		l.LocationID = o.NewLocationID
 		l.LocationName = o.NewLocationName
 	}
+	if o.NewLessonFormat != nil {
+		l.LessonFormat = normalizeLessonFormat(*o.NewLessonFormat)
+	}
 	if o.NewTeacherName != nil {
 		l.TeacherName = *o.NewTeacherName
 	}
@@ -173,8 +177,22 @@ func buildLessonFromOverride(o OverrideView, isAdded bool) Lesson {
 		lesson.LocationID = o.NewLocationID
 		lesson.LocationName = o.NewLocationName
 	}
+	if o.NewLessonFormat != nil {
+		lesson.LessonFormat = normalizeLessonFormat(*o.NewLessonFormat)
+	} else {
+		lesson.LessonFormat = "offline"
+	}
 	if o.NewTeacherName != nil {
 		lesson.TeacherName = *o.NewTeacherName
 	}
 	return lesson
+}
+
+func normalizeLessonFormat(v string) string {
+	switch v {
+	case "online", "hybrid":
+		return v
+	default:
+		return "offline"
+	}
 }

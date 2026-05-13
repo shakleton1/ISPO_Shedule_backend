@@ -1093,3 +1093,16 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
 [x] Handler tests: новые import/CRUD endpoints.
 [x] Integration tests: миграции + repository для group calendar, teacher constraints, replacements.
 [x] OpenAPI должен обновляться вместе с endpoint-ами, CI должен валидировать docs/openapi.yaml.
+
+14.9) Чистая модель аудиторий, формата пары и заявок
+[x] Убрана опора на is_virtual как основную модель: locations.kind = physical/virtual, а формат пары хранится отдельно как lesson_format.
+    Где: db/migrations/20260513130000_clean_room_model.sql, internal/schedule/models.go, merge/build/view DTO.
+[x] Добавлены campuses, location_types и location_type_links.
+    Где: repository_rooms.go, handlers_rooms.go, router.go, docs/openapi.yaml.
+[x] Добавлены teacher_location_preferences, room_requests, room_assignments.
+    Логика места пары: override/template/course_assignment -> room_assignment -> teacher preference -> room request.
+[x] Автоподбор аудиторий переведен с location_kind на location_type_code.
+    Где: service_location_autofill.go, repository_planning.go, handlers_planning.go.
+[x] PLX "График" учитывает двухбуквенные коды УП и ПП.
+    Где: handlers_import_plx.go + unit test.
+[x] cmd/seed создает тестовые данные на две группы с преподавателями, аудиториями, типами помещений, учебным календарем, ограничением дня преподавателя, предпочтением кабинета и заявкой на ВЦ.

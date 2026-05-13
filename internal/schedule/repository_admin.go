@@ -196,33 +196,25 @@ func (r *Repository) GetLocation(id int) (*Location, error) {
 }
 
 func (r *Repository) CreateLocation(l *Location) error {
-	if l.LocationKind == "" {
-		if l.IsVirtual {
-			l.LocationKind = "virtual"
-		} else {
-			l.LocationKind = "classroom"
-		}
+	if err := normalizeLocation(l); err != nil {
+		return err
 	}
 	return r.db.Create(l).Error
 }
 
 func (r *Repository) UpdateLocation(id int, patch *Location) (*Location, error) {
+	if err := normalizeLocation(patch); err != nil {
+		return nil, err
+	}
 	var row Location
 	if err := r.db.First(&row, id).Error; err != nil {
 		return nil, err
 	}
 	row.Name = patch.Name
-	row.IsVirtual = patch.IsVirtual
-	row.Campus = patch.Campus
-	row.LocationKind = patch.LocationKind
-	if row.LocationKind == "" {
-		if row.IsVirtual {
-			row.LocationKind = "virtual"
-		} else {
-			row.LocationKind = "classroom"
-		}
-	}
+	row.CampusID = patch.CampusID
+	row.Kind = patch.Kind
 	row.Capacity = patch.Capacity
+	row.IsActive = patch.IsActive
 	if err := r.db.Save(&row).Error; err != nil {
 		return nil, err
 	}
@@ -244,7 +236,7 @@ type TemplateFilters struct {
 
 func (r *Repository) ListTemplates(filters TemplateFilters) ([]ScheduleTemplate, error) {
 	q := r.db.Table("schedule_templates st").
-		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, st.status, st.teacher_manual, st.location_manual, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.flow_key, st.created_at, st.updated_at").
+		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, st.lesson_format, st.status, st.teacher_manual, st.location_manual, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.flow_key, st.created_at, st.updated_at").
 		Joins("LEFT JOIN teachers t ON t.id = st.teacher_id").
 		Order("st.group_id asc, st.day_of_week asc, st.week_parity asc, st.pair_number asc, st.subgroup asc")
 	if filters.GroupID != nil {
@@ -268,7 +260,7 @@ func (r *Repository) ListTemplates(filters TemplateFilters) ([]ScheduleTemplate,
 
 func (r *Repository) ListTemplatesPaged(filters TemplateFilters, limit, offset *int) ([]ScheduleTemplate, error) {
 	q := r.db.Table("schedule_templates st").
-		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, st.status, st.teacher_manual, st.location_manual, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.flow_key, st.created_at, st.updated_at").
+		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, st.lesson_format, st.status, st.teacher_manual, st.location_manual, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.flow_key, st.created_at, st.updated_at").
 		Joins("LEFT JOIN teachers t ON t.id = st.teacher_id").
 		Order("st.group_id asc, st.day_of_week asc, st.week_parity asc, st.pair_number asc, st.subgroup asc")
 	if filters.GroupID != nil {
@@ -301,6 +293,7 @@ func (r *Repository) CreateTemplate(tpl *ScheduleTemplate) error {
 	if tpl.Status != StatusDraft && tpl.Status != StatusPublished {
 		return fmt.Errorf("invalid status: %s", tpl.Status)
 	}
+	tpl.LessonFormat = normalizeLessonFormat(tpl.LessonFormat)
 	teacherID, err := ensureTeacherID(r.db, tpl.TeacherName)
 	if err != nil {
 		return err
@@ -324,12 +317,14 @@ func (r *Repository) UpdateTemplate(id int64, patch *ScheduleTemplate) (*Schedul
 	if patch.Status != StatusDraft && patch.Status != StatusPublished {
 		return nil, fmt.Errorf("invalid status: %s", patch.Status)
 	}
+	patch.LessonFormat = normalizeLessonFormat(patch.LessonFormat)
 	row.GroupID = patch.GroupID
 	row.DayOfWeek = patch.DayOfWeek
 	row.WeekParity = patch.WeekParity
 	row.PairNumber = patch.PairNumber
 	row.SubjectID = patch.SubjectID
 	row.LocationID = patch.LocationID
+	row.LessonFormat = patch.LessonFormat
 	row.Status = patch.Status
 	row.TeacherManual = patch.TeacherManual
 	row.LocationManual = patch.LocationManual
@@ -349,7 +344,7 @@ func (r *Repository) DeleteTemplate(id int64) error {
 func (r *Repository) GetTemplateByID(id int64) (*ScheduleTemplate, error) {
 	var row ScheduleTemplate
 	if err := r.db.Table("schedule_templates st").
-		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, st.status, st.teacher_manual, st.location_manual, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.flow_key, st.created_at, st.updated_at").
+		Select("st.id, st.group_id, st.day_of_week, st.week_parity, st.pair_number, st.subject_id, st.location_id, st.lesson_format, st.status, st.teacher_manual, st.location_manual, COALESCE(t.name, '') AS teacher_name, st.subgroup, st.flow_key, st.created_at, st.updated_at").
 		Joins("LEFT JOIN teachers t ON t.id = st.teacher_id").
 		Where("st.id = ?", id).
 		Scan(&row).Error; err != nil {
@@ -381,8 +376,8 @@ func (r *Repository) PublishDraftTemplates(groupID int) (int64, error) {
 		}
 
 		res := tx.Exec(`
-			INSERT INTO schedule_templates (group_id, day_of_week, week_parity, pair_number, subject_id, location_id, status, teacher_manual, location_manual, teacher_id, subgroup, flow_key, created_at, updated_at)
-			SELECT group_id, day_of_week, week_parity, pair_number, subject_id, location_id, 'published', teacher_manual, location_manual, teacher_id, subgroup, flow_key, now(), now()
+			INSERT INTO schedule_templates (group_id, day_of_week, week_parity, pair_number, subject_id, location_id, lesson_format, status, teacher_manual, location_manual, teacher_id, subgroup, flow_key, created_at, updated_at)
+			SELECT group_id, day_of_week, week_parity, pair_number, subject_id, location_id, lesson_format, 'published', teacher_manual, location_manual, teacher_id, subgroup, flow_key, now(), now()
 			FROM schedule_templates
 			WHERE group_id = ? AND status = 'draft'
 		`, groupID)
@@ -417,7 +412,7 @@ type OverrideFilters struct {
 
 func (r *Repository) ListOverrides(filters OverrideFilters) ([]ScheduleOverride, error) {
 	q := r.db.Table("schedule_overrides so").
-		Select("so.id, so.target_date, so.group_id, so.pair_number, so.action_type, so.new_subject_id, so.new_location_id, so.new_teacher_manual, t.name AS new_teacher_name, so.comment, so.subgroup, so.flow_key, so.created_at, so.updated_at").
+		Select("so.id, so.target_date, so.group_id, so.pair_number, so.action_type, so.new_subject_id, so.new_location_id, so.new_lesson_format, so.new_teacher_manual, t.name AS new_teacher_name, so.comment, so.subgroup, so.flow_key, so.created_at, so.updated_at").
 		Joins("LEFT JOIN teachers t ON t.id = so.new_teacher_id").
 		Order("so.target_date asc, so.pair_number asc")
 	if filters.GroupID != nil {
@@ -433,7 +428,7 @@ func (r *Repository) ListOverrides(filters OverrideFilters) ([]ScheduleOverride,
 
 func (r *Repository) ListOverridesPaged(filters OverrideFilters, limit, offset *int) ([]ScheduleOverride, error) {
 	q := r.db.Table("schedule_overrides so").
-		Select("so.id, so.target_date, so.group_id, so.pair_number, so.action_type, so.new_subject_id, so.new_location_id, so.new_teacher_manual, t.name AS new_teacher_name, so.comment, so.subgroup, so.flow_key, so.created_at, so.updated_at").
+		Select("so.id, so.target_date, so.group_id, so.pair_number, so.action_type, so.new_subject_id, so.new_location_id, so.new_lesson_format, so.new_teacher_manual, t.name AS new_teacher_name, so.comment, so.subgroup, so.flow_key, so.created_at, so.updated_at").
 		Joins("LEFT JOIN teachers t ON t.id = so.new_teacher_id").
 		Order("so.target_date asc, so.pair_number asc")
 	if filters.GroupID != nil {
@@ -509,6 +504,7 @@ func (r *Repository) UpdateOverride(id int64, patch *ScheduleOverride) (*Schedul
 	row.ActionType = patch.ActionType
 	row.NewSubjectID = patch.NewSubjectID
 	row.NewLocationID = patch.NewLocationID
+	row.NewLessonFormat = patch.NewLessonFormat
 	row.Comment = patch.Comment
 	row.Subgroup = patch.Subgroup
 	row.FlowKey = patch.FlowKey
@@ -533,7 +529,7 @@ func validateOverrideForWrite(o *ScheduleOverride) error {
 	}
 	switch o.ActionType {
 	case OverrideCancel:
-		if o.NewSubjectID != nil || o.NewLocationID != nil || o.NewTeacherName != nil || o.NewTeacherManual || o.FlowKey != nil {
+		if o.NewSubjectID != nil || o.NewLocationID != nil || o.NewLessonFormat != nil || o.NewTeacherName != nil || o.NewTeacherManual || o.FlowKey != nil {
 			return fmt.Errorf("CANCEL must not set new_* fields")
 		}
 	case OverrideAdd:
@@ -541,7 +537,7 @@ func validateOverrideForWrite(o *ScheduleOverride) error {
 			return fmt.Errorf("ADD requires new_subject_id")
 		}
 	case OverrideReplace:
-		if o.NewSubjectID == nil && o.NewLocationID == nil && o.NewTeacherName == nil && o.Comment == nil && !o.NewTeacherManual && o.FlowKey == nil {
+		if o.NewSubjectID == nil && o.NewLocationID == nil && o.NewLessonFormat == nil && o.NewTeacherName == nil && o.Comment == nil && !o.NewTeacherManual && o.FlowKey == nil {
 			return fmt.Errorf("REPLACE requires at least one change field")
 		}
 	default:
@@ -557,7 +553,7 @@ func (r *Repository) DeleteOverride(id int64) error {
 func (r *Repository) GetOverrideByID(id int64) (*ScheduleOverride, error) {
 	var row ScheduleOverride
 	if err := r.db.Table("schedule_overrides so").
-		Select("so.id, so.target_date, so.group_id, so.pair_number, so.action_type, so.new_subject_id, so.new_location_id, so.new_teacher_manual, t.name AS new_teacher_name, so.comment, so.subgroup, so.flow_key, so.created_at, so.updated_at").
+		Select("so.id, so.target_date, so.group_id, so.pair_number, so.action_type, so.new_subject_id, so.new_location_id, so.new_lesson_format, so.new_teacher_manual, t.name AS new_teacher_name, so.comment, so.subgroup, so.flow_key, so.created_at, so.updated_at").
 		Joins("LEFT JOIN teachers t ON t.id = so.new_teacher_id").
 		Where("so.id = ?", id).
 		Scan(&row).Error; err != nil {

@@ -345,7 +345,7 @@ func validateLocationOccupancyRules(targetGroupID int, groupsByID map[int]Group,
 					continue
 				}
 				meta := locationMeta[*lesson.LocationID]
-				if strings.EqualFold(strings.TrimSpace(meta.LocationKind), "virtual") {
+				if meta.IsVirtual() {
 					continue
 				}
 				slot := roomOccupancySlot{Date: day.Date, PairNumber: lesson.PairNumber, LocationID: *lesson.LocationID}
@@ -363,7 +363,7 @@ func validateLocationOccupancyRules(targetGroupID int, groupsByID map[int]Group,
 			continue
 		}
 		meta := locationMeta[slot.LocationID]
-		if isPhysicalEducationFacilityKind(meta.LocationKind) && allEntriesPhysicalEducation(entries) {
+		if meta.IsPhysicalEducationFacility() && allEntriesPhysicalEducation(entries) {
 			continue
 		}
 		if entriesHaveSharedFlow(entries) {
@@ -402,7 +402,7 @@ func validatePhysicalEducationFacilityRules(targetGroupID int, groupsByID map[in
 					continue
 				}
 				meta := locationMeta[*lesson.LocationID]
-				if !isPhysicalEducationFacilityKind(meta.LocationKind) {
+				if !meta.IsPhysicalEducationFacility() {
 					continue
 				}
 				slot := physicalEducationRoomSlot{
@@ -432,7 +432,7 @@ func validatePhysicalEducationFacilityRules(targetGroupID int, groupsByID map[in
 			}
 
 			meta := locationMeta[*lesson.LocationID]
-			if !isPhysicalEducationFacilityKind(meta.LocationKind) {
+			if !meta.IsPhysicalEducationFacility() {
 				warnings = append(warnings, warningFromLesson("physical_education_location_kind", day.Date, lesson, targetGroup, "physical education must be scheduled in gym or pool"))
 				continue
 			}
@@ -656,7 +656,7 @@ func validateSingleCampusPerDay(days []DaySchedule, group Group, locationMeta ma
 				continue
 			}
 			meta := locationMeta[*lesson.LocationID]
-			campus := strings.TrimSpace(meta.Campus)
+			campus := strings.TrimSpace(meta.CampusName)
 			if campus == "" {
 				continue
 			}

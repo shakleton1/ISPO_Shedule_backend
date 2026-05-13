@@ -318,6 +318,38 @@ paths:
                 type: array
                 items: { $ref: "#/components/schemas/Location" }
 
+  /api/v1/campuses:
+    get:
+      tags: [Dictionaries]
+      summary: List campuses (public)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Campus" }
+
+  /api/v1/location-types:
+    get:
+      tags: [Dictionaries]
+      summary: List location types (public)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LocationType" }
+
   /api/v1/admin/groups:
     get:
       tags: [Admin]
@@ -508,6 +540,189 @@ paths:
       parameters:
         - in: path
           name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "204": { description: Deleted }
+
+  /api/v1/admin/campuses:
+    get:
+      tags: [Admin]
+      summary: List campuses
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Campus" }
+    post:
+      tags: [Admin]
+      summary: Create campus
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Campus" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Campus" }
+
+  /api/v1/admin/campuses/{id}:
+    put:
+      tags: [Admin]
+      summary: Update campus
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Campus" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Campus" }
+    delete:
+      tags: [Admin]
+      summary: Delete campus
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "204": { description: Deleted }
+
+  /api/v1/admin/location-types:
+    get:
+      tags: [Admin]
+      summary: List location types
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LocationType" }
+    post:
+      tags: [Admin]
+      summary: Create location type
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LocationType" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LocationType" }
+
+  /api/v1/admin/location-types/{id}:
+    put:
+      tags: [Admin]
+      summary: Update location type
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LocationType" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LocationType" }
+    delete:
+      tags: [Admin]
+      summary: Delete location type
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "204": { description: Deleted }
+
+  /api/v1/admin/location-type-links:
+    get:
+      tags: [Admin]
+      summary: List location/type links
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: location_id
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: type_id
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LocationTypeLink" }
+    post:
+      tags: [Admin]
+      summary: Link location to type
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LocationTypeLink" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LocationTypeLink" }
+
+  /api/v1/admin/location-type-links/{location_id}/{type_id}:
+    delete:
+      tags: [Admin]
+      summary: Delete location/type link
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: location_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: path
+          name: type_id
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
@@ -745,6 +960,234 @@ paths:
     delete:
       tags: [Admin]
       summary: Delete course assignment (dispatcher/admin)
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Deleted }
+
+  /api/v1/admin/teacher-location-preferences:
+    get:
+      tags: [Admin]
+      summary: List teacher location preferences
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: teacher_id
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: location_id
+          schema: { type: integer, minimum: 1 }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TeacherLocationPreference" }
+    post:
+      tags: [Admin]
+      summary: Create teacher location preference
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TeacherLocationPreference" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherLocationPreference" }
+
+  /api/v1/admin/teacher-location-preferences/{id}:
+    put:
+      tags: [Admin]
+      summary: Update teacher location preference
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TeacherLocationPreference" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherLocationPreference" }
+    delete:
+      tags: [Admin]
+      summary: Delete teacher location preference
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Deleted }
+
+  /api/v1/admin/room-requests:
+    get:
+      tags: [Admin]
+      summary: List room requests
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: teacher_id
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: subject_id
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: group_id
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: semester
+          schema: { type: integer, minimum: 1, maximum: 12 }
+        - in: query
+          name: status
+          schema: { type: string, enum: [pending, approved, rejected, cancelled] }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RoomRequest" }
+    post:
+      tags: [Admin]
+      summary: Create room request
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RoomRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoomRequest" }
+
+  /api/v1/admin/room-requests/{id}:
+    put:
+      tags: [Admin]
+      summary: Update room request
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RoomRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoomRequest" }
+    delete:
+      tags: [Admin]
+      summary: Delete room request
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Deleted }
+
+  /api/v1/admin/room-assignments:
+    get:
+      tags: [Admin]
+      summary: List room assignments
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: schedule_template_id
+          schema: { type: integer, format: int64, minimum: 1 }
+        - in: query
+          name: schedule_override_id
+          schema: { type: integer, format: int64, minimum: 1 }
+        - in: query
+          name: location_id
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: status
+          schema: { type: string, enum: [draft, published] }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RoomAssignment" }
+    post:
+      tags: [Admin]
+      summary: Create room assignment
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RoomAssignment" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoomAssignment" }
+
+  /api/v1/admin/room-assignments/{id}:
+    put:
+      tags: [Admin]
+      summary: Update room assignment
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RoomAssignment" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RoomAssignment" }
+    delete:
+      tags: [Admin]
+      summary: Delete room assignment
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -2267,18 +2710,48 @@ components:
 
     Location:
       type: object
-      required: [id, name, is_virtual]
+      required: [id, name, kind, is_active]
+      properties:
+        id: { type: integer }
+        campus_id: { type: integer, nullable: true }
+        name: { type: string }
+        kind:
+          type: string
+          enum: [physical, virtual]
+        capacity: { type: integer, nullable: true }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Campus:
+      type: object
+      required: [id, name]
       properties:
         id: { type: integer }
         name: { type: string }
-        is_virtual: { type: boolean }
-        campus: { type: string }
-        location_kind:
-          type: string
-          enum: [classroom, computer_lab, gym, pool, virtual, other]
-        capacity: { type: integer, nullable: true }
+        address: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+
+    LocationType:
+      type: object
+      required: [id, code, name]
+      properties:
+        id: { type: integer }
+        code:
+          type: string
+          enum: [classroom, computer_class, lab, gym, pool, lecture_hall, special, online]
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    LocationTypeLink:
+      type: object
+      required: [location_id, type_id]
+      properties:
+        location_id: { type: integer }
+        type_id: { type: integer }
+        created_at: { type: string, format: date-time }
 
     Teacher:
       type: object
@@ -2310,6 +2783,52 @@ components:
         curriculum_item_id: { type: integer, format: int64, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
         notes: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    TeacherLocationPreference:
+      type: object
+      required: [id, teacher_id, location_id, priority]
+      properties:
+        id: { type: integer, format: int64 }
+        teacher_id: { type: integer }
+        location_id: { type: integer }
+        priority: { type: integer, minimum: 1 }
+        valid_from: { type: string, format: date, nullable: true }
+        valid_to: { type: string, format: date, nullable: true }
+        comment: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    RoomRequest:
+      type: object
+      required: [id, priority, status]
+      properties:
+        id: { type: integer, format: int64 }
+        teacher_id: { type: integer, nullable: true }
+        subject_id: { type: integer, nullable: true }
+        group_id: { type: integer, nullable: true }
+        semester: { type: integer, nullable: true, minimum: 1, maximum: 12 }
+        required_type_id: { type: integer, nullable: true }
+        preferred_location_id: { type: integer, nullable: true }
+        priority: { type: integer, minimum: 1 }
+        comment: { type: string, nullable: true }
+        status: { type: string, enum: [pending, approved, rejected, cancelled] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    RoomAssignment:
+      type: object
+      required: [id, location_id, source, status]
+      properties:
+        id: { type: integer, format: int64 }
+        schedule_template_id: { type: integer, format: int64, nullable: true }
+        schedule_override_id: { type: integer, format: int64, nullable: true }
+        location_id: { type: integer }
+        source:
+          type: string
+          enum: [manual, auto, imported, teacher_preference, course_assignment, request]
+        status: { type: string, enum: [draft, published] }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -2437,10 +2956,10 @@ components:
         start_date: { type: string, format: date }
         end_date: { type: string, format: date }
         campus: { type: string, nullable: true }
-        location_kind:
+        location_type_code:
           type: string
           nullable: true
-          enum: [classroom, computer_lab, gym, pool, other]
+          enum: [classroom, computer_class, lab, gym, pool, lecture_hall, special, online]
         replace_virtual:
           type: boolean
           default: true
@@ -2503,16 +3022,17 @@ components:
           pair_number,
           subject_id,
           subject_name,
-          location_id,
           location_name,
+          lesson_format,
           teacher_name,
         ]
       properties:
         pair_number: { type: integer }
         subject_id: { type: integer }
         subject_name: { type: string }
-        location_id: { type: integer }
+        location_id: { type: integer, nullable: true }
         location_name: { type: string }
+        lesson_format: { type: string, enum: [offline, online, hybrid] }
         teacher_name: { type: string }
         teacher_manual: { type: boolean }
         location_manual: { type: boolean }
@@ -2532,6 +3052,7 @@ components:
         new_subject_name: { type: string }
         new_location_id: { type: integer, nullable: true }
         new_location_name: { type: string }
+        new_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
         new_teacher_manual: { type: boolean }
         new_teacher_name: { type: string, nullable: true }
         comment: { type: string, nullable: true }
@@ -2546,6 +3067,7 @@ components:
           pair_number,
           subject_name,
           location_name,
+          lesson_format,
           teacher_name,
           is_changed,
           is_added,
@@ -2556,8 +3078,10 @@ components:
         subject_name: { type: string }
         location_id: { type: integer, nullable: true }
         location_name: { type: string }
+        lesson_format: { type: string, enum: [offline, online, hybrid] }
         teacher_name: { type: string }
         subgroup: { type: integer, nullable: true }
+        flow_key: { type: string, nullable: true, maxLength: 80 }
         is_changed: { type: boolean }
         is_added: { type: boolean }
         comment: { type: string, nullable: true }
@@ -2613,6 +3137,7 @@ components:
           pair_number,
           subject_name,
           location_name,
+          lesson_format,
           teacher_name,
           is_changed,
           is_added,
@@ -2625,6 +3150,7 @@ components:
         subject_name: { type: string }
         location_id: { type: integer, nullable: true }
         location_name: { type: string }
+        lesson_format: { type: string, enum: [offline, online, hybrid] }
         teacher_name: { type: string }
         subgroup: { type: integer, nullable: true }
         flow_key: { type: string, nullable: true, maxLength: 80 }
@@ -2687,7 +3213,7 @@ components:
           week_parity,
           pair_number,
           subject_id,
-          location_id,
+          lesson_format,
         ]
       properties:
         id: { type: integer, format: int64 }
@@ -2698,7 +3224,8 @@ components:
           enum: [numerator, denominator, both]
         pair_number: { type: integer, minimum: 1, maximum: 8 }
         subject_id: { type: integer }
-        location_id: { type: integer }
+        location_id: { type: integer, nullable: true }
+        lesson_format: { type: string, enum: [offline, online, hybrid] }
         status: { type: string, enum: [draft, published] }
         teacher_name: { type: string }
         teacher_manual: { type: boolean }
@@ -2824,6 +3351,7 @@ components:
           enum: [CANCEL, REPLACE, ADD]
         new_subject_id: { type: integer, nullable: true }
         new_location_id: { type: integer, nullable: true }
+        new_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
         new_teacher_manual: { type: boolean }
         new_teacher_name: { type: string, nullable: true }
         comment: { type: string, nullable: true }
@@ -2844,6 +3372,7 @@ components:
           enum: [CANCEL, REPLACE, ADD]
         new_subject_id: { type: integer, nullable: true }
         new_location_id: { type: integer, nullable: true }
+        new_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
         new_teacher_manual: { type: boolean }
         new_teacher_name: { type: string, nullable: true }
         comment: { type: string, nullable: true }
@@ -2947,6 +3476,7 @@ components:
           enum: [CANCEL, REPLACE, ADD]
         new_subject_id: { type: integer, nullable: true }
         new_location_id: { type: integer, nullable: true }
+        new_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
         new_teacher_name: { type: string, nullable: true }
         comment: { type: string, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }

@@ -718,10 +718,12 @@ func findPLXGraphCourseRow(rows [][]string, course int) int {
 
 func mapPLXGraphActivity(symbol string) (string, string, bool) {
 	switch strings.ToLower(strings.TrimSpace(symbol)) {
-	case "у":
+	case "у", "уп":
 		return "PRACTICE", "Учебная практика", false
 	case "п":
 		return "PRACTICE", "Производственная практика", false
+	case "пп":
+		return "PRACTICE", "Преддипломная практика", false
 	case "пд":
 		return "PRACTICE", "Производственная практика (преддипломная)", false
 	case "э":

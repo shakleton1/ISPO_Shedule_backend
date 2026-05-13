@@ -2,7 +2,6 @@ package schedule
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -12,8 +11,8 @@ type LocationAutofillRequest struct {
 	GroupID        int       `json:"group_id"`
 	StartDate      time.Time `json:"-"`
 	EndDate        time.Time `json:"-"`
-	Campus         *string   `json:"campus,omitempty"`
-	LocationKind   *string   `json:"location_kind,omitempty"`
+	CampusName     *string   `json:"campus,omitempty"`
+	LocationType   *string   `json:"location_type_code,omitempty"`
 	ReplaceVirtual bool      `json:"replace_virtual"`
 	DryRun         bool      `json:"dry_run"`
 	Comment        *string   `json:"comment,omitempty"`
@@ -93,7 +92,7 @@ func (s *Service) AutofillLocations(req LocationAutofillRequest) (*LocationAutof
 		if rows, ok := candidatesByWeek[key]; ok {
 			return rows, nil
 		}
-		rows, err := s.repo.ListAvailableLocationsForWeek(week, req.Campus, req.LocationKind)
+		rows, err := s.repo.ListAvailableLocationsForWeek(week, req.CampusName, req.LocationType)
 		if err != nil {
 			return nil, err
 		}
@@ -219,7 +218,7 @@ func locationNeedsAutofill(lesson Lesson, locationMeta map[int]LocationMeta, rep
 		return false
 	}
 	meta := locationMeta[*lesson.LocationID]
-	return strings.EqualFold(strings.TrimSpace(meta.LocationKind), "virtual")
+	return meta.IsVirtual()
 }
 
 func chooseFreeLocation(date string, pairNumber int16, candidates []Location, occupied map[locationAutofillSlot]bool) *Location {

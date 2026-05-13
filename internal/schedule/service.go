@@ -34,6 +34,7 @@ type Lesson struct {
 	SubjectName  string  `json:"subject_name"`
 	LocationID   *int    `json:"location_id"`
 	LocationName string  `json:"location_name"`
+	LessonFormat string  `json:"lesson_format"`
 	TeacherName  string  `json:"teacher_name"`
 	Subgroup     *int16  `json:"subgroup"` // nil/0=вся группа
 	FlowKey      *string `json:"flow_key,omitempty"`

@@ -39,9 +39,32 @@ type TeacherDayConstraintView struct {
 }
 
 type LocationMeta struct {
-	ID           int    `gorm:"column:id"`
-	Campus       string `gorm:"column:campus"`
-	LocationKind string `gorm:"column:location_kind"`
+	ID         int    `gorm:"column:id"`
+	CampusID   *int   `gorm:"column:campus_id"`
+	CampusName string `gorm:"column:campus_name"`
+	Kind       string `gorm:"column:kind"`
+	TypeCodes  string `gorm:"column:type_codes"`
+}
+
+func (m LocationMeta) HasType(code string) bool {
+	code = strings.ToLower(strings.TrimSpace(code))
+	if code == "" {
+		return false
+	}
+	for _, part := range strings.Split(m.TypeCodes, ",") {
+		if strings.ToLower(strings.TrimSpace(part)) == code {
+			return true
+		}
+	}
+	return false
+}
+
+func (m LocationMeta) IsVirtual() bool {
+	return strings.EqualFold(strings.TrimSpace(m.Kind), "virtual") || m.HasType("online")
+}
+
+func (m LocationMeta) IsPhysicalEducationFacility() bool {
+	return m.HasType("gym") || m.HasType("pool")
 }
 
 func (r *Repository) ListLocationMetaByIDs(ids []int) (map[int]LocationMeta, error) {
@@ -49,9 +72,18 @@ func (r *Repository) ListLocationMetaByIDs(ids []int) (map[int]LocationMeta, err
 		return map[int]LocationMeta{}, nil
 	}
 	var rows []LocationMeta
-	err := r.db.Table("locations").
-		Select("id, campus, location_kind").
-		Where("id IN ?", ids).
+	err := r.db.Table("locations l").
+		Select(`
+l.id,
+l.campus_id,
+COALESCE(c.name, '') AS campus_name,
+l.kind,
+COALESCE(string_agg(DISTINCT lt.code, ',' ORDER BY lt.code), '') AS type_codes`).
+		Joins("LEFT JOIN campuses c ON c.id = l.campus_id").
+		Joins("LEFT JOIN location_type_links ltl ON ltl.location_id = l.id").
+		Joins("LEFT JOIN location_types lt ON lt.id = ltl.type_id").
+		Where("l.id IN ?", ids).
+		Group("l.id, c.name").
 		Scan(&rows).Error
 	if err != nil {
 		return nil, err
@@ -184,20 +216,26 @@ func (r *Repository) UpsertLocationOverrideForSlot(groupID int, date time.Time, 
 	return "updated", nil
 }
 
-func (r *Repository) ListAvailableLocationsForWeek(weekStart time.Time, campus, locationKind *string) ([]Location, error) {
+func (r *Repository) ListAvailableLocationsForWeek(weekStart time.Time, campusName, locationTypeCode *string) ([]Location, error) {
 	weekStart = mondayOfWeek(weekStart)
 	q := r.db.Table("location_week_availability lwa").
-		Select("l.id, l.name, l.is_virtual, l.campus, l.location_kind, l.capacity, l.created_at, l.updated_at").
+		Select("l.id, l.campus_id, l.name, l.kind, l.capacity, l.is_active, l.created_at, l.updated_at").
 		Joins("JOIN locations l ON l.id = lwa.location_id").
-		Where("lwa.week_start_date = ? AND lwa.is_available = TRUE", weekStart)
+		Joins("LEFT JOIN campuses c ON c.id = l.campus_id").
+		Where("lwa.week_start_date = ? AND lwa.is_available = TRUE AND l.is_active = TRUE", weekStart)
 
-	if campus != nil && strings.TrimSpace(*campus) != "" {
-		q = q.Where("l.campus = ?", strings.TrimSpace(*campus))
+	if campusName != nil && strings.TrimSpace(*campusName) != "" {
+		q = q.Where("c.name = ?", strings.TrimSpace(*campusName))
 	}
-	if locationKind != nil && strings.TrimSpace(*locationKind) != "" {
-		q = q.Where("l.location_kind = ?", strings.TrimSpace(*locationKind))
+	if locationTypeCode != nil && strings.TrimSpace(*locationTypeCode) != "" {
+		q = q.Where(`EXISTS (
+			SELECT 1
+			FROM location_type_links ltl
+			JOIN location_types lt ON lt.id = ltl.type_id
+			WHERE ltl.location_id = l.id AND lt.code = ?
+		)`, strings.TrimSpace(*locationTypeCode))
 	} else {
-		q = q.Where("l.location_kind <> ?", "virtual")
+		q = q.Where("l.kind = ?", "physical")
 	}
 
 	var rows []Location

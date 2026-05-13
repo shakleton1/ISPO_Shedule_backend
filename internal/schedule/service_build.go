@@ -179,6 +179,7 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 					SubjectName:    r.SubjectName,
 					LocationID:     r.LocationID,
 					LocationName:   r.LocationName,
+					LessonFormat:   r.LessonFormat,
 					TeacherName:    r.TeacherName,
 					TeacherManual:  r.TeacherManual,
 					LocationManual: r.LocationManual,
@@ -217,6 +218,7 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 				NewSubjectName:   r.NewSubjectName,
 				NewLocationID:    r.NewLocationID,
 				NewLocationName:  r.NewLocationName,
+				NewLessonFormat:  r.NewLessonFormat,
 				NewTeacherManual: r.NewTeacherManual,
 				NewTeacherName:   r.NewTeacherName,
 				Comment:          r.Comment,
@@ -394,6 +396,26 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 				if resolvedName != "" {
 					lessons[i].LocationName = resolvedName
 				}
+				continue
+			}
+
+			if pref, err := s.repo.ResolveTeacherPreferredLocation(lessons[i].TeacherName, d); err != nil {
+				return nil, err
+			} else if pref != nil {
+				locationID := pref.ID
+				lessons[i].LocationID = &locationID
+				lessons[i].LocationName = pref.Name
+				continue
+			}
+
+			requested, err := s.repo.ResolveRequestedLocation(groupID, *lessons[i].SubjectID, semester)
+			if err != nil {
+				return nil, err
+			}
+			if requested != nil {
+				locationID := requested.ID
+				lessons[i].LocationID = &locationID
+				lessons[i].LocationName = requested.Name
 			}
 		}
 

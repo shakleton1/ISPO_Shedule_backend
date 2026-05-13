@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 
 	"ispo-schedule/internal/schedule"
 )
@@ -21,20 +22,16 @@ func TestRepositoryPlanning_LocationWeekAvailability(t *testing.T) {
 	db := getTestDB(t)
 	repo := schedule.NewRepository(db)
 
-	room := &schedule.Location{
-		Name:         "Avail Room " + fmt.Sprint(time.Now().UnixNano()),
-		Campus:       "main",
-		LocationKind: "computer_lab",
-	}
+	campusID, computerTypeID := ensureTestCampusAndLocationType(t, repo, db)
+
+	room := &schedule.Location{Name: "Avail Room " + fmt.Sprint(time.Now().UnixNano()), CampusID: &campusID, Kind: "physical", IsActive: true}
 	require.NoError(t, repo.CreateLocation(room))
+	require.NoError(t, repo.CreateLocationTypeLink(&schedule.LocationTypeLink{LocationID: room.ID, TypeID: computerTypeID}))
 	t.Cleanup(func() { _ = db.Where("id = ?", room.ID).Delete(&schedule.Location{}).Error })
 
-	disabled := &schedule.Location{
-		Name:         "Disabled Room " + fmt.Sprint(time.Now().UnixNano()),
-		Campus:       "main",
-		LocationKind: "computer_lab",
-	}
+	disabled := &schedule.Location{Name: "Disabled Room " + fmt.Sprint(time.Now().UnixNano()), CampusID: &campusID, Kind: "physical", IsActive: true}
 	require.NoError(t, repo.CreateLocation(disabled))
+	require.NoError(t, repo.CreateLocationTypeLink(&schedule.LocationTypeLink{LocationID: disabled.ID, TypeID: computerTypeID}))
 	t.Cleanup(func() { _ = db.Where("id = ?", disabled.ID).Delete(&schedule.Location{}).Error })
 
 	weekStart := time.Date(2026, 9, 9, 0, 0, 0, 0, time.UTC)
@@ -49,8 +46,8 @@ func TestRepositoryPlanning_LocationWeekAvailability(t *testing.T) {
 	})
 
 	campus := "main"
-	kind := "computer_lab"
-	available, err := repo.ListAvailableLocationsForWeek(weekStart, &campus, &kind)
+	locationType := "computer_class"
+	available, err := repo.ListAvailableLocationsForWeek(weekStart, &campus, &locationType)
 	require.NoError(t, err)
 	require.NotEmpty(t, available)
 	assert.Equal(t, room.ID, available[0].ID)
@@ -67,6 +64,7 @@ func TestServiceAutofillLocations_CreatesLocationOverride(t *testing.T) {
 	db := getTestDB(t)
 	repo := schedule.NewRepository(db)
 	svc := schedule.NewService(schedule.ServiceDeps{Repo: repo, SemesterStartDate: "2026-09-07", Now: time.Now})
+	campusID, computerTypeID := ensureTestCampusAndLocationType(t, repo, db)
 
 	group := &schedule.Group{Name: "AUTO-G-" + fmt.Sprint(time.Now().UnixNano()), Course: 1}
 	require.NoError(t, db.Create(group).Error)
@@ -76,29 +74,23 @@ func TestServiceAutofillLocations_CreatesLocationOverride(t *testing.T) {
 	require.NoError(t, db.Create(subject).Error)
 	t.Cleanup(func() { _ = db.Where("id = ?", subject.ID).Delete(&schedule.Subject{}).Error })
 
-	placeholder := &schedule.Location{
-		Name:         "AUTO-V-" + fmt.Sprint(time.Now().UnixNano()),
-		IsVirtual:    true,
-		LocationKind: "virtual",
-	}
+	placeholder := &schedule.Location{Name: "AUTO-V-" + fmt.Sprint(time.Now().UnixNano()), Kind: "virtual", IsActive: true}
 	require.NoError(t, repo.CreateLocation(placeholder))
 	t.Cleanup(func() { _ = db.Where("id = ?", placeholder.ID).Delete(&schedule.Location{}).Error })
 
-	room := &schedule.Location{
-		Name:         "AUTO-R-" + fmt.Sprint(time.Now().UnixNano()),
-		Campus:       "main",
-		LocationKind: "computer_lab",
-	}
+	room := &schedule.Location{Name: "AUTO-R-" + fmt.Sprint(time.Now().UnixNano()), CampusID: &campusID, Kind: "physical", IsActive: true}
 	require.NoError(t, repo.CreateLocation(room))
+	require.NoError(t, repo.CreateLocationTypeLink(&schedule.LocationTypeLink{LocationID: room.ID, TypeID: computerTypeID}))
 	t.Cleanup(func() { _ = db.Where("id = ?", room.ID).Delete(&schedule.Location{}).Error })
 
+	placeholderID := placeholder.ID
 	tpl := &schedule.ScheduleTemplate{
 		GroupID:    group.ID,
 		DayOfWeek:  0,
 		WeekParity: schedule.WeekParityBoth,
 		PairNumber: 1,
 		SubjectID:  subject.ID,
-		LocationID: placeholder.ID,
+		LocationID: &placeholderID,
 		Status:     schedule.StatusPublished,
 	}
 	require.NoError(t, repo.CreateTemplate(tpl))
@@ -111,13 +103,13 @@ func TestServiceAutofillLocations_CreatesLocationOverride(t *testing.T) {
 	t.Cleanup(func() { _ = db.Where("group_id = ?", group.ID).Delete(&schedule.ScheduleOverride{}).Error })
 
 	campus := "main"
-	kind := "computer_lab"
+	locationType := "computer_class"
 	resp, err := svc.AutofillLocations(schedule.LocationAutofillRequest{
 		GroupID:        group.ID,
 		StartDate:      start,
 		EndDate:        start,
-		Campus:         &campus,
-		LocationKind:   &kind,
+		CampusName:     &campus,
+		LocationType:   &locationType,
 		ReplaceVirtual: true,
 		Comment:        ptrString("autofill"),
 	})
@@ -137,4 +129,21 @@ func TestServiceAutofillLocations_CreatesLocationOverride(t *testing.T) {
 	require.Len(t, week.Days[0].Lessons, 1)
 	require.NotNil(t, week.Days[0].Lessons[0].LocationID)
 	assert.Equal(t, room.ID, *week.Days[0].Lessons[0].LocationID)
+}
+
+func ensureTestCampusAndLocationType(t *testing.T, repo *schedule.Repository, db *gorm.DB) (int, int) {
+	t.Helper()
+	campus := &schedule.Campus{Name: "main"}
+	if err := repo.CreateCampus(campus); err != nil {
+		var existing schedule.Campus
+		require.NoError(t, db.Where("name = ?", campus.Name).First(&existing).Error)
+		campus = &existing
+	}
+	locationType := &schedule.LocationType{Code: "computer_class", Name: "Computer class"}
+	if err := repo.CreateLocationType(locationType); err != nil {
+		var existing schedule.LocationType
+		require.NoError(t, db.Where("code = ?", locationType.Code).First(&existing).Error)
+		locationType = &existing
+	}
+	return campus.ID, locationType.ID
 }

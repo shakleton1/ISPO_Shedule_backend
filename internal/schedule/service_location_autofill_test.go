@@ -10,8 +10,8 @@ func TestLocationNeedsAutofill(t *testing.T) {
 	virtualID := 10
 	classroomID := 11
 	meta := map[int]LocationMeta{
-		virtualID:   {ID: virtualID, LocationKind: "virtual"},
-		classroomID: {ID: classroomID, LocationKind: "classroom"},
+		virtualID:   {ID: virtualID, Kind: "virtual", TypeCodes: "online"},
+		classroomID: {ID: classroomID, Kind: "physical", TypeCodes: "classroom"},
 	}
 
 	assert.True(t, locationNeedsAutofill(Lesson{}, meta, true))

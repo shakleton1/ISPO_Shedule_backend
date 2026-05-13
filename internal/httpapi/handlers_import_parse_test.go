@@ -334,6 +334,24 @@ func TestParsePLXCurriculumXLSX_Basic(t *testing.T) {
 	}
 }
 
+func TestMapPLXGraphActivity_PracticeCodes(t *testing.T) {
+	tests := []struct {
+		symbol string
+		code   string
+		teach  bool
+	}{
+		{symbol: "УП", code: "PRACTICE", teach: false},
+		{symbol: "ПП", code: "PRACTICE", teach: false},
+		{symbol: "Э", code: "EXAM", teach: true},
+	}
+	for _, tt := range tests {
+		code, _, teaching := mapPLXGraphActivity(tt.symbol)
+		if code != tt.code || teaching != tt.teach {
+			t.Fatalf("symbol %q: got code=%s teaching=%v", tt.symbol, code, teaching)
+		}
+	}
+}
+
 func TestParsePLXCurriculumXLSX_InferFourDigitAdmissionYear(t *testing.T) {
 	f := newPLXTestWorkbook(t)
 	defer func() { _ = f.Close() }()

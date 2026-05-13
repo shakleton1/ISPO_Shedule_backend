@@ -609,7 +609,7 @@ type locationAutofillReq struct {
 	StartDate      string  `json:"start_date"`
 	EndDate        string  `json:"end_date"`
 	Campus         *string `json:"campus"`
-	LocationKind   *string `json:"location_kind"`
+	LocationType   *string `json:"location_type_code"`
 	ReplaceVirtual *bool   `json:"replace_virtual"`
 	DryRun         bool    `json:"dry_run"`
 	Comment        *string `json:"comment"`
@@ -645,8 +645,8 @@ func handleAdminAutofillLocations(svc *schedule.Service, repo *schedule.Reposito
 			GroupID:        req.GroupID,
 			StartDate:      start,
 			EndDate:        end,
-			Campus:         req.Campus,
-			LocationKind:   req.LocationKind,
+			CampusName:     req.Campus,
+			LocationType:   req.LocationType,
 			ReplaceVirtual: replaceVirtual,
 			DryRun:         req.DryRun,
 			Comment:        req.Comment,

@@ -51,27 +51,61 @@ func toSubjectDTO(s schedule.Subject) subjectDTO {
 }
 
 type locationDTO struct {
-	ID           int       `json:"id"`
-	Name         string    `json:"name"`
-	IsVirtual    bool      `json:"is_virtual"`
-	Campus       string    `json:"campus"`
-	LocationKind string    `json:"location_kind"`
-	Capacity     *int16    `json:"capacity"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID        int       `json:"id"`
+	CampusID  *int      `json:"campus_id"`
+	Name      string    `json:"name"`
+	Kind      string    `json:"kind"`
+	Capacity  *int16    `json:"capacity"`
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func toLocationDTO(l schedule.Location) locationDTO {
 	return locationDTO{
-		ID:           l.ID,
-		Name:         l.Name,
-		IsVirtual:    l.IsVirtual,
-		Campus:       l.Campus,
-		LocationKind: l.LocationKind,
-		Capacity:     l.Capacity,
-		CreatedAt:    l.CreatedAt,
-		UpdatedAt:    l.UpdatedAt,
+		ID:        l.ID,
+		CampusID:  l.CampusID,
+		Name:      l.Name,
+		Kind:      l.Kind,
+		Capacity:  l.Capacity,
+		IsActive:  l.IsActive,
+		CreatedAt: l.CreatedAt,
+		UpdatedAt: l.UpdatedAt,
 	}
+}
+
+type campusDTO struct {
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
+	Address   *string   `json:"address"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func toCampusDTO(c schedule.Campus) campusDTO {
+	return campusDTO{ID: c.ID, Name: c.Name, Address: c.Address, CreatedAt: c.CreatedAt, UpdatedAt: c.UpdatedAt}
+}
+
+type locationTypeDTO struct {
+	ID        int       `json:"id"`
+	Code      string    `json:"code"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func toLocationTypeDTO(t schedule.LocationType) locationTypeDTO {
+	return locationTypeDTO{ID: t.ID, Code: t.Code, Name: t.Name, CreatedAt: t.CreatedAt, UpdatedAt: t.UpdatedAt}
+}
+
+type locationTypeLinkDTO struct {
+	LocationID int       `json:"location_id"`
+	TypeID     int       `json:"type_id"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+func toLocationTypeLinkDTO(l schedule.LocationTypeLink) locationTypeLinkDTO {
+	return locationTypeLinkDTO{LocationID: l.LocationID, TypeID: l.TypeID, CreatedAt: l.CreatedAt}
 }
 
 type teacherDTO struct {
@@ -288,7 +322,8 @@ type scheduleTemplateDTO struct {
 	WeekParity     schedule.WeekParity   `json:"week_parity"`
 	PairNumber     int16                 `json:"pair_number"`
 	SubjectID      int                   `json:"subject_id"`
-	LocationID     int                   `json:"location_id"`
+	LocationID     *int                  `json:"location_id"`
+	LessonFormat   string                `json:"lesson_format"`
 	Status         schedule.EntityStatus `json:"status"`
 	TeacherManual  bool                  `json:"teacher_manual"`
 	LocationManual bool                  `json:"location_manual"`
@@ -308,6 +343,7 @@ func toScheduleTemplateDTO(t schedule.ScheduleTemplate) scheduleTemplateDTO {
 		PairNumber:     t.PairNumber,
 		SubjectID:      t.SubjectID,
 		LocationID:     t.LocationID,
+		LessonFormat:   t.LessonFormat,
 		Status:         t.Status,
 		TeacherManual:  t.TeacherManual,
 		LocationManual: t.LocationManual,
@@ -327,6 +363,7 @@ type scheduleOverrideDTO struct {
 	ActionType       schedule.OverrideAction `json:"action_type"`
 	NewSubjectID     *int                    `json:"new_subject_id"`
 	NewLocationID    *int                    `json:"new_location_id"`
+	NewLessonFormat  *string                 `json:"new_lesson_format"`
 	NewTeacherManual bool                    `json:"new_teacher_manual"`
 	NewTeacherName   *string                 `json:"new_teacher_name"`
 	Comment          *string                 `json:"comment"`
@@ -345,6 +382,7 @@ func toScheduleOverrideDTO(o schedule.ScheduleOverride) scheduleOverrideDTO {
 		ActionType:       o.ActionType,
 		NewSubjectID:     o.NewSubjectID,
 		NewLocationID:    o.NewLocationID,
+		NewLessonFormat:  o.NewLessonFormat,
 		NewTeacherManual: o.NewTeacherManual,
 		NewTeacherName:   o.NewTeacherName,
 		Comment:          o.Comment,
@@ -550,5 +588,87 @@ func toLocationWeekAvailabilityDTO(a schedule.LocationWeekAvailability) location
 		Comment:       a.Comment,
 		CreatedAt:     a.CreatedAt,
 		UpdatedAt:     a.UpdatedAt,
+	}
+}
+
+type teacherLocationPreferenceDTO struct {
+	ID         int64      `json:"id"`
+	TeacherID  int        `json:"teacher_id"`
+	LocationID int        `json:"location_id"`
+	Priority   int        `json:"priority"`
+	ValidFrom  *time.Time `json:"valid_from"`
+	ValidTo    *time.Time `json:"valid_to"`
+	Comment    *string    `json:"comment"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+}
+
+func toTeacherLocationPreferenceDTO(p schedule.TeacherLocationPreference) teacherLocationPreferenceDTO {
+	return teacherLocationPreferenceDTO{
+		ID:         p.ID,
+		TeacherID:  p.TeacherID,
+		LocationID: p.LocationID,
+		Priority:   p.Priority,
+		ValidFrom:  p.ValidFrom,
+		ValidTo:    p.ValidTo,
+		Comment:    p.Comment,
+		CreatedAt:  p.CreatedAt,
+		UpdatedAt:  p.UpdatedAt,
+	}
+}
+
+type roomRequestDTO struct {
+	ID                  int64     `json:"id"`
+	TeacherID           *int      `json:"teacher_id"`
+	SubjectID           *int      `json:"subject_id"`
+	GroupID             *int      `json:"group_id"`
+	Semester            *int16    `json:"semester"`
+	RequiredTypeID      *int      `json:"required_type_id"`
+	PreferredLocationID *int      `json:"preferred_location_id"`
+	Priority            int       `json:"priority"`
+	Comment             *string   `json:"comment"`
+	Status              string    `json:"status"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
+
+func toRoomRequestDTO(r schedule.RoomRequest) roomRequestDTO {
+	return roomRequestDTO{
+		ID:                  r.ID,
+		TeacherID:           r.TeacherID,
+		SubjectID:           r.SubjectID,
+		GroupID:             r.GroupID,
+		Semester:            r.Semester,
+		RequiredTypeID:      r.RequiredTypeID,
+		PreferredLocationID: r.PreferredLocationID,
+		Priority:            r.Priority,
+		Comment:             r.Comment,
+		Status:              r.Status,
+		CreatedAt:           r.CreatedAt,
+		UpdatedAt:           r.UpdatedAt,
+	}
+}
+
+type roomAssignmentDTO struct {
+	ID                 int64                 `json:"id"`
+	ScheduleTemplateID *int64                `json:"schedule_template_id"`
+	ScheduleOverrideID *int64                `json:"schedule_override_id"`
+	LocationID         int                   `json:"location_id"`
+	Source             string                `json:"source"`
+	Status             schedule.EntityStatus `json:"status"`
+	CreatedAt          time.Time             `json:"created_at"`
+	UpdatedAt          time.Time             `json:"updated_at"`
+}
+
+func toRoomAssignmentDTO(a schedule.RoomAssignment) roomAssignmentDTO {
+	return roomAssignmentDTO{
+		ID:                 a.ID,
+		ScheduleTemplateID: a.ScheduleTemplateID,
+		ScheduleOverrideID: a.ScheduleOverrideID,
+		LocationID:         a.LocationID,
+		Source:             a.Source,
+		Status:             a.Status,
+		CreatedAt:          a.CreatedAt,
+		UpdatedAt:          a.UpdatedAt,
 	}
 }

@@ -162,6 +162,7 @@ type adminBulkOverridesRequest struct {
 	ActionType       string  `json:"action_type"`
 	NewSubjectID     *int    `json:"new_subject_id"`
 	NewLocationID    *int    `json:"new_location_id"`
+	NewLessonFormat  *string `json:"new_lesson_format"`
 	NewTeacherName   *string `json:"new_teacher_name"`
 	Comment          *string `json:"comment"`
 	Subgroup         *int16  `json:"subgroup"`
@@ -278,15 +279,16 @@ func handleAdminBulkOverrides(repo *schedule.Repository) gin.HandlerFunc {
 						return fmt.Errorf("override already exists for %s pair %d", dayKey, pn)
 					}
 					o := &schedule.ScheduleOverride{
-						TargetDate:     d,
-						GroupID:        req.GroupID,
-						PairNumber:     pn,
-						ActionType:     schedule.OverrideAction(strings.ToUpper(strings.TrimSpace(req.ActionType))),
-						NewSubjectID:   req.NewSubjectID,
-						NewLocationID:  req.NewLocationID,
-						NewTeacherName: req.NewTeacherName,
-						Comment:        req.Comment,
-						Subgroup:       req.Subgroup,
+						TargetDate:      d,
+						GroupID:         req.GroupID,
+						PairNumber:      pn,
+						ActionType:      schedule.OverrideAction(strings.ToUpper(strings.TrimSpace(req.ActionType))),
+						NewSubjectID:    req.NewSubjectID,
+						NewLocationID:   req.NewLocationID,
+						NewLessonFormat: req.NewLessonFormat,
+						NewTeacherName:  req.NewTeacherName,
+						Comment:         req.Comment,
+						Subgroup:        req.Subgroup,
 					}
 					if err := txRepo.CreateOverride(o); err != nil {
 						return err
@@ -405,15 +407,16 @@ func handleAdminMovePair(svc *schedule.Service, repo *schedule.Repository) gin.H
 			}
 			// ADD at destination
 			add := &schedule.ScheduleOverride{
-				TargetDate:     dateOnly,
-				GroupID:        req.GroupID,
-				PairNumber:     req.ToPair,
-				ActionType:     schedule.OverrideAdd,
-				NewSubjectID:   found.SubjectID,
-				NewLocationID:  found.LocationID,
-				NewTeacherName: &found.TeacherName,
-				Subgroup:       req.Subgroup,
-				Comment:        req.Comment,
+				TargetDate:      dateOnly,
+				GroupID:         req.GroupID,
+				PairNumber:      req.ToPair,
+				ActionType:      schedule.OverrideAdd,
+				NewSubjectID:    found.SubjectID,
+				NewLocationID:   found.LocationID,
+				NewLessonFormat: &found.LessonFormat,
+				NewTeacherName:  &found.TeacherName,
+				Subgroup:        req.Subgroup,
+				Comment:         req.Comment,
 			}
 			if strings.TrimSpace(found.TeacherName) == "" {
 				add.NewTeacherName = nil
@@ -844,8 +847,8 @@ func handleAdminCreateTemplate(repo *schedule.Repository, pushSvc *push.Service)
 			writeInvalidJSON(c)
 			return
 		}
-		if req.GroupID <= 0 || req.SubjectID <= 0 || req.LocationID <= 0 || req.PairNumber <= 0 {
-			writeValidationError(c, "", "group_id, subject_id, location_id, pair_number required")
+		if req.GroupID <= 0 || req.SubjectID <= 0 || req.PairNumber <= 0 {
+			writeValidationError(c, "", "group_id, subject_id, pair_number required")
 			return
 		}
 		if err := repo.CreateTemplate(&req); err != nil {
@@ -1011,6 +1014,7 @@ type adminOverrideRequest struct {
 	Action           string  `json:"action"`
 	NewSubjectID     *int    `json:"new_subject_id"`
 	NewLocationID    *int    `json:"new_location_id"`
+	NewLessonFormat  *string `json:"new_lesson_format"`
 	NewTeacherManual bool    `json:"new_teacher_manual"`
 	NewTeacherName   *string `json:"new_teacher_name"`
 	Comment          *string `json:"comment"`
@@ -1030,7 +1034,7 @@ func validateOverrideRequest(o schedule.ScheduleOverride) error {
 	}
 	switch o.ActionType {
 	case schedule.OverrideCancel:
-		if o.NewSubjectID != nil || o.NewLocationID != nil || o.NewTeacherName != nil || o.NewTeacherManual || o.FlowKey != nil {
+		if o.NewSubjectID != nil || o.NewLocationID != nil || o.NewLessonFormat != nil || o.NewTeacherName != nil || o.NewTeacherManual || o.FlowKey != nil {
 			return errors.New("CANCEL must not include new_* fields")
 		}
 	case schedule.OverrideAdd:
@@ -1038,7 +1042,7 @@ func validateOverrideRequest(o schedule.ScheduleOverride) error {
 			return errors.New("ADD requires new_subject_id")
 		}
 	case schedule.OverrideReplace:
-		if o.NewSubjectID == nil && o.NewLocationID == nil && o.NewTeacherName == nil && o.Comment == nil && !o.NewTeacherManual && o.FlowKey == nil {
+		if o.NewSubjectID == nil && o.NewLocationID == nil && o.NewLessonFormat == nil && o.NewTeacherName == nil && o.Comment == nil && !o.NewTeacherManual && o.FlowKey == nil {
 			return errors.New("REPLACE requires at least one change field")
 		}
 	default:
@@ -1066,6 +1070,7 @@ func handleAdminCreateOverride(repo *schedule.Repository, pushSvc *push.Service)
 			ActionType:       schedule.OverrideAction(req.Action),
 			NewSubjectID:     req.NewSubjectID,
 			NewLocationID:    req.NewLocationID,
+			NewLessonFormat:  req.NewLessonFormat,
 			NewTeacherManual: req.NewTeacherManual,
 			NewTeacherName:   req.NewTeacherName,
 			Comment:          req.Comment,

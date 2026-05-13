@@ -80,7 +80,7 @@ func makeSubject(t *testing.T, db *gorm.DB) *schedule.Subject {
 
 func makeLocation(t *testing.T, db *gorm.DB) *schedule.Location {
 	t.Helper()
-	l := &schedule.Location{Name: "L-" + uniqueSuffix(), IsVirtual: false}
+	l := &schedule.Location{Name: "L-" + uniqueSuffix(), Kind: "physical", IsActive: true}
 	require.NoError(t, db.Create(l).Error)
 	t.Cleanup(func() {
 		_ = db.Where("id = ?", l.ID).Delete(&schedule.Location{}).Error
@@ -90,13 +90,14 @@ func makeLocation(t *testing.T, db *gorm.DB) *schedule.Location {
 
 func makeTemplate(t *testing.T, db *gorm.DB, repo *schedule.Repository, groupID, subjectID, locationID int, pair int16, status schedule.EntityStatus) *schedule.ScheduleTemplate {
 	t.Helper()
+	locID := locationID
 	tpl := &schedule.ScheduleTemplate{
 		GroupID:    groupID,
 		DayOfWeek:  0,
 		WeekParity: schedule.WeekParityBoth,
 		PairNumber: pair,
 		SubjectID:  subjectID,
-		LocationID: locationID,
+		LocationID: &locID,
 		Status:     status,
 	}
 	require.NoError(t, repo.CreateTemplate(tpl))

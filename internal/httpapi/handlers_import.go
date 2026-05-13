@@ -369,7 +369,7 @@ func importTemplatesReplace(c *gin.Context, repo *schedule.Repository, groupID i
 				WeekParity: r.WeekParity,
 				PairNumber: r.PairNumber,
 				SubjectID:  subID,
-				LocationID: locID,
+				LocationID: &locID,
 				Status:     status,
 				TeacherID:  teacherID,
 				Subgroup:   r.Subgroup,
@@ -624,7 +624,7 @@ func getOrCreateLocationID(tx *gorm.DB, name string) (int, error) {
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return 0, err
 	}
-	l = schedule.Location{Name: name, IsVirtual: false}
+	l = schedule.Location{Name: name, Kind: "physical", IsActive: true}
 	if err := tx.Create(&l).Error; err != nil {
 		return 0, err
 	}

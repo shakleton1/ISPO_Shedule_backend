@@ -30,15 +30,39 @@ type Subject struct {
 }
 
 type Location struct {
-	ID           int       `gorm:"primaryKey" json:"id"`
-	Name         string    `gorm:"size:50;not null" json:"name"`
-	IsVirtual    bool      `gorm:"not null;default:false" json:"is_virtual"`
-	Campus       string    `gorm:"size:50;not null;default:''" json:"campus"`
-	LocationKind string    `gorm:"type:text;not null;default:'classroom'" json:"location_kind"`
-	Capacity     *int16    `json:"capacity"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID        int       `gorm:"primaryKey" json:"id"`
+	CampusID  *int      `json:"campus_id"`
+	Name      string    `gorm:"size:50;not null" json:"name"`
+	Kind      string    `gorm:"type:text;not null;default:'physical'" json:"kind"`
+	Capacity  *int16    `json:"capacity"`
+	IsActive  bool      `gorm:"not null;default:true" json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
+
+type Campus struct {
+	ID        int       `gorm:"primaryKey" json:"id"`
+	Name      string    `gorm:"size:100;uniqueIndex;not null" json:"name"`
+	Address   *string   `json:"address"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type LocationType struct {
+	ID        int       `gorm:"primaryKey" json:"id"`
+	Code      string    `gorm:"size:50;uniqueIndex;not null" json:"code"`
+	Name      string    `gorm:"size:100;not null" json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type LocationTypeLink struct {
+	LocationID int       `gorm:"primaryKey" json:"location_id"`
+	TypeID     int       `gorm:"primaryKey" json:"type_id"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+func (LocationTypeLink) TableName() string { return "location_type_links" }
 
 type Teacher struct {
 	ID        int       `gorm:"primaryKey" json:"id"`
@@ -78,7 +102,8 @@ type ScheduleTemplate struct {
 	WeekParity     WeekParity   `gorm:"type:text;not null;index:idx_tpl_query,priority:3" json:"week_parity"`
 	PairNumber     int16        `gorm:"not null;index:idx_tpl_query,priority:4" json:"pair_number"`
 	SubjectID      int          `gorm:"not null" json:"subject_id"`
-	LocationID     int          `gorm:"not null" json:"location_id"`
+	LocationID     *int         `json:"location_id"`
+	LessonFormat   string       `gorm:"type:text;not null;default:'offline'" json:"lesson_format"`
 	Status         EntityStatus `gorm:"type:text;not null;default:'published'" json:"status"`
 	TeacherManual  bool         `gorm:"not null;default:false" json:"teacher_manual"`
 	LocationManual bool         `gorm:"not null;default:false" json:"location_manual"`
@@ -98,6 +123,7 @@ type ScheduleOverride struct {
 	ActionType       OverrideAction `gorm:"type:text;not null" json:"action_type"`
 	NewSubjectID     *int           `json:"new_subject_id"`
 	NewLocationID    *int           `json:"new_location_id"`
+	NewLessonFormat  *string        `gorm:"type:text" json:"new_lesson_format"`
 	NewTeacherID     *int           `json:"-"`
 	NewTeacherManual bool           `gorm:"not null;default:false" json:"new_teacher_manual"`
 	NewTeacherName   *string        `gorm:"column:new_teacher_name;->" json:"new_teacher_name"`
@@ -281,3 +307,41 @@ type LocationWeekAvailability struct {
 }
 
 func (LocationWeekAvailability) TableName() string { return "location_week_availability" }
+
+type TeacherLocationPreference struct {
+	ID         int64      `gorm:"primaryKey" json:"id"`
+	TeacherID  int        `gorm:"not null" json:"teacher_id"`
+	LocationID int        `gorm:"not null" json:"location_id"`
+	Priority   int        `gorm:"not null;default:100" json:"priority"`
+	ValidFrom  *time.Time `gorm:"type:date" json:"valid_from"`
+	ValidTo    *time.Time `gorm:"type:date" json:"valid_to"`
+	Comment    *string    `json:"comment"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+}
+
+type RoomRequest struct {
+	ID                  int64     `gorm:"primaryKey" json:"id"`
+	TeacherID           *int      `json:"teacher_id"`
+	SubjectID           *int      `json:"subject_id"`
+	GroupID             *int      `json:"group_id"`
+	Semester            *int16    `json:"semester"`
+	RequiredTypeID      *int      `json:"required_type_id"`
+	PreferredLocationID *int      `json:"preferred_location_id"`
+	Priority            int       `gorm:"not null;default:100" json:"priority"`
+	Comment             *string   `json:"comment"`
+	Status              string    `gorm:"type:text;not null;default:'pending'" json:"status"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
+
+type RoomAssignment struct {
+	ID                 int64        `gorm:"primaryKey" json:"id"`
+	ScheduleTemplateID *int64       `json:"schedule_template_id"`
+	ScheduleOverrideID *int64       `json:"schedule_override_id"`
+	LocationID         int          `gorm:"not null" json:"location_id"`
+	Source             string       `gorm:"type:text;not null;default:'manual'" json:"source"`
+	Status             EntityStatus `gorm:"type:text;not null;default:'published'" json:"status"`
+	CreatedAt          time.Time    `json:"created_at"`
+	UpdatedAt          time.Time    `json:"updated_at"`
+}

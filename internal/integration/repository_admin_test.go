@@ -30,7 +30,7 @@ func createAdminBaseData(t *testing.T) (*schedule.Repository, *schedule.Group, *
 	require.NoError(t, db.Create(subject).Error)
 	t.Cleanup(func() { _ = db.Exec("UPDATE subjects SET deleted_at = now() WHERE id = ?", subject.ID).Error })
 
-	location := &schedule.Location{Name: fmt.Sprintf("repo-admin-location-%d", time.Now().UnixNano())}
+	location := &schedule.Location{Name: fmt.Sprintf("repo-admin-location-%d", time.Now().UnixNano()), Kind: "physical", IsActive: true}
 	require.NoError(t, db.Create(location).Error)
 	t.Cleanup(func() { _ = db.Where("id = ?", location.ID).Delete(&schedule.Location{}).Error })
 
@@ -46,7 +46,7 @@ func TestRepositoryAdmin_ListTemplatesForWeekStatus(t *testing.T) {
 	repo := schedule.NewRepository(db)
 	group := &schedule.Group{Name: fmt.Sprintf("tpl-group-%d", time.Now().UnixNano()), Course: 1}
 	subject := &schedule.Subject{Name: fmt.Sprintf("tpl-subject-%d", time.Now().UnixNano())}
-	location := &schedule.Location{Name: fmt.Sprintf("tpl-location-%d", time.Now().UnixNano())}
+	location := &schedule.Location{Name: fmt.Sprintf("tpl-location-%d", time.Now().UnixNano()), Kind: "physical", IsActive: true}
 	require.NoError(t, db.Create(group).Error)
 	require.NoError(t, db.Create(subject).Error)
 	require.NoError(t, db.Create(location).Error)
@@ -57,13 +57,14 @@ func TestRepositoryAdmin_ListTemplatesForWeekStatus(t *testing.T) {
 		_ = db.Where("id = ?", location.ID).Delete(&schedule.Location{}).Error
 	})
 
+	locationID := location.ID
 	tpl := &schedule.ScheduleTemplate{
 		GroupID:    group.ID,
 		DayOfWeek:  1,
 		WeekParity: schedule.WeekParityNumerator,
 		PairNumber: 2,
 		SubjectID:  subject.ID,
-		LocationID: location.ID,
+		LocationID: &locationID,
 		Status:     schedule.StatusPublished,
 	}
 	require.NoError(t, repo.CreateTemplate(tpl))
@@ -278,9 +279,9 @@ func TestRepositoryAdmin_GroupSubjectLocationTeacherCRUD(t *testing.T) {
 
 	location := &schedule.Location{Name: fmt.Sprintf("crud-location-%d", time.Now().UnixNano())}
 	require.NoError(t, repo.CreateLocation(location))
-	updatedLocation, err := repo.UpdateLocation(location.ID, &schedule.Location{Name: location.Name + "-upd", IsVirtual: true})
+	updatedLocation, err := repo.UpdateLocation(location.ID, &schedule.Location{Name: location.Name + "-upd", Kind: "virtual", IsActive: true})
 	require.NoError(t, err)
-	assert.True(t, updatedLocation.IsVirtual)
+	assert.Equal(t, "virtual", updatedLocation.Kind)
 	require.NoError(t, repo.DeleteLocation(location.ID))
 
 	teacher := &schedule.Teacher{Name: fmt.Sprintf("crud-teacher-%d", time.Now().UnixNano())}

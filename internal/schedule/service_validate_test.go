@@ -82,8 +82,8 @@ func TestValidateScheduleBusinessRules_PEPracticeAndCampus(t *testing.T) {
 		},
 	}
 	meta := map[int]LocationMeta{
-		locA: {ID: locA, Campus: "main", LocationKind: "classroom"},
-		locB: {ID: locB, Campus: "sport", LocationKind: "gym"},
+		locA: {ID: locA, CampusName: "main", Kind: "physical", TypeCodes: "classroom"},
+		locB: {ID: locB, CampusName: "sport", Kind: "physical", TypeCodes: "gym"},
 	}
 
 	warnings := validateScheduleBusinessRules(days, group, meta)
@@ -127,8 +127,8 @@ func TestValidatePhysicalEducationFacilityRules(t *testing.T) {
 		}
 	}
 	meta := map[int]LocationMeta{
-		classroomID: {ID: classroomID, LocationKind: "classroom"},
-		gymID:       {ID: gymID, LocationKind: "gym"},
+		classroomID: {ID: classroomID, Kind: "physical", TypeCodes: "classroom"},
+		gymID:       {ID: gymID, Kind: "physical", TypeCodes: "gym"},
 	}
 
 	warnings := validatePhysicalEducationFacilityRules(targetGroup.ID, groupsByID, allDaysByGroup, meta)
@@ -151,7 +151,7 @@ func TestValidateLocationOccupancyRules_ConflictsWithoutSharedFlow(t *testing.T)
 		targetGroup.ID: {{Date: "2026-09-07", Lessons: []Lesson{{PairNumber: 1, SubjectID: &subjectID, SubjectName: "Math", LocationID: &locationID}}}},
 		otherGroup.ID:  {{Date: "2026-09-07", Lessons: []Lesson{{PairNumber: 1, SubjectID: &subjectID, SubjectName: "Math", LocationID: &locationID}}}},
 	}
-	meta := map[int]LocationMeta{locationID: {ID: locationID, LocationKind: "classroom"}}
+	meta := map[int]LocationMeta{locationID: {ID: locationID, Kind: "physical", TypeCodes: "classroom"}}
 
 	warnings := validateLocationOccupancyRules(targetGroup.ID, groupsByID, allDaysByGroup, meta)
 
@@ -172,7 +172,7 @@ func TestValidateLocationOccupancyRules_AllowsSharedFlow(t *testing.T) {
 		targetGroup.ID: {{Date: "2026-09-07", Lessons: []Lesson{{PairNumber: 1, SubjectID: &subjectID, SubjectName: "Math", LocationID: &locationID, FlowKey: &flow}}}},
 		otherGroup.ID:  {{Date: "2026-09-07", Lessons: []Lesson{{PairNumber: 1, SubjectID: &subjectID, SubjectName: "Math", LocationID: &locationID, FlowKey: &flow}}}},
 	}
-	meta := map[int]LocationMeta{locationID: {ID: locationID, LocationKind: "classroom"}}
+	meta := map[int]LocationMeta{locationID: {ID: locationID, Kind: "physical", TypeCodes: "classroom"}}
 
 	warnings := validateLocationOccupancyRules(targetGroup.ID, groupsByID, allDaysByGroup, meta)
 
@@ -192,7 +192,7 @@ func TestValidateLocationOccupancyRules_SkipsPhysicalEducationFacilities(t *test
 		targetGroup.ID: {{Date: "2026-09-07", Lessons: []Lesson{{PairNumber: 1, SubjectID: &subjectID, SubjectName: "physical education", LocationID: &locationID}}}},
 		otherGroup.ID:  {{Date: "2026-09-07", Lessons: []Lesson{{PairNumber: 1, SubjectID: &subjectID, SubjectName: "physical education", LocationID: &locationID}}}},
 	}
-	meta := map[int]LocationMeta{locationID: {ID: locationID, LocationKind: "gym"}}
+	meta := map[int]LocationMeta{locationID: {ID: locationID, Kind: "physical", TypeCodes: "gym"}}
 
 	warnings := validateLocationOccupancyRules(targetGroup.ID, groupsByID, allDaysByGroup, meta)
 
