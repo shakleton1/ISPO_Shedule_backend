@@ -13,6 +13,10 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api
 
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/seed ./cmd/seed
+
 RUN CGO_ENABLED=0 go install github.com/pressly/goose/v3/cmd/goose@v3.26.0
 
 
@@ -36,6 +40,7 @@ RUN useradd -r -u 10001 -m app
 WORKDIR /app
 
 COPY --from=build /out/api /app/api
+COPY --from=build /out/seed /app/seed
 COPY --from=build /go/bin/goose /usr/local/bin/goose
 COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 
