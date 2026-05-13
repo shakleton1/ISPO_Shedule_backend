@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -65,8 +66,12 @@ func NewRouter(deps RouterDeps) http.Handler {
 
 	// OpenAPI spec (YAML).
 	r.GET("/openapi.yaml", func(c *gin.Context) {
-		c.Header("Content-Type", "application/yaml")
-		c.File("docs/openapi.yaml")
+		b, err := os.ReadFile("docs/openapi.yaml")
+		if err != nil {
+			abortWithError(c, http.StatusInternalServerError, "openapi_unavailable", "", "openapi spec unavailable")
+			return
+		}
+		c.Data(http.StatusOK, "application/yaml; charset=utf-8", b)
 	})
 
 	// Swagger UI (loads spec from /openapi.yaml).
