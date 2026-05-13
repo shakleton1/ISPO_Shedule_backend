@@ -197,7 +197,7 @@ type CurriculumItem struct {
 	ParentID     *int64    `json:"parent_id"`
 	IndexCode    *string   `gorm:"size:30" json:"index_code"`
 	ItemType     string    `gorm:"type:text;not null" json:"item_type"`
-	Name         string    `gorm:"size:200;not null" json:"name"`
+	Name         string    `gorm:"type:text;not null" json:"name"`
 	SubjectID    *int      `json:"subject_id"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
