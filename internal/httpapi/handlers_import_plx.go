@@ -455,6 +455,9 @@ func parsePLXSemesterBlocks(semesterHeader, columnHeader []string) []plxSemester
 		}
 		starts = append(starts, block)
 	}
+	if len(starts) == 0 {
+		starts = parsePLXSessionBlocks(semesterHeader)
+	}
 	for i := range starts {
 		end := len(columnHeader)
 		if i+1 < len(starts) {
@@ -478,6 +481,22 @@ func parsePLXSemesterBlocks(semesterHeader, columnHeader []string) []plxSemester
 				starts[i].Columns["exam"] = append(starts[i].Columns["exam"], col)
 			}
 		}
+	}
+	return starts
+}
+
+func parsePLXSessionBlocks(sessionHeader []string) []plxSemesterBlock {
+	starts := []plxSemesterBlock{}
+	for i, raw := range sessionHeader {
+		key := normalizePLXCell(raw)
+		if key == "" || key == "-" || !strings.Contains(key, "сессия") {
+			continue
+		}
+		starts = append(starts, plxSemesterBlock{
+			Semester: int16(len(starts) + 1),
+			Start:    i,
+			Columns:  map[string][]int{},
+		})
 	}
 	return starts
 }

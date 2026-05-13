@@ -360,6 +360,41 @@ func TestParsePLXCurriculumXLSX_InferFourDigitAdmissionYear(t *testing.T) {
 	}
 }
 
+func TestParsePLXCurriculumXLSX_SessionBlocks(t *testing.T) {
+	f := newPLXSessionWorkbook(t)
+	defer func() { _ = f.Close() }()
+
+	buf, err := f.WriteToBuffer()
+	if err != nil {
+		t.Fatalf("WriteToBuffer: %v", err)
+	}
+	academicStart, _ := time.Parse("2006-01-02", "2026-09-01")
+	parsed, err := parsePLXCurriculumXLSX(bytes.NewReader(buf.Bytes()), plxCurriculumImportOptions{
+		Filename:          "38.02.01_26_11.plx.xlsx",
+		AcademicYearStart: academicStart,
+		Replace:           true,
+	})
+	if err != nil {
+		t.Fatalf("expected nil err, got %v", err)
+	}
+	if len(parsed.Items) != 2 {
+		t.Fatalf("expected 2 items, got %d: %+v", len(parsed.Items), parsed.Items)
+	}
+	discipline := parsed.Items[1]
+	if discipline.Name != "История России" {
+		t.Fatalf("unexpected discipline: %+v", discipline)
+	}
+	if len(discipline.Allocations) != 2 {
+		t.Fatalf("expected 2 session allocations, got %d: %+v", len(discipline.Allocations), discipline.Allocations)
+	}
+	if discipline.Allocations[0].Semester != 1 || discipline.Allocations[0].HoursTotal == nil || *discipline.Allocations[0].HoursTotal != 10 {
+		t.Fatalf("unexpected first session allocation: %+v", discipline.Allocations[0])
+	}
+	if discipline.Allocations[1].Semester != 2 || discipline.Allocations[1].HoursTotal == nil || *discipline.Allocations[1].HoursTotal != 12 {
+		t.Fatalf("unexpected second session allocation: %+v", discipline.Allocations[1])
+	}
+}
+
 func newPLXTestWorkbook(t *testing.T) *excelize.File {
 	t.Helper()
 	f := excelize.NewFile()
@@ -420,5 +455,52 @@ func newPLXTestWorkbook(t *testing.T) *excelize.File {
 	_ = f.SetCellValue(graph, "C13", "У")
 	_ = f.SetCellValue(graph, "D13", "Э")
 	_ = f.SetCellValue(graph, "E13", "К")
+	return f
+}
+
+func newPLXSessionWorkbook(t *testing.T) *excelize.File {
+	t.Helper()
+	f := excelize.NewFile()
+	plan := f.GetSheetName(0)
+	if err := f.SetSheetName(plan, "План"); err != nil {
+		t.Fatalf("SetSheetName: %v", err)
+	}
+	plan = "План"
+	if _, err := f.NewSheet("График"); err != nil {
+		t.Fatalf("NewSheet: %v", err)
+	}
+
+	_ = f.SetCellValue(plan, "Q1", "Курс 1")
+	_ = f.SetCellValue(plan, "R2", "Установочная сессия")
+	_ = f.SetCellValue(plan, "AD2", "Зимняя сессия")
+	_ = f.SetCellValue(plan, "A3", "Считать в плане")
+	_ = f.SetCellValue(plan, "B3", "Индекс")
+	_ = f.SetCellValue(plan, "C3", "Наименование")
+	_ = f.SetCellValue(plan, "D3", "Экза мен")
+	_ = f.SetCellValue(plan, "E3", "Зачет")
+	_ = f.SetCellValue(plan, "F3", "Зачет с оц.")
+	_ = f.SetCellValue(plan, "R3", "Итого")
+	_ = f.SetCellValue(plan, "S3", "Ауд.")
+	_ = f.SetCellValue(plan, "T3", "Лек")
+	_ = f.SetCellValue(plan, "AD3", "Итого")
+	_ = f.SetCellValue(plan, "AE3", "Ауд.")
+	_ = f.SetCellValue(plan, "AF3", "Пр")
+	_ = f.SetCellValue(plan, "A4", "ПП.ПРОФЕССИОНАЛЬНАЯ ПОДГОТОВКА")
+	_ = f.SetCellValue(plan, "A5", "+")
+	_ = f.SetCellValue(plan, "B5", "СГ.01")
+	_ = f.SetCellValue(plan, "C5", "История России")
+	_ = f.SetCellValue(plan, "R5", 10)
+	_ = f.SetCellValue(plan, "S5", 10)
+	_ = f.SetCellValue(plan, "T5", 6)
+	_ = f.SetCellValue(plan, "AD5", 12)
+	_ = f.SetCellValue(plan, "AE5", 12)
+	_ = f.SetCellValue(plan, "AF5", 8)
+
+	graph := "График"
+	_ = f.SetCellValue(graph, "B4", 1)
+	_ = f.SetCellValue(graph, "C4", 2)
+	_ = f.SetCellValue(graph, "A13", "I")
+	_ = f.SetCellValue(graph, "B13", "=")
+	_ = f.SetCellValue(graph, "C13", "=")
 	return f
 }
