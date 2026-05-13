@@ -15,6 +15,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
+	gormlogger "gorm.io/gorm/logger"
 )
 
 func main() {
@@ -33,6 +34,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("open db")
 	}
+	gormDB = gormDB.Session(&gorm.Session{Logger: gormlogger.Default.LogMode(gormlogger.Silent)})
 	repo := schedule.NewRepository(gormDB)
 
 	res, err := seedMinimal(repo)
