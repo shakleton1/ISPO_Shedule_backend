@@ -2,9 +2,11 @@ package httpapi
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -72,7 +74,25 @@ func NewRouter(deps RouterDeps) http.Handler {
 			abortWithError(c, http.StatusInternalServerError, "openapi_unavailable", "", "openapi spec unavailable")
 			return
 		}
-		c.DataFromReader(http.StatusOK, int64(len(b)), "application/yaml; charset=utf-8", bytes.NewReader(b), nil)
+		contentType := "application/yaml; charset=utf-8"
+		if strings.Contains(c.GetHeader("Accept-Encoding"), "gzip") {
+			var compressed bytes.Buffer
+			gz := gzip.NewWriter(&compressed)
+			if _, err := gz.Write(b); err != nil {
+				_ = gz.Close()
+				abortWithError(c, http.StatusInternalServerError, "openapi_unavailable", "", "openapi spec unavailable")
+				return
+			}
+			if err := gz.Close(); err != nil {
+				abortWithError(c, http.StatusInternalServerError, "openapi_unavailable", "", "openapi spec unavailable")
+				return
+			}
+			c.Header("Content-Encoding", "gzip")
+			c.Header("Vary", "Accept-Encoding")
+			c.DataFromReader(http.StatusOK, int64(compressed.Len()), contentType, bytes.NewReader(compressed.Bytes()), nil)
+			return
+		}
+		c.DataFromReader(http.StatusOK, int64(len(b)), contentType, bytes.NewReader(b), nil)
 	}
 	r.GET("/openapi.yaml", openAPIHandler)
 	r.HEAD("/openapi.yaml", openAPIHandler)
