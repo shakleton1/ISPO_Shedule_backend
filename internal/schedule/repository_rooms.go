@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -27,10 +28,9 @@ type RoomRequestFilters struct {
 }
 
 type RoomAssignmentFilters struct {
-	ScheduleTemplateID *int64
-	ScheduleOverrideID *int64
-	LocationID         *int
-	Status             *EntityStatus
+	ScheduleLessonID *int64
+	LocationID       *int
+	Status           *EntityStatus
 }
 
 func normalizeLocation(row *Location) error {
@@ -113,15 +113,15 @@ func normalizeRoomAssignment(row *RoomAssignment) error {
 	if row.LocationID <= 0 {
 		return fmt.Errorf("location_id required")
 	}
-	if (row.ScheduleTemplateID == nil) == (row.ScheduleOverrideID == nil) {
-		return fmt.Errorf("exactly one of schedule_template_id or schedule_override_id required")
+	if row.ScheduleLessonID <= 0 {
+		return fmt.Errorf("schedule_lesson_id required")
 	}
 	row.Source = strings.ToLower(strings.TrimSpace(row.Source))
 	if row.Source == "" {
 		row.Source = "manual"
 	}
 	switch row.Source {
-	case "manual", "auto", "imported", "teacher_preference", "request":
+	case "manual", "auto", "imported", "teacher_preference", "request", "replacement":
 	default:
 		return fmt.Errorf("invalid room assignment source: %s", row.Source)
 	}
@@ -384,11 +384,8 @@ func (r *Repository) ListRoomAssignmentsPaged(filters RoomAssignmentFilters, lim
 }
 
 func applyRoomAssignmentFilters(q *gorm.DB, filters RoomAssignmentFilters) *gorm.DB {
-	if filters.ScheduleTemplateID != nil {
-		q = q.Where("schedule_template_id = ?", *filters.ScheduleTemplateID)
-	}
-	if filters.ScheduleOverrideID != nil {
-		q = q.Where("schedule_override_id = ?", *filters.ScheduleOverrideID)
+	if filters.ScheduleLessonID != nil {
+		q = q.Where("schedule_lesson_id = ?", *filters.ScheduleLessonID)
 	}
 	if filters.LocationID != nil {
 		q = q.Where("location_id = ?", *filters.LocationID)
@@ -414,8 +411,7 @@ func (r *Repository) UpdateRoomAssignment(id int64, patch *RoomAssignment) (*Roo
 	if err := r.db.First(&row, id).Error; err != nil {
 		return nil, err
 	}
-	row.ScheduleTemplateID = patch.ScheduleTemplateID
-	row.ScheduleOverrideID = patch.ScheduleOverrideID
+	row.ScheduleLessonID = patch.ScheduleLessonID
 	row.LocationID = patch.LocationID
 	row.Source = patch.Source
 	row.Status = patch.Status
@@ -427,6 +423,48 @@ func (r *Repository) UpdateRoomAssignment(id int64, patch *RoomAssignment) (*Roo
 
 func (r *Repository) DeleteRoomAssignment(id int64) error {
 	return r.db.Delete(&RoomAssignment{}, id).Error
+}
+
+func getRoomAssignmentForLesson(tx *gorm.DB, lessonID int64) (*RoomAssignment, error) {
+	var row RoomAssignment
+	err := tx.Where("schedule_lesson_id = ?", lessonID).First(&row).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &row, nil
+}
+
+func upsertRoomAssignmentForLesson(tx *gorm.DB, lessonID int64, locationID int, source string) (*RoomAssignment, error) {
+	row := &RoomAssignment{
+		ScheduleLessonID: lessonID,
+		LocationID:       locationID,
+		Source:           source,
+		Status:           StatusPublished,
+	}
+	if err := normalizeRoomAssignment(row); err != nil {
+		return nil, err
+	}
+	var existing RoomAssignment
+	err := tx.Where("schedule_lesson_id = ?", lessonID).First(&existing).Error
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+		if err := tx.Create(row).Error; err != nil {
+			return nil, err
+		}
+		return row, nil
+	}
+	existing.LocationID = locationID
+	existing.Source = row.Source
+	existing.Status = StatusPublished
+	if err := tx.Save(&existing).Error; err != nil {
+		return nil, err
+	}
+	return &existing, nil
 }
 
 func (r *Repository) ResolveTeacherPreferredLocation(teacherName string, targetDate time.Time) (*Location, error) {

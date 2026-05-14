@@ -467,11 +467,7 @@ func handleAdminListRoomAssignments(repo *schedule.Repository) gin.HandlerFunc {
 		if !ok {
 			return
 		}
-		templateID, ok := parseQueryInt64(c, "schedule_template_id")
-		if !ok {
-			return
-		}
-		overrideID, ok := parseQueryInt64(c, "schedule_override_id")
+		lessonID, ok := parseQueryInt64(c, "schedule_lesson_id")
 		if !ok {
 			return
 		}
@@ -485,10 +481,9 @@ func handleAdminListRoomAssignments(repo *schedule.Repository) gin.HandlerFunc {
 			status = &v
 		}
 		filters := schedule.RoomAssignmentFilters{
-			ScheduleTemplateID: templateID,
-			ScheduleOverrideID: overrideID,
-			LocationID:         locationID,
-			Status:             status,
+			ScheduleLessonID: lessonID,
+			LocationID:       locationID,
+			Status:           status,
 		}
 		var rows []schedule.RoomAssignment
 		var err error

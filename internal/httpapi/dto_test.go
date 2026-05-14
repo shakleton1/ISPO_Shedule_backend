@@ -52,5 +52,5 @@ func TestToScheduleDayEventDTO_NilFields(t *testing.T) {
 	assert.Nil(t, got.LocationID)
 }
 
-// Note: toScheduleTemplateDTO и toScheduleOverrideDTO требуют integration тестов
+// Note: toScheduleOverrideDTO требует integration тестов
 // с полной загрузкой данных из БД

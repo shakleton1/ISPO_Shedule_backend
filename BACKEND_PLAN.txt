@@ -1114,3 +1114,23 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
 [x] Приоритет места пары уточнен: override/template с явным кабинетом -> room_assignment -> teacher_location_preferences -> room_requests; course_assignments используется только для преподавателя.
 [x] teacher_day_constraints переведены с allows_lessons на warning/hard_block + requires_confirmation; ручные overrides/move/bulk требуют confirm_constraints для warning.
 [x] Убраны шумные duplicate-key логи из integration-тестов campuses/location_types через idempotent INSERT ... ON CONFLICT.
+
+15) Переход на фактические занятия schedule_lessons
+[x] Добавить schedule_lessons как единственный источник актуального расписания на конкретные даты.
+    Где: новая миграция, internal/schedule/models.go, repository/service.
+[x] Перевести room_assignments на schedule_lesson_id; убрать schedule_template_id и schedule_override_id из БД, DTO, API, OpenAPI и тестов.
+    Правило: кабинет закрепляется за конкретной парой schedule_lesson.
+[x] Пересобрать schedule_overrides как журнал примененных операций add/replace/cancel/restore со snapshot source_* и replacement_*.
+    Где: миграция, модель, DTO, отчеты.
+[x] Добавить ApplyScheduleOverride в транзакции: FOR UPDATE по schedule_lesson, expected_lesson_version, teacher constraints, room conflict, snapshot, update lesson/room_assignment, bump schedule_version.
+[x] Перевести buildDays() на чтение schedule_lessons + room_assignments; schedule_overrides больше не участвует в рендеринге публичного расписания.
+[x] Удалить использование mergeLessons()/normalizeOverrides()/OverrideView для сборки расписания; переписать merge tests на apply override tests.
+[x] Перевести AutofillLocations(): вместо schedule_overrides создавать/обновлять room_assignments(schedule_lesson_id).
+[x] Перевести проверки занятости кабинетов на schedule_lessons JOIN room_assignments, игнорировать cancelled и virtual/online.
+[x] Использовать teacher_day_constraints при создании schedule_lessons, add/replace override и генерации.
+[x] Удалить schedule_templates как основу расписания: таблицу, модель, repository, handlers, OpenAPI routes/schemas, template seed/tests.
+[x] Удалить calendar_exceptions и works_as_day из актуальной логики, так как фактические даты уже записаны в schedule_lessons.
+[x] Переделать seed: schedule_lessons на 1-2 недели, room_assignments на lessons, schedule_overrides examples add/replace/cancel.
+[x] Добавить API: /admin/schedule-lessons CRUD/cancel, /admin/schedule-overrides/apply, /admin/reports/schedule-overrides.
+[x] Обновить OpenAPI/DTO: ScheduleLessonDTO, ApplyScheduleOverrideRequest, новый ScheduleOverrideDTO, RoomAssignmentDTO(schedule_lesson_id).
+[x] Тесты: apply replace/cancel/add, version conflict, room_assignment schedule_lesson_id, public schedule сразу показывает примененную замену.

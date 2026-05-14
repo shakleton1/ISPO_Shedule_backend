@@ -156,36 +156,33 @@ go run .\cmd\api
 Роли:
 
 - `admin` — полный доступ
-- `dispatcher` — изменение расписания (шаблоны/оверрайды/оверлеи/исключения) без редактирования справочников
-- `viewer` — только чтение админских списков (шаблоны/оверрайды/исключения/справочники)
+- `dispatcher` — изменение фактических занятий, замен, оверлеев и событий без редактирования справочников
+- `viewer` — только чтение админских списков
 
 Операции (основное):
 
-- Импорт шаблонов: `POST /api/v1/admin/import/templates/csv|xlsx`
-- Шаблоны: `GET/POST/PUT/DELETE /api/v1/admin/templates`
-- Оверрайды: `GET /api/v1/admin/overrides`, `POST /api/v1/admin/override`, `PUT/DELETE /api/v1/admin/overrides/:id`
-- Массовые оверрайды (на период): `POST /api/v1/admin/overrides/bulk`
-- Перенос пары (атомарно `CANCEL` + `ADD`): `POST /api/v1/admin/override/move`
+- Фактические занятия: `GET/POST/PATCH/DELETE /api/v1/admin/schedule-lessons`, `POST /api/v1/admin/schedule-lessons/:id/cancel`
+- Замены/добавления/отмены: `POST /api/v1/admin/schedule-overrides/apply`
+- Журнал замен: `GET /api/v1/admin/overrides`, `GET /api/v1/admin/reports/schedule-overrides`
 - Оверлей дня: `POST /api/v1/admin/overlay`
 - События дня (структурированные, не только текст): `GET/POST /api/v1/admin/day-events`, `PUT/DELETE /api/v1/admin/day-events/:id`
-- Calendar exceptions: `GET/POST /api/v1/admin/calendar-exceptions`, `DELETE /api/v1/admin/calendar-exceptions/:date`
 
 Жизненный цикл и “источник истины” (policy):
 
-- `schedule_templates` (status=`published`) — базовый источник расписания по неделе.
-- `course_assignments` (status=`published`) — вспомогательный источник: используется для автозаполнения преподавателя (и далее аудитории) если в шаблоне поле пустое.
-- `schedule_overrides` — самый высокий приоритет на конкретную дату (CANCEL/REPLACE/ADD) и перекрывает шаблоны/автозаполнение.
-- Импорт — это способ записать шаблоны (в published или draft), но не отдельный “источник истины”.
+- `schedule_lessons` — единственный источник актуального расписания на конкретные даты.
+- `room_assignments` — фактический кабинет конкретной пары через `schedule_lesson_id`.
+- `schedule_overrides` — примененная операция `add|replace|cancel|restore` со snapshot “что было” и “что стало” для отчетов.
+- `course_assignments` — связь группа + семестр + предмет -> преподаватель; кабинет отсюда не подставляется.
 
 Draft/publish:
 
-- Для `schedule_templates` и `course_assignments` есть `status: draft|published`.
+- Для `schedule_lessons` есть `status: draft|published|cancelled`, для `course_assignments` — `draft|published`.
 - Любые изменения со статусом `draft` не bump’ают `system_state.schedule_version` и не отправляют push.
 - Публикация черновиков делает изменения “видимыми” клиентам: bump’ает `schedule_version` и (если включено) шлёт push.
 
 Полезно для дебага:
 
-- `GET /api/v1/admin/schedule/explain?group_id=1&date=2026-02-26&pair_number=2&subgroup=1` — показывает, какие шаблоны/оверрайды/авторезолв участвовали в результате.
+- `GET /api/v1/admin/schedule/explain?group_id=1&date=2026-02-26&pair_number=2&subgroup=1` — показывает итоговые фактические занятия в слоте.
 
 Учебные планы и календарный учебный график:
 
@@ -196,7 +193,7 @@ Draft/publish:
 - Строки учебного плана: `GET/POST /api/v1/admin/curricula/:id/items`, `PUT/DELETE /api/v1/admin/curriculum-items/:id`
 - Распределение по семестрам: `GET /api/v1/admin/curriculum-items/:id/allocations`, `PUT /api/v1/admin/curriculum-items/:id/allocations`
 
-Важно: если группа привязана к `curriculum_id` и в академ. календаре неделя помечена как `is_teaching=false`, то шаблоны на эти даты не применяются (каникулы/практики и т.п.), но оверрайды по датам всё равно можно задавать вручную.
+Важно: учебный календарь отображает занятость недели группы (практика, экзамены и т.п.) и используется в проверках/подсказках; актуальные пары всё равно хранятся конкретными датами в `schedule_lessons`.
 
 Просмотр структуры БД “Atlas-style” (локально):
 
@@ -208,53 +205,26 @@ Draft/publish:
 
 См. пошаговый гайд: [docs/deploy_docker.md](docs/deploy_docker.md).
 
-## Импорт шаблонов CSV/XLSX
-
-Импорт работает в режиме "заменить всё для группы" в рамках выбранного статуса:
-
-- сначала удаляются все `schedule_templates` для `group_id` и `status`
-- затем вставляются строки из файла
-- если импорт в `status=published`: после успеха увеличивается `system_state.schedule_version` и (если включено) отправляется push
-- если импорт в `status=draft`: версия не меняется и push не отправляется
-
-Параметры:
-
-- `group_id` — обязателен
-- `status` — опционально, `published` (по умолчанию) или `draft`
-
-Обязательные колонки (CSV):
-
-- `day_of_week` (0..5, где 0=Пн)
-- `week_parity` (`numerator`|`denominator`|`both`)
-- `pair_number` (1..8)
-- `subject`
-- `location`
-- `teacher_name`
-
-Опционально:
-
-- `subgroup` (1 или 2)
-
 ## Важные правила и ограничения БД
 
 ### Нормализация преподавателей
 
 Преподаватели вынесены в таблицу `teachers`:
 
-- `schedule_templates.teacher_id` → `teachers(id)`
+- `schedule_lessons.teacher_id` → `teachers(id)`
 
 ## Ops / эксплуатация
 
 - Prod-стратегия миграций: [docs/ops_migrations.md](docs/ops_migrations.md)
 - Backup/restore playbook: [docs/backup_restore.md](docs/backup_restore.md)
-- `schedule_overrides.new_teacher_id` → `teachers(id)`
+- `schedule_overrides.source_teacher_id` / `replacement_teacher_id` → `teachers(id)`
 
-API при этом по-прежнему использует поле `teacher_name`/`new_teacher_name` (строка): репозиторий автоматически создаёт/находит запись в `teachers` при записи.
+API расписания использует `teacher_id`; создание/поиск преподавателей остается в справочниках и импортах.
 
 ### Уникальность и политика конфликтов
 
-- Для `schedule_overrides` действует уникальность: один оверрайд на `(group_id, target_date, pair_number, subgroup)`.
-- Для `schedule_templates` действует уникальность: один шаблон на `(group_id, day_of_week, week_parity, pair_number, subgroup)`.
+- Для `schedule_lessons` действует уникальность активного слота `(group_id, lesson_date, pair_number, subgroup)` при `status <> cancelled`.
+- Для `room_assignments` действует уникальность `schedule_lesson_id`.
 
 Если в базе исторически были дубликаты, миграции детерминированно оставляют "лучший" вариант (как правило, самый новый по `updated_at`, при равенстве — по `id`).
 

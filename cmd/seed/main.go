@@ -435,7 +435,20 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	}
 
 	online := "online"
-	templateSeeds := []schedule.ScheduleTemplate{
+	type lessonSeed struct {
+		GroupID      int
+		DayOfWeek    int16
+		WeekParity   schedule.WeekParity
+		PairNumber   int16
+		SubjectID    int
+		LocationID   *int
+		LessonFormat string
+		Status       schedule.EntityStatus
+		TeacherID    *int
+		Subgroup     *int16
+		FlowKey      *string
+	}
+	templateSeeds := []lessonSeed{
 		{GroupID: group1ID, DayOfWeek: 0, WeekParity: schedule.WeekParityDenominator, PairNumber: 3, SubjectID: instrToolsID, Status: schedule.StatusPublished, TeacherID: &tuzovaID},
 		{GroupID: group1ID, DayOfWeek: 0, WeekParity: schedule.WeekParityDenominator, PairNumber: 4, SubjectID: instrToolsID, LocationID: &loc403ID, Status: schedule.StatusPublished, TeacherID: &tuzovaID},
 		{GroupID: group1ID, DayOfWeek: 1, WeekParity: schedule.WeekParityDenominator, PairNumber: 2, SubjectID: englishPDID, LocationID: &loc548ID, Status: schedule.StatusPublished, TeacherID: &pshenitsynaID, Subgroup: &subgroup2},
@@ -478,14 +491,31 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		{GroupID: group2ID, DayOfWeek: 4, WeekParity: schedule.WeekParityNumerator, PairNumber: 2, SubjectID: englishPDID, LessonFormat: online, Status: schedule.StatusPublished, TeacherID: &onlineTeacherIDs[2]},
 		{GroupID: group2ID, DayOfWeek: 5, WeekParity: schedule.WeekParityNumerator, PairNumber: 1, SubjectID: economicsID, LocationID: &locEconomicsID, Status: schedule.StatusPublished, TeacherID: &vimbergID},
 	}
-	var requestTemplateID int64
+	var requestLessonID int64
 	for _, tpl := range templateSeeds {
-		id, err := getOrCreateScheduleTemplate(db, tpl)
+		lessonDate, ok := seedLessonDate(tpl.WeekParity, tpl.DayOfWeek)
+		if !ok {
+			continue
+		}
+		subjectID := tpl.SubjectID
+		lesson := schedule.ScheduleLesson{
+			GroupID:      tpl.GroupID,
+			LessonDate:   lessonDate,
+			PairNumber:   tpl.PairNumber,
+			Subgroup:     tpl.Subgroup,
+			SubjectID:    &subjectID,
+			TeacherID:    tpl.TeacherID,
+			LessonFormat: tpl.LessonFormat,
+			Status:       tpl.Status,
+			Source:       "manual",
+			FlowKey:      tpl.FlowKey,
+		}
+		id, err := getOrCreateScheduleLesson(db, lesson, tpl.LocationID, "manual")
 		if err != nil {
 			return nil, err
 		}
 		if tpl.GroupID == group1ID && tpl.SubjectID == instrToolsID && tpl.DayOfWeek == 0 && tpl.WeekParity == schedule.WeekParityDenominator && tpl.PairNumber == 3 {
-			requestTemplateID = id
+			requestLessonID = id
 		}
 	}
 
@@ -556,15 +586,65 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	}); err != nil {
 		return nil, err
 	}
-	if requestTemplateID > 0 {
+	if requestLessonID > 0 {
 		if err := upsertRoomAssignment(db, schedule.RoomAssignment{
-			ScheduleTemplateID: &requestTemplateID,
-			LocationID:         loc403ID,
-			Source:             "request",
-			Status:             schedule.StatusPublished,
+			ScheduleLessonID: requestLessonID,
+			LocationID:       loc403ID,
+			Source:           "request",
+			Status:           schedule.StatusPublished,
 		}); err != nil {
 			return nil, err
 		}
+	}
+
+	seedSvc := schedule.NewService(schedule.ServiceDeps{Repo: repo, SemesterStartDate: "2026-02-23", Now: time.Now})
+	replaceDate, _ := seedLessonDate(schedule.WeekParityDenominator, 0)
+	if replaceLessonID, err := findScheduleLessonID(db, group2ID, replaceDate, 1, nil); err == nil {
+		expected := 1
+		if err := applySeedOverrideOnce(db, seedSvc, "seed replace example", schedule.ApplyScheduleOverrideRequest{
+			ScheduleLessonID:        &replaceLessonID,
+			GroupID:                 group2ID,
+			LessonDate:              replaceDate,
+			PairNumber:              1,
+			ActionType:              string(schedule.OverrideReplace),
+			ReplacementSubjectID:    &mathModelID,
+			ReplacementTeacherID:    &zernovaID,
+			ReplacementLocationID:   &locModelingID,
+			ReplacementLessonFormat: ptrString("offline"),
+			ExpectedLessonVersion:   &expected,
+			ConfirmConstraints:      true,
+		}); err != nil {
+			return nil, err
+		}
+	}
+	cancelDate, _ := seedLessonDate(schedule.WeekParityDenominator, 1)
+	if cancelLessonID, err := findScheduleLessonID(db, group2ID, cancelDate, 2, nil); err == nil {
+		expected := 1
+		if err := applySeedOverrideOnce(db, seedSvc, "seed cancel example", schedule.ApplyScheduleOverrideRequest{
+			ScheduleLessonID:      &cancelLessonID,
+			GroupID:               group2ID,
+			LessonDate:            cancelDate,
+			PairNumber:            2,
+			ActionType:            string(schedule.OverrideCancel),
+			ExpectedLessonVersion: &expected,
+			ConfirmConstraints:    true,
+		}); err != nil {
+			return nil, err
+		}
+	}
+	addDate, _ := seedLessonDate(schedule.WeekParityDenominator, 2)
+	if err := applySeedOverrideOnce(db, seedSvc, "seed add example", schedule.ApplyScheduleOverrideRequest{
+		GroupID:                 group2ID,
+		LessonDate:              addDate,
+		PairNumber:              3,
+		ActionType:              string(schedule.OverrideAdd),
+		ReplacementSubjectID:    &standardsID,
+		ReplacementTeacherID:    &zernovaID,
+		ReplacementLocationID:   &locModelingID,
+		ReplacementLessonFormat: ptrString("offline"),
+		ConfirmConstraints:      true,
+	}); err != nil {
+		return nil, err
 	}
 
 	if _, err := repo.GetSystemState(); err != nil {
@@ -684,7 +764,7 @@ func resetSeedGroupPlanning(db *gorm.DB, groupIDs []int) error {
 	statements := []string{
 		"DELETE FROM schedule_replacements WHERE group_id IN ?",
 		"DELETE FROM schedule_overrides WHERE group_id IN ?",
-		"DELETE FROM schedule_templates WHERE group_id IN ?",
+		"DELETE FROM schedule_lessons WHERE group_id IN ?",
 		"DELETE FROM course_assignments WHERE group_id IN ?",
 		"DELETE FROM study_calendar_weeks WHERE group_id IN ?",
 		"DELETE FROM room_requests WHERE group_id IN ?",
@@ -917,39 +997,66 @@ func getOrCreateCourseAssignment(db *gorm.DB, a schedule.CourseAssignment) (int6
 	return a.ID, nil
 }
 
-func getOrCreateScheduleTemplate(db *gorm.DB, tpl schedule.ScheduleTemplate) (int64, error) {
-	if tpl.LessonFormat == "" {
-		tpl.LessonFormat = "offline"
+func getOrCreateScheduleLesson(db *gorm.DB, lesson schedule.ScheduleLesson, locationID *int, roomSource string) (int64, error) {
+	if lesson.LessonFormat == "" {
+		lesson.LessonFormat = "offline"
 	}
+	if lesson.Status == "" {
+		lesson.Status = schedule.StatusPublished
+	}
+	if lesson.Source == "" {
+		lesson.Source = "manual"
+	}
+	lesson.LessonDate = dateOnly(lesson.LessonDate)
 	q := db.Where(
-		"group_id = ? AND day_of_week = ? AND week_parity = ? AND pair_number = ? AND status = ?",
-		tpl.GroupID, tpl.DayOfWeek, tpl.WeekParity, tpl.PairNumber, tpl.Status,
+		"group_id = ? AND lesson_date = ? AND pair_number = ? AND status <> ?",
+		lesson.GroupID, lesson.LessonDate, lesson.PairNumber, schedule.StatusCancelled,
 	)
-	if tpl.Subgroup == nil {
+	if lesson.Subgroup == nil {
 		q = q.Where("subgroup IS NULL")
 	} else {
-		q = q.Where("subgroup = ?", *tpl.Subgroup)
+		q = q.Where("subgroup = ?", *lesson.Subgroup)
 	}
-	var row schedule.ScheduleTemplate
+	var row schedule.ScheduleLesson
 	if err := q.First(&row).Error; err == nil {
-		row.SubjectID = tpl.SubjectID
-		row.LocationID = tpl.LocationID
-		row.LessonFormat = tpl.LessonFormat
-		row.TeacherID = tpl.TeacherID
-		row.TeacherManual = tpl.TeacherManual
-		row.LocationManual = tpl.LocationManual
-		row.FlowKey = tpl.FlowKey
-		if err := db.Omit("TeacherName").Save(&row).Error; err != nil {
+		row.SubjectID = lesson.SubjectID
+		row.TeacherID = lesson.TeacherID
+		row.LessonFormat = lesson.LessonFormat
+		row.Status = lesson.Status
+		row.Source = lesson.Source
+		row.FlowKey = lesson.FlowKey
+		row.Comment = lesson.Comment
+		if err := db.Save(&row).Error; err != nil {
 			return 0, err
+		}
+		if locationID != nil {
+			if err := upsertRoomAssignment(db, schedule.RoomAssignment{
+				ScheduleLessonID: row.ID,
+				LocationID:       *locationID,
+				Source:           roomSource,
+				Status:           schedule.StatusPublished,
+			}); err != nil {
+				return 0, err
+			}
 		}
 		return row.ID, nil
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return 0, err
 	}
-	if err := db.Omit("TeacherName").Create(&tpl).Error; err != nil {
+	if err := db.Create(&lesson).Error; err != nil {
 		return 0, err
 	}
-	return tpl.ID, nil
+	if locationID != nil {
+		if err := upsertRoomAssignment(db, schedule.RoomAssignment{
+			ScheduleLessonID: lesson.ID,
+			LocationID:       *locationID,
+			Source:           roomSource,
+			Status:           schedule.StatusPublished,
+		}); err != nil {
+			return 0, err
+		}
+	}
+	return lesson.ID, nil
 }
 
 func upsertTeacherDayConstraint(db *gorm.DB, d schedule.TeacherDayConstraint) error {
@@ -1008,14 +1115,10 @@ func upsertRoomRequest(db *gorm.DB, r schedule.RoomRequest) error {
 
 func upsertRoomAssignment(db *gorm.DB, a schedule.RoomAssignment) error {
 	var row schedule.RoomAssignment
-	q := db.Model(&schedule.RoomAssignment{})
-	if a.ScheduleTemplateID != nil {
-		q = q.Where("schedule_template_id = ?", *a.ScheduleTemplateID)
-	} else if a.ScheduleOverrideID != nil {
-		q = q.Where("schedule_override_id = ?", *a.ScheduleOverrideID)
-	} else {
-		return fmt.Errorf("room assignment owner required")
+	if a.ScheduleLessonID <= 0 {
+		return fmt.Errorf("schedule_lesson_id required")
 	}
+	q := db.Model(&schedule.RoomAssignment{}).Where("schedule_lesson_id = ?", a.ScheduleLessonID)
 	err := q.First(&row).Error
 	if err == nil {
 		row.LocationID = a.LocationID
@@ -1027,6 +1130,53 @@ func upsertRoomAssignment(db *gorm.DB, a schedule.RoomAssignment) error {
 		return err
 	}
 	return db.Create(&a).Error
+}
+
+func findScheduleLessonID(db *gorm.DB, groupID int, lessonDate time.Time, pairNumber int16, subgroup *int16) (int64, error) {
+	q := db.Model(&schedule.ScheduleLesson{}).
+		Where("group_id = ? AND lesson_date = ? AND pair_number = ? AND status <> ?", groupID, dateOnly(lessonDate), pairNumber, schedule.StatusCancelled)
+	if subgroup == nil {
+		q = q.Where("subgroup IS NULL")
+	} else {
+		q = q.Where("subgroup = ?", *subgroup)
+	}
+	var row schedule.ScheduleLesson
+	if err := q.First(&row).Error; err != nil {
+		return 0, err
+	}
+	return row.ID, nil
+}
+
+func applySeedOverrideOnce(db *gorm.DB, svc *schedule.Service, reason string, req schedule.ApplyScheduleOverrideRequest) error {
+	var cnt int64
+	if err := db.Model(&schedule.ScheduleOverride{}).
+		Where("group_id = ? AND lesson_date = ? AND pair_number = ? AND action_type = ? AND reason = ?",
+			req.GroupID, dateOnly(req.LessonDate), req.PairNumber, schedule.OverrideAction(req.ActionType), reason).
+		Count(&cnt).Error; err != nil {
+		return err
+	}
+	if cnt > 0 {
+		return nil
+	}
+	req.Reason = &reason
+	_, err := svc.ApplyScheduleOverride(req)
+	return err
+}
+
+func seedLessonDate(parity schedule.WeekParity, dayOfWeek int16) (time.Time, bool) {
+	var weekStart time.Time
+	switch parity {
+	case schedule.WeekParityDenominator, schedule.WeekParityBoth:
+		weekStart = time.Date(2026, 3, 23, 0, 0, 0, 0, time.UTC)
+	case schedule.WeekParityNumerator:
+		weekStart = time.Date(2026, 3, 30, 0, 0, 0, 0, time.UTC)
+	default:
+		return time.Time{}, false
+	}
+	if dayOfWeek < 0 || dayOfWeek > 5 {
+		return time.Time{}, false
+	}
+	return weekStart.AddDate(0, 0, int(dayOfWeek)), true
 }
 
 func defaultAdmissionYear(now time.Time) int16 {

@@ -56,7 +56,7 @@ func TestRepositoryPlanning_LocationWeekAvailability(t *testing.T) {
 	}
 }
 
-func TestServiceAutofillLocations_CreatesLocationOverride(t *testing.T) {
+func TestServiceAutofillLocations_CreatesRoomAssignment(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -84,23 +84,24 @@ func TestServiceAutofillLocations_CreatesLocationOverride(t *testing.T) {
 	t.Cleanup(func() { _ = db.Where("id = ?", room.ID).Delete(&schedule.Location{}).Error })
 
 	placeholderID := placeholder.ID
-	tpl := &schedule.ScheduleTemplate{
-		GroupID:    group.ID,
-		DayOfWeek:  0,
-		WeekParity: schedule.WeekParityBoth,
-		PairNumber: 1,
-		SubjectID:  subject.ID,
-		LocationID: &placeholderID,
-		Status:     schedule.StatusPublished,
-	}
-	require.NoError(t, repo.CreateTemplate(tpl))
-	t.Cleanup(func() { _ = db.Where("id = ?", tpl.ID).Delete(&schedule.ScheduleTemplate{}).Error })
-
+	subjectID := subject.ID
 	start := time.Date(2026, 9, 7, 0, 0, 0, 0, time.UTC)
+	lesson := &schedule.ScheduleLesson{
+		GroupID:      group.ID,
+		LessonDate:   start,
+		PairNumber:   1,
+		SubjectID:    &subjectID,
+		LessonFormat: "offline",
+		Status:       schedule.StatusPublished,
+		Source:       "manual",
+	}
+	require.NoError(t, repo.CreateScheduleLesson(lesson))
+	require.NoError(t, repo.CreateRoomAssignment(&schedule.RoomAssignment{ScheduleLessonID: lesson.ID, LocationID: placeholderID, Source: "manual", Status: schedule.StatusPublished}))
+	t.Cleanup(func() { _ = db.Where("id = ?", lesson.ID).Delete(&schedule.ScheduleLesson{}).Error })
+
 	_, err := repo.UpsertLocationWeekAvailability(start, []schedule.LocationWeekAvailability{{LocationID: room.ID, IsAvailable: true}})
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = db.Where("location_id = ?", room.ID).Delete(&schedule.LocationWeekAvailability{}).Error })
-	t.Cleanup(func() { _ = db.Where("group_id = ?", group.ID).Delete(&schedule.ScheduleOverride{}).Error })
 
 	campus := "main"
 	locationType := "computer_class"
@@ -115,13 +116,12 @@ func TestServiceAutofillLocations_CreatesLocationOverride(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 1, resp.Assigned)
-	assert.Equal(t, 1, resp.Created)
+	assert.Equal(t, 1, resp.Updated)
 
-	overrides, err := repo.ListOverrides(schedule.OverrideFilters{GroupID: &group.ID, TargetDate: &start})
+	assignments, err := repo.ListRoomAssignments(schedule.RoomAssignmentFilters{ScheduleLessonID: &lesson.ID})
 	require.NoError(t, err)
-	require.Len(t, overrides, 1)
-	require.NotNil(t, overrides[0].NewLocationID)
-	assert.Equal(t, room.ID, *overrides[0].NewLocationID)
+	require.Len(t, assignments, 1)
+	assert.Equal(t, room.ID, assignments[0].LocationID)
 
 	week, err := svc.GetRange(group.ID, start, start)
 	require.NoError(t, err)

@@ -186,22 +186,13 @@ func (s *Service) getAggregatedScheduleView(resp *ScheduleViewResponse, startDat
 }
 
 func (s *Service) emptyScheduleViewDays(startDate, endDate time.Time) ([]ScheduleViewDay, map[string]int, error) {
-	exceptions, err := s.repo.ListCalendarExceptionsBetween(startDate, endDate)
-	if err != nil {
-		return nil, nil, err
-	}
-	worksAs := map[string]int16{}
-	for _, e := range exceptions {
-		worksAs[e.TargetDate.Format("2006-01-02")] = e.WorksAsDay
-	}
-
 	days := make([]ScheduleViewDay, 0)
 	byDate := map[string]int{}
 	for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
 		dateKey := d.Format("2006-01-02")
 		days = append(days, ScheduleViewDay{
 			Date:       dateKey,
-			DayOfWeek:  dayOfWeekForDate(d, worksAs),
+			DayOfWeek:  dayOfWeekForDate(d, nil),
 			WeekParity: s.weekParityForDate(d),
 			Lessons:    []ScheduleViewLesson{},
 		})

@@ -37,7 +37,7 @@ func createAdminBaseData(t *testing.T) (*schedule.Repository, *schedule.Group, *
 	return repo, group, subject, location
 }
 
-func TestRepositoryAdmin_ListTemplatesForWeekStatus(t *testing.T) {
+func TestRepositoryAdmin_ListScheduleLessonViewsBetween(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -51,33 +51,38 @@ func TestRepositoryAdmin_ListTemplatesForWeekStatus(t *testing.T) {
 	require.NoError(t, db.Create(subject).Error)
 	require.NoError(t, db.Create(location).Error)
 	t.Cleanup(func() {
-		_ = db.Where("group_id = ?", group.ID).Delete(&schedule.ScheduleTemplate{}).Error
+		_ = db.Where("group_id = ?", group.ID).Delete(&schedule.ScheduleLesson{}).Error
 		_ = db.Where("id = ?", group.ID).Delete(&schedule.Group{}).Error
 		_ = db.Exec("UPDATE subjects SET deleted_at = now() WHERE id = ?", subject.ID).Error
 		_ = db.Where("id = ?", location.ID).Delete(&schedule.Location{}).Error
 	})
 
 	locationID := location.ID
-	tpl := &schedule.ScheduleTemplate{
-		GroupID:    group.ID,
-		DayOfWeek:  1,
-		WeekParity: schedule.WeekParityNumerator,
-		PairNumber: 2,
-		SubjectID:  subject.ID,
-		LocationID: &locationID,
-		Status:     schedule.StatusPublished,
+	subjectID := subject.ID
+	lessonDate := time.Date(2026, 9, 8, 0, 0, 0, 0, time.UTC)
+	lesson := &schedule.ScheduleLesson{
+		GroupID:      group.ID,
+		LessonDate:   lessonDate,
+		PairNumber:   2,
+		SubjectID:    &subjectID,
+		LessonFormat: "offline",
+		Status:       schedule.StatusPublished,
+		Source:       "manual",
 	}
-	require.NoError(t, repo.CreateTemplate(tpl))
+	require.NoError(t, repo.CreateScheduleLesson(lesson))
+	require.NoError(t, repo.CreateRoomAssignment(&schedule.RoomAssignment{ScheduleLessonID: lesson.ID, LocationID: locationID, Source: "manual", Status: schedule.StatusPublished}))
 
-	rows, err := repo.ListTemplatesForWeekStatus(group.ID, schedule.WeekParityNumerator, schedule.StatusPublished)
+	rows, err := repo.ListScheduleLessonViewsBetween([]int{group.ID}, lessonDate, lessonDate, false)
 	require.NoError(t, err)
 	require.NotEmpty(t, rows)
-	assert.Equal(t, int16(1), rows[0].DayOfWeek)
 	assert.Equal(t, int16(2), rows[0].PairNumber)
-	assert.Equal(t, subject.ID, rows[0].SubjectID)
+	require.NotNil(t, rows[0].SubjectID)
+	assert.Equal(t, subject.ID, *rows[0].SubjectID)
+	require.NotNil(t, rows[0].LocationID)
+	assert.Equal(t, location.ID, *rows[0].LocationID)
 }
 
-func TestRepositoryAdmin_OverridesOverlaysCalendarBetween(t *testing.T) {
+func TestRepositoryAdmin_OverridesAndOverlaysBetween(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -87,32 +92,41 @@ func TestRepositoryAdmin_OverridesOverlaysCalendarBetween(t *testing.T) {
 	targetDate := time.Now().UTC().AddDate(0, 0, 1)
 	comment := "repo-admin-override"
 	overlayText := "special day"
-	exComment := "moved day"
+	subjectID := subject.ID
+	lesson := &schedule.ScheduleLesson{
+		GroupID:      group.ID,
+		LessonDate:   targetDate,
+		PairNumber:   3,
+		SubjectID:    &subjectID,
+		LessonFormat: "offline",
+		Status:       schedule.StatusPublished,
+		Source:       "manual",
+	}
+	require.NoError(t, repo.CreateScheduleLesson(lesson))
+	t.Cleanup(func() { _ = db.Where("id = ?", lesson.ID).Delete(&schedule.ScheduleLesson{}).Error })
 
 	o := &schedule.ScheduleOverride{
-		TargetDate:    targetDate,
-		GroupID:       group.ID,
-		PairNumber:    3,
-		ActionType:    schedule.OverrideReplace,
-		NewSubjectID:  &subject.ID,
-		NewLocationID: &location.ID,
-		Comment:       &comment,
+		ScheduleLessonID:      &lesson.ID,
+		GroupID:               group.ID,
+		LessonDate:            targetDate,
+		PairNumber:            3,
+		ActionType:            schedule.OverrideReplace,
+		ReplacementSubjectID:  &subject.ID,
+		ReplacementLocationID: &location.ID,
+		Reason:                &comment,
+		Status:                "applied",
 	}
-	require.NoError(t, repo.CreateOverride(o))
+	require.NoError(t, db.Create(o).Error)
 	t.Cleanup(func() { _ = db.Where("id = ?", o.ID).Delete(&schedule.ScheduleOverride{}).Error })
 
 	ov, err := repo.UpsertOverlay(group.ID, targetDate, overlayText, "warn")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = db.Where("id = ?", ov.ID).Delete(&schedule.ScheduleDayOverlay{}).Error })
 
-	ce, err := repo.UpsertCalendarException(targetDate, 4, &exComment)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = db.Where("id = ?", ce.ID).Delete(&schedule.CalendarException{}).Error })
-
 	start := targetDate.AddDate(0, 0, -1)
 	end := targetDate.AddDate(0, 0, 1)
 
-	overrides, err := repo.ListOverridesBetween(group.ID, start, end)
+	overrides, err := repo.ListScheduleOverrides(schedule.ScheduleOverrideFilters{GroupID: &group.ID, StartDate: &start, EndDate: &end})
 	require.NoError(t, err)
 	require.NotEmpty(t, overrides)
 	assert.Equal(t, int16(3), overrides[0].PairNumber)
@@ -121,11 +135,6 @@ func TestRepositoryAdmin_OverridesOverlaysCalendarBetween(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, overlays)
 	assert.Equal(t, overlayText, overlays[0].Text)
-
-	exceptions, err := repo.ListCalendarExceptionsBetween(start, end)
-	require.NoError(t, err)
-	require.NotEmpty(t, exceptions)
-	assert.Equal(t, int16(4), exceptions[0].WorksAsDay)
 }
 
 func TestRepositoryAdmin_DayEvents_CRUDBetweenAndPaged(t *testing.T) {

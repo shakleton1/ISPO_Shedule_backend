@@ -1,7 +1,6 @@
 package schedule
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -161,60 +160,6 @@ DO UPDATE SET
 
 func (r *Repository) DeleteLocationWeekAvailability(id int64) error {
 	return r.db.Delete(&LocationWeekAvailability{}, id).Error
-}
-
-func (r *Repository) UpsertLocationOverrideForSlot(groupID int, date time.Time, pairNumber int16, subgroup *int16, locationID int, comment *string) (string, error) {
-	if groupID <= 0 {
-		return "", fmt.Errorf("group_id required")
-	}
-	if pairNumber < 1 || pairNumber > 8 {
-		return "", fmt.Errorf("pair_number must be 1..8")
-	}
-	if locationID <= 0 {
-		return "", fmt.Errorf("location_id required")
-	}
-
-	date = dateOnly(date)
-	var row ScheduleOverride
-	q := r.db.Where("group_id = ? AND target_date = ? AND pair_number = ?", groupID, date, pairNumber)
-	if subgroup == nil {
-		q = q.Where("subgroup IS NULL")
-	} else {
-		q = q.Where("subgroup = ?", *subgroup)
-	}
-
-	err := q.First(&row).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			o := &ScheduleOverride{
-				TargetDate:    date,
-				GroupID:       groupID,
-				PairNumber:    pairNumber,
-				ActionType:    OverrideReplace,
-				NewLocationID: &locationID,
-				Comment:       comment,
-				Subgroup:      subgroup,
-			}
-			if err := r.CreateOverride(o); err != nil {
-				return "", err
-			}
-			return "created", nil
-		}
-		return "", err
-	}
-
-	if row.ActionType == OverrideCancel {
-		return "blocked_cancel", nil
-	}
-
-	updates := map[string]any{"new_location_id": locationID}
-	if comment != nil {
-		updates["comment"] = comment
-	}
-	if err := r.db.Model(&ScheduleOverride{}).Where("id = ?", row.ID).Updates(updates).Error; err != nil {
-		return "", err
-	}
-	return "updated", nil
 }
 
 func (r *Repository) ListAvailableLocationsForWeek(weekStart time.Time, campusName, locationTypeCode *string) ([]Location, error) {

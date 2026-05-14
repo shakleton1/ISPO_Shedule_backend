@@ -32,16 +32,17 @@ type LocationAutofillResponse struct {
 }
 
 type LocationAutofillAssignment struct {
-	Date           string `json:"date"`
-	PairNumber     int16  `json:"pair_number"`
-	Subgroup       *int16 `json:"subgroup"`
-	SubjectID      *int   `json:"subject_id"`
-	SubjectName    string `json:"subject_name"`
-	LocationID     *int   `json:"location_id"`
-	LocationName   string `json:"location_name"`
-	Status         string `json:"status"`
-	Reason         string `json:"reason,omitempty"`
-	OverrideAction string `json:"override_action,omitempty"`
+	ScheduleLessonID int64  `json:"schedule_lesson_id"`
+	Date             string `json:"date"`
+	PairNumber       int16  `json:"pair_number"`
+	Subgroup         *int16 `json:"subgroup"`
+	SubjectID        *int   `json:"subject_id"`
+	SubjectName      string `json:"subject_name"`
+	LocationID       *int   `json:"location_id"`
+	LocationName     string `json:"location_name"`
+	Status           string `json:"status"`
+	Reason           string `json:"reason,omitempty"`
+	AssignmentAction string `json:"assignment_action,omitempty"`
 }
 
 type locationAutofillSlot struct {
@@ -63,11 +64,11 @@ func (s *Service) AutofillLocations(req LocationAutofillRequest) (*LocationAutof
 		return nil, fmt.Errorf("date_end before date_start")
 	}
 
-	target, err := s.GetRange(req.GroupID, startDate, endDate)
+	rows, err := s.repo.ListScheduleLessonViewsBetween([]int{req.GroupID}, startDate, endDate, false)
 	if err != nil {
 		return nil, err
 	}
-	locationMeta, err := s.locationMetaForDays(target.Days)
+	locationMeta, err := s.locationMetaForLessonViews(rows)
 	if err != nil {
 		return nil, err
 	}
@@ -81,9 +82,13 @@ func (s *Service) AutofillLocations(req LocationAutofillRequest) (*LocationAutof
 		DateStart:   startDate.Format("2006-01-02"),
 		DateEnd:     endDate.Format("2006-01-02"),
 		DryRun:      req.DryRun,
-		DataVersion: target.DataVersion,
 		Assignments: []LocationAutofillAssignment{},
 	}
+	state, err := s.repo.GetSystemState()
+	if err != nil {
+		return nil, err
+	}
+	resp.DataVersion = state.ScheduleVersion.UTC().Format(time.RFC3339)
 
 	candidatesByWeek := map[string][]Location{}
 	getCandidates := func(day time.Time) ([]Location, error) {
@@ -100,60 +105,59 @@ func (s *Service) AutofillLocations(req LocationAutofillRequest) (*LocationAutof
 		return rows, nil
 	}
 
-	for _, day := range target.Days {
-		dayDate, err := time.Parse("2006-01-02", day.Date)
+	for _, lesson := range rows {
+		dayDate := dateOnly(lesson.LessonDate)
+		dayKey := dayDate.Format("2006-01-02")
+		if !lessonViewNeedsAutofill(lesson, locationMeta, req.ReplaceVirtual) {
+			continue
+		}
+		if lesson.SubjectID == nil {
+			resp.Skipped++
+			resp.Assignments = append(resp.Assignments, LocationAutofillAssignment{
+				ScheduleLessonID: lesson.ID,
+				Date:             dayKey,
+				PairNumber:       lesson.PairNumber,
+				Subgroup:         lesson.Subgroup,
+				Status:           "skipped",
+				Reason:           "lesson_without_subject",
+			})
+			continue
+		}
+
+		candidates, err := getCandidates(dayDate)
 		if err != nil {
 			return nil, err
 		}
-		for _, lesson := range day.Lessons {
-			if !locationNeedsAutofill(lesson, locationMeta, req.ReplaceVirtual) {
-				continue
-			}
-			if lesson.SubjectID == nil {
-				resp.Skipped++
-				resp.Assignments = append(resp.Assignments, LocationAutofillAssignment{
-					Date:       day.Date,
-					PairNumber: lesson.PairNumber,
-					Subgroup:   lesson.Subgroup,
-					Status:     "skipped",
-					Reason:     "lesson_without_subject",
-				})
-				continue
-			}
-
-			candidates, err := getCandidates(dayDate)
-			if err != nil {
-				return nil, err
-			}
-			chosen := chooseFreeLocation(day.Date, lesson.PairNumber, candidates, occupied)
-			if chosen == nil {
-				resp.Skipped++
-				resp.Assignments = append(resp.Assignments, LocationAutofillAssignment{
-					Date:        day.Date,
-					PairNumber:  lesson.PairNumber,
-					Subgroup:    lesson.Subgroup,
-					SubjectID:   lesson.SubjectID,
-					SubjectName: lesson.SubjectName,
-					Status:      "skipped",
-					Reason:      "no_available_location",
-				})
-				continue
-			}
-
-			locationID := chosen.ID
-			occupied[locationAutofillSlot{Date: day.Date, PairNumber: lesson.PairNumber, LocationID: locationID}] = true
-			resp.Assigned++
+		chosen := chooseFreeLocation(dayKey, lesson.PairNumber, candidates, occupied)
+		if chosen == nil {
+			resp.Skipped++
 			resp.Assignments = append(resp.Assignments, LocationAutofillAssignment{
-				Date:         day.Date,
-				PairNumber:   lesson.PairNumber,
-				Subgroup:     lesson.Subgroup,
-				SubjectID:    lesson.SubjectID,
-				SubjectName:  lesson.SubjectName,
-				LocationID:   &locationID,
-				LocationName: chosen.Name,
-				Status:       "assigned",
+				ScheduleLessonID: lesson.ID,
+				Date:             dayKey,
+				PairNumber:       lesson.PairNumber,
+				Subgroup:         lesson.Subgroup,
+				SubjectID:        lesson.SubjectID,
+				SubjectName:      lesson.SubjectName,
+				Status:           "skipped",
+				Reason:           "no_available_location",
 			})
+			continue
 		}
+
+		locationID := chosen.ID
+		occupied[locationAutofillSlot{Date: dayKey, PairNumber: lesson.PairNumber, LocationID: locationID}] = true
+		resp.Assigned++
+		resp.Assignments = append(resp.Assignments, LocationAutofillAssignment{
+			ScheduleLessonID: lesson.ID,
+			Date:             dayKey,
+			PairNumber:       lesson.PairNumber,
+			Subgroup:         lesson.Subgroup,
+			SubjectID:        lesson.SubjectID,
+			SubjectName:      lesson.SubjectName,
+			LocationID:       &locationID,
+			LocationName:     chosen.Name,
+			Status:           "assigned",
+		})
 	}
 
 	if req.DryRun || resp.Assigned == 0 {
@@ -161,34 +165,24 @@ func (s *Service) AutofillLocations(req LocationAutofillRequest) (*LocationAutof
 	}
 
 	if err := s.repo.DB().Transaction(func(tx *gorm.DB) error {
-		txRepo := NewRepository(tx)
 		for i := range resp.Assignments {
 			a := &resp.Assignments[i]
 			if a.Status != "assigned" || a.LocationID == nil {
 				continue
 			}
-			day, err := time.Parse("2006-01-02", a.Date)
+			existing, err := getRoomAssignmentForLesson(tx, a.ScheduleLessonID)
 			if err != nil {
 				return err
 			}
-			mode, err := txRepo.UpsertLocationOverrideForSlot(req.GroupID, day, a.PairNumber, a.Subgroup, *a.LocationID, req.Comment)
-			if err != nil {
+			if _, err := upsertRoomAssignmentForLesson(tx, a.ScheduleLessonID, *a.LocationID, "auto"); err != nil {
 				return err
 			}
-			switch mode {
-			case "created":
+			if existing == nil {
 				resp.Created++
-				a.OverrideAction = "created"
-			case "updated":
+				a.AssignmentAction = "created"
+			} else {
 				resp.Updated++
-				a.OverrideAction = "updated"
-			case "blocked_cancel":
-				resp.Assigned--
-				resp.Skipped++
-				a.Status = "skipped"
-				a.Reason = "cancel_override_exists"
-			default:
-				return fmt.Errorf("unknown location override mode %q", mode)
+				a.AssignmentAction = "updated"
 			}
 		}
 		return nil
@@ -210,7 +204,7 @@ func (s *Service) AutofillLocations(req LocationAutofillRequest) (*LocationAutof
 	return resp, nil
 }
 
-func locationNeedsAutofill(lesson Lesson, locationMeta map[int]LocationMeta, replaceVirtual bool) bool {
+func lessonViewNeedsAutofill(lesson ScheduleLessonView, locationMeta map[int]LocationMeta, replaceVirtual bool) bool {
 	if lesson.LocationID == nil || *lesson.LocationID <= 0 {
 		return true
 	}
@@ -219,6 +213,11 @@ func locationNeedsAutofill(lesson Lesson, locationMeta map[int]LocationMeta, rep
 	}
 	meta := locationMeta[*lesson.LocationID]
 	return meta.IsVirtual()
+}
+
+func locationNeedsAutofill(lesson Lesson, locationMeta map[int]LocationMeta, replaceVirtual bool) bool {
+	view := ScheduleLessonView{LocationID: lesson.LocationID}
+	return lessonViewNeedsAutofill(view, locationMeta, replaceVirtual)
 }
 
 func chooseFreeLocation(date string, pairNumber int16, candidates []Location, occupied map[locationAutofillSlot]bool) *Location {
@@ -233,24 +232,38 @@ func chooseFreeLocation(date string, pairNumber int16, candidates []Location, oc
 }
 
 func (s *Service) occupiedLocationSlots(startDate, endDate time.Time) (map[locationAutofillSlot]bool, error) {
-	groups, err := s.repo.ListGroups()
+	out := map[locationAutofillSlot]bool{}
+	var rows []struct {
+		LessonDate time.Time `gorm:"column:lesson_date"`
+		PairNumber int16     `gorm:"column:pair_number"`
+		LocationID int       `gorm:"column:location_id"`
+	}
+	err := s.repo.DB().Table("schedule_lessons sl").
+		Select("sl.lesson_date, sl.pair_number, ra.location_id").
+		Joins("JOIN room_assignments ra ON ra.schedule_lesson_id = sl.id AND ra.status = ?", StatusPublished).
+		Where("sl.lesson_date BETWEEN ? AND ? AND sl.status <> ?", dateOnly(startDate), dateOnly(endDate), StatusCancelled).
+		Scan(&rows).Error
 	if err != nil {
 		return nil, err
 	}
-	out := map[locationAutofillSlot]bool{}
-	for _, group := range groups {
-		week, err := s.GetRange(group.ID, startDate, endDate)
-		if err != nil {
-			return nil, err
-		}
-		for _, day := range week.Days {
-			for _, lesson := range day.Lessons {
-				if lesson.LocationID == nil || *lesson.LocationID <= 0 || lesson.PairNumber <= 0 {
-					continue
-				}
-				out[locationAutofillSlot{Date: day.Date, PairNumber: lesson.PairNumber, LocationID: *lesson.LocationID}] = true
-			}
-		}
+	for _, row := range rows {
+		out[locationAutofillSlot{Date: dateOnly(row.LessonDate).Format("2006-01-02"), PairNumber: row.PairNumber, LocationID: row.LocationID}] = true
 	}
 	return out, nil
+}
+
+func (s *Service) locationMetaForLessonViews(rows []ScheduleLessonView) (map[int]LocationMeta, error) {
+	seen := map[int]bool{}
+	ids := make([]int, 0)
+	for _, lesson := range rows {
+		if lesson.LocationID == nil || *lesson.LocationID <= 0 {
+			continue
+		}
+		if seen[*lesson.LocationID] {
+			continue
+		}
+		seen[*lesson.LocationID] = true
+		ids = append(ids, *lesson.LocationID)
+	}
+	return s.repo.ListLocationMetaByIDs(ids)
 }

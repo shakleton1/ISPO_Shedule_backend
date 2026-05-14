@@ -313,81 +313,93 @@ func toCurriculumItemAllocationDTO(a schedule.CurriculumItemAllocation) curricul
 	}
 }
 
-type scheduleTemplateDTO struct {
-	ID             int64                 `json:"id"`
-	GroupID        int                   `json:"group_id"`
-	DayOfWeek      int16                 `json:"day_of_week"`
-	WeekParity     schedule.WeekParity   `json:"week_parity"`
-	PairNumber     int16                 `json:"pair_number"`
-	SubjectID      int                   `json:"subject_id"`
-	LocationID     *int                  `json:"location_id"`
-	LessonFormat   string                `json:"lesson_format"`
-	Status         schedule.EntityStatus `json:"status"`
-	TeacherManual  bool                  `json:"teacher_manual"`
-	LocationManual bool                  `json:"location_manual"`
-	TeacherName    string                `json:"teacher_name"`
-	Subgroup       *int16                `json:"subgroup"`
-	FlowKey        *string               `json:"flow_key,omitempty"`
-	CreatedAt      time.Time             `json:"created_at"`
-	UpdatedAt      time.Time             `json:"updated_at"`
+type scheduleLessonDTO struct {
+	ID           int64                 `json:"id"`
+	GroupID      int                   `json:"group_id"`
+	LessonDate   time.Time             `json:"lesson_date"`
+	PairNumber   int16                 `json:"pair_number"`
+	Subgroup     *int16                `json:"subgroup"`
+	SubjectID    *int                  `json:"subject_id"`
+	TeacherID    *int                  `json:"teacher_id"`
+	LessonFormat string                `json:"lesson_format"`
+	Status       schedule.EntityStatus `json:"status"`
+	Source       string                `json:"source"`
+	FlowKey      *string               `json:"flow_key,omitempty"`
+	Comment      *string               `json:"comment"`
+	Version      int                   `json:"version"`
+	CreatedAt    time.Time             `json:"created_at"`
+	UpdatedAt    time.Time             `json:"updated_at"`
 }
 
-func toScheduleTemplateDTO(t schedule.ScheduleTemplate) scheduleTemplateDTO {
-	return scheduleTemplateDTO{
-		ID:             t.ID,
-		GroupID:        t.GroupID,
-		DayOfWeek:      t.DayOfWeek,
-		WeekParity:     t.WeekParity,
-		PairNumber:     t.PairNumber,
-		SubjectID:      t.SubjectID,
-		LocationID:     t.LocationID,
-		LessonFormat:   t.LessonFormat,
-		Status:         t.Status,
-		TeacherManual:  t.TeacherManual,
-		LocationManual: t.LocationManual,
-		TeacherName:    t.TeacherName,
-		Subgroup:       t.Subgroup,
-		FlowKey:        t.FlowKey,
-		CreatedAt:      t.CreatedAt,
-		UpdatedAt:      t.UpdatedAt,
+func toScheduleLessonDTO(l schedule.ScheduleLesson) scheduleLessonDTO {
+	return scheduleLessonDTO{
+		ID:           l.ID,
+		GroupID:      l.GroupID,
+		LessonDate:   l.LessonDate,
+		PairNumber:   l.PairNumber,
+		Subgroup:     l.Subgroup,
+		SubjectID:    l.SubjectID,
+		TeacherID:    l.TeacherID,
+		LessonFormat: l.LessonFormat,
+		Status:       l.Status,
+		Source:       l.Source,
+		FlowKey:      l.FlowKey,
+		Comment:      l.Comment,
+		Version:      l.Version,
+		CreatedAt:    l.CreatedAt,
+		UpdatedAt:    l.UpdatedAt,
 	}
 }
 
 type scheduleOverrideDTO struct {
-	ID               int64                   `json:"id"`
-	TargetDate       time.Time               `json:"target_date"`
-	GroupID          int                     `json:"group_id"`
-	PairNumber       int16                   `json:"pair_number"`
-	ActionType       schedule.OverrideAction `json:"action_type"`
-	NewSubjectID     *int                    `json:"new_subject_id"`
-	NewLocationID    *int                    `json:"new_location_id"`
-	NewLessonFormat  *string                 `json:"new_lesson_format"`
-	NewTeacherManual bool                    `json:"new_teacher_manual"`
-	NewTeacherName   *string                 `json:"new_teacher_name"`
-	Comment          *string                 `json:"comment"`
-	Subgroup         *int16                  `json:"subgroup"`
-	FlowKey          *string                 `json:"flow_key,omitempty"`
-	CreatedAt        time.Time               `json:"created_at"`
-	UpdatedAt        time.Time               `json:"updated_at"`
+	ID                      int64                   `json:"id"`
+	ScheduleLessonID        *int64                  `json:"schedule_lesson_id"`
+	GroupID                 int                     `json:"group_id"`
+	LessonDate              time.Time               `json:"lesson_date"`
+	PairNumber              int16                   `json:"pair_number"`
+	Subgroup                *int16                  `json:"subgroup"`
+	ActionType              schedule.OverrideAction `json:"action_type"`
+	SourceSubjectID         *int                    `json:"source_subject_id"`
+	SourceTeacherID         *int                    `json:"source_teacher_id"`
+	SourceLocationID        *int                    `json:"source_location_id"`
+	SourceLessonFormat      *string                 `json:"source_lesson_format"`
+	ReplacementSubjectID    *int                    `json:"replacement_subject_id"`
+	ReplacementTeacherID    *int                    `json:"replacement_teacher_id"`
+	ReplacementLocationID   *int                    `json:"replacement_location_id"`
+	ReplacementLessonFormat *string                 `json:"replacement_lesson_format"`
+	Reason                  *string                 `json:"reason"`
+	Status                  string                  `json:"status"`
+	ExpectedLessonVersion   *int                    `json:"expected_lesson_version"`
+	AppliedLessonVersion    *int                    `json:"applied_lesson_version"`
+	CreatedBy               *int                    `json:"created_by"`
+	CreatedAt               time.Time               `json:"created_at"`
+	AppliedAt               *time.Time              `json:"applied_at"`
 }
 
 func toScheduleOverrideDTO(o schedule.ScheduleOverride) scheduleOverrideDTO {
 	return scheduleOverrideDTO{
-		ID:               o.ID,
-		TargetDate:       o.TargetDate,
-		GroupID:          o.GroupID,
-		PairNumber:       o.PairNumber,
-		ActionType:       o.ActionType,
-		NewSubjectID:     o.NewSubjectID,
-		NewLocationID:    o.NewLocationID,
-		NewLessonFormat:  o.NewLessonFormat,
-		NewTeacherManual: o.NewTeacherManual,
-		NewTeacherName:   o.NewTeacherName,
-		Comment:          o.Comment,
-		Subgroup:         o.Subgroup,
-		FlowKey:          o.FlowKey,
-		CreatedAt:        o.CreatedAt,
-		UpdatedAt:        o.UpdatedAt,
+		ID:                      o.ID,
+		ScheduleLessonID:        o.ScheduleLessonID,
+		GroupID:                 o.GroupID,
+		LessonDate:              o.LessonDate,
+		PairNumber:              o.PairNumber,
+		Subgroup:                o.Subgroup,
+		ActionType:              o.ActionType,
+		SourceSubjectID:         o.SourceSubjectID,
+		SourceTeacherID:         o.SourceTeacherID,
+		SourceLocationID:        o.SourceLocationID,
+		SourceLessonFormat:      o.SourceLessonFormat,
+		ReplacementSubjectID:    o.ReplacementSubjectID,
+		ReplacementTeacherID:    o.ReplacementTeacherID,
+		ReplacementLocationID:   o.ReplacementLocationID,
+		ReplacementLessonFormat: o.ReplacementLessonFormat,
+		Reason:                  o.Reason,
+		Status:                  o.Status,
+		ExpectedLessonVersion:   o.ExpectedLessonVersion,
+		AppliedLessonVersion:    o.AppliedLessonVersion,
+		CreatedBy:               o.CreatedBy,
+		CreatedAt:               o.CreatedAt,
+		AppliedAt:               o.AppliedAt,
 	}
 }
 
@@ -410,26 +422,6 @@ func toScheduleDayOverlayDTO(o schedule.ScheduleDayOverlay) scheduleDayOverlayDT
 		StylePreset: o.StylePreset,
 		CreatedAt:   o.CreatedAt,
 		UpdatedAt:   o.UpdatedAt,
-	}
-}
-
-type calendarExceptionDTO struct {
-	ID         int64     `json:"id"`
-	TargetDate time.Time `json:"target_date"`
-	WorksAsDay int16     `json:"works_as_day"`
-	Comment    *string   `json:"comment"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-}
-
-func toCalendarExceptionDTO(e schedule.CalendarException) calendarExceptionDTO {
-	return calendarExceptionDTO{
-		ID:         e.ID,
-		TargetDate: e.TargetDate,
-		WorksAsDay: e.WorksAsDay,
-		Comment:    e.Comment,
-		CreatedAt:  e.CreatedAt,
-		UpdatedAt:  e.UpdatedAt,
 	}
 }
 
@@ -650,25 +642,23 @@ func toRoomRequestDTO(r schedule.RoomRequest) roomRequestDTO {
 }
 
 type roomAssignmentDTO struct {
-	ID                 int64                 `json:"id"`
-	ScheduleTemplateID *int64                `json:"schedule_template_id"`
-	ScheduleOverrideID *int64                `json:"schedule_override_id"`
-	LocationID         int                   `json:"location_id"`
-	Source             string                `json:"source"`
-	Status             schedule.EntityStatus `json:"status"`
-	CreatedAt          time.Time             `json:"created_at"`
-	UpdatedAt          time.Time             `json:"updated_at"`
+	ID               int64                 `json:"id"`
+	ScheduleLessonID int64                 `json:"schedule_lesson_id"`
+	LocationID       int                   `json:"location_id"`
+	Source           string                `json:"source"`
+	Status           schedule.EntityStatus `json:"status"`
+	CreatedAt        time.Time             `json:"created_at"`
+	UpdatedAt        time.Time             `json:"updated_at"`
 }
 
 func toRoomAssignmentDTO(a schedule.RoomAssignment) roomAssignmentDTO {
 	return roomAssignmentDTO{
-		ID:                 a.ID,
-		ScheduleTemplateID: a.ScheduleTemplateID,
-		ScheduleOverrideID: a.ScheduleOverrideID,
-		LocationID:         a.LocationID,
-		Source:             a.Source,
-		Status:             a.Status,
-		CreatedAt:          a.CreatedAt,
-		UpdatedAt:          a.UpdatedAt,
+		ID:               a.ID,
+		ScheduleLessonID: a.ScheduleLessonID,
+		LocationID:       a.LocationID,
+		Source:           a.Source,
+		Status:           a.Status,
+		CreatedAt:        a.CreatedAt,
+		UpdatedAt:        a.UpdatedAt,
 	}
 }

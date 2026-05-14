@@ -1127,10 +1127,7 @@ paths:
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
-          name: schedule_template_id
-          schema: { type: integer, format: int64, minimum: 1 }
-        - in: query
-          name: schedule_override_id
+          name: schedule_lesson_id
           schema: { type: integer, format: int64, minimum: 1 }
         - in: query
           name: location_id
@@ -1579,10 +1576,10 @@ paths:
                 type: array
                 items: { $ref: "#/components/schemas/CurriculumItemAllocation" }
 
-  /api/v1/admin/templates:
+  /api/v1/admin/schedule-lessons:
     get:
       tags: [Admin]
-      summary: List templates
+      summary: List concrete schedule lessons
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -1590,17 +1587,25 @@ paths:
           required: false
           schema: { type: integer, minimum: 1 }
         - in: query
-          name: day_of_week
+          name: teacher_id
           required: false
-          schema: { type: integer, minimum: 0, maximum: 5 }
+          schema: { type: integer, minimum: 1 }
         - in: query
-          name: week_parity
+          name: lesson_date
           required: false
-          schema: { type: string, enum: [numerator, denominator, both] }
+          schema: { type: string, format: date }
+        - in: query
+          name: start_date
+          required: false
+          schema: { type: string, format: date }
+        - in: query
+          name: end_date
+          required: false
+          schema: { type: string, format: date }
         - in: query
           name: status
           required: false
-          schema: { type: string, enum: [draft, published] }
+          schema: { type: string, enum: [draft, published, cancelled] }
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
@@ -1610,27 +1615,27 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: "#/components/schemas/ScheduleTemplate" }
+                items: { $ref: "#/components/schemas/ScheduleLesson" }
     post:
       tags: [Admin]
-      summary: Create template (dispatcher/admin)
+      summary: Create concrete schedule lesson
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/ScheduleTemplate" }
+            schema: { $ref: "#/components/schemas/ScheduleLessonRequest" }
       responses:
         "201":
           description: Created
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ScheduleTemplate" }
+              schema: { $ref: "#/components/schemas/ScheduleLesson" }
 
-  /api/v1/admin/templates/{id}:
-    put:
+  /api/v1/admin/schedule-lessons/{id}:
+    patch:
       tags: [Admin]
-      summary: Update template (dispatcher/admin)
+      summary: Update concrete schedule lesson
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1641,16 +1646,16 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/ScheduleTemplate" }
+            schema: { $ref: "#/components/schemas/ScheduleLessonRequest" }
       responses:
         "200":
           description: OK
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ScheduleTemplate" }
+              schema: { $ref: "#/components/schemas/ScheduleLesson" }
     delete:
       tags: [Admin]
-      summary: Delete template (dispatcher/admin)
+      summary: Delete concrete schedule lesson
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1660,31 +1665,31 @@ paths:
       responses:
         "204": { description: Deleted }
 
-  /api/v1/admin/templates/publish:
+  /api/v1/admin/schedule-lessons/{id}/cancel:
     post:
       tags: [Admin]
-      summary: Publish draft templates for group (dispatcher/admin)
+      summary: Cancel concrete schedule lesson
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
-        - in: query
-          name: group_id
+        - in: path
+          name: id
           required: true
-          schema: { type: integer, minimum: 1 }
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                expected_version: { type: integer, nullable: true }
+                reason: { type: string, nullable: true }
       responses:
-        "200": { description: OK }
-
-  /api/v1/admin/templates/discard-drafts:
-    post:
-      tags: [Admin]
-      summary: Discard draft templates for group (dispatcher/admin)
-      security: [{ bearerAuth: [] }, { adminKey: [] }]
-      parameters:
-        - in: query
-          name: group_id
-          required: true
-          schema: { type: integer, minimum: 1 }
-      responses:
-        "200": { description: OK }
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScheduleLesson" }
 
   /api/v1/admin/schedule/explain:
     get:
@@ -1761,7 +1766,7 @@ paths:
   /api/v1/admin/overrides:
     get:
       tags: [Admin]
-      summary: List overrides
+      summary: List applied schedule override operations
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -1769,9 +1774,21 @@ paths:
           required: false
           schema: { type: integer, minimum: 1 }
         - in: query
-          name: date
+          name: teacher_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: start_date
           required: false
           schema: { type: string, format: date }
+        - in: query
+          name: end_date
+          required: false
+          schema: { type: string, format: date }
+        - in: query
+          name: action_type
+          required: false
+          schema: { type: string, enum: [add, replace, cancel, restore] }
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
@@ -1782,39 +1799,6 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/ScheduleOverride" }
-
-  /api/v1/admin/overrides/{id}:
-    put:
-      tags: [Admin]
-      summary: Update override (dispatcher/admin)
-      security: [{ bearerAuth: [] }, { adminKey: [] }]
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: integer, format: int64, minimum: 1 }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/ScheduleOverride" }
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ScheduleOverride" }
-    delete:
-      tags: [Admin]
-      summary: Delete override (dispatcher/admin)
-      security: [{ bearerAuth: [] }, { adminKey: [] }]
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: integer, format: int64, minimum: 1 }
-      responses:
-        "204": { description: Deleted }
 
   /api/v1/admin/schedule/validate:
     get:
@@ -1842,54 +1826,55 @@ paths:
               schema:
                 { $ref: "#/components/schemas/ScheduleValidationResponse" }
 
-  /api/v1/admin/override:
-    post:
+  /api/v1/admin/reports/schedule-overrides:
+    get:
       tags: [Admin]
-      summary: Create override (dispatcher/admin)
+      summary: Report applied schedule override operations
       security: [{ bearerAuth: [] }, { adminKey: [] }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/AdminOverrideRequest" }
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ScheduleOverride" }
-
-  /api/v1/admin/overrides/bulk:
-    post:
-      tags: [Admin]
-      summary: Create overrides in bulk for a date range (dispatcher/admin)
-      security: [{ bearerAuth: [] }, { adminKey: [] }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/AdminBulkOverridesRequest" }
+      parameters:
+        - in: query
+          name: group_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: teacher_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: start_date
+          required: false
+          schema: { type: string, format: date }
+        - in: query
+          name: end_date
+          required: false
+          schema: { type: string, format: date }
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                { $ref: "#/components/schemas/AdminBulkOverridesResponse" }
+                type: array
+                items: { $ref: "#/components/schemas/ScheduleOverride" }
 
-  /api/v1/admin/override/move:
+  /api/v1/admin/schedule-overrides/apply:
     post:
       tags: [Admin]
-      summary: Move a lesson to another pair number (CANCEL + ADD) (dispatcher/admin)
+      summary: Apply add/replace/cancel/restore operation
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/AdminMovePairRequest" }
+            schema: { $ref: "#/components/schemas/ApplyScheduleOverrideRequest" }
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScheduleOverride" }
+        "409":
+          $ref: "#/components/responses/Conflict"
 
   /api/v1/admin/day-events:
     get:
@@ -1980,106 +1965,6 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScheduleDayOverlay" }
-
-  /api/v1/admin/calendar-exceptions:
-    get:
-      tags: [Admin]
-      summary: List calendar exceptions
-      security: [{ bearerAuth: [] }, { adminKey: [] }]
-      parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/CalendarException" }
-    post:
-      tags: [Admin]
-      summary: Upsert calendar exception (dispatcher/admin)
-      security: [{ bearerAuth: [] }, { adminKey: [] }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              { $ref: "#/components/schemas/AdminCalendarExceptionRequest" }
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/CalendarException" }
-
-  /api/v1/admin/calendar-exceptions/{date}:
-    delete:
-      tags: [Admin]
-      summary: Delete calendar exception (dispatcher/admin)
-      security: [{ bearerAuth: [] }, { adminKey: [] }]
-      parameters:
-        - in: path
-          name: date
-          required: true
-          schema: { type: string, format: date }
-      responses:
-        "204": { description: Deleted }
-
-  /api/v1/admin/import/templates/csv:
-    post:
-      tags: [Admin]
-      summary: Import templates from CSV (replace by group)
-      security: [{ bearerAuth: [] }, { adminKey: [] }]
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required: [file, group_id]
-              properties:
-                group_id:
-                  type: integer
-                  minimum: 1
-                file:
-                  type: string
-                  format: binary
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ImportResponse"
-
-  /api/v1/admin/import/templates/xlsx:
-    post:
-      tags: [Admin]
-      summary: Import templates from XLSX (replace by group)
-      security: [{ bearerAuth: [] }, { adminKey: [] }]
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required: [file, group_id]
-              properties:
-                group_id:
-                  type: integer
-                  minimum: 1
-                file:
-                  type: string
-                  format: binary
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ImportResponse"
 
   /api/v1/admin/import/curriculum-items/csv:
     post:
@@ -2483,6 +2368,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
     MethodNotAllowed:
       description: Method not allowed
       content:
@@ -2818,15 +2709,14 @@ components:
 
     RoomAssignment:
       type: object
-      required: [id, location_id, source, status]
+      required: [id, schedule_lesson_id, location_id, source, status]
       properties:
         id: { type: integer, format: int64 }
-        schedule_template_id: { type: integer, format: int64, nullable: true }
-        schedule_override_id: { type: integer, format: int64, nullable: true }
+        schedule_lesson_id: { type: integer, format: int64 }
         location_id: { type: integer }
         source:
           type: string
-          enum: [manual, auto, imported, teacher_preference, request]
+          enum: [manual, auto, imported, teacher_preference, request, replacement]
         status: { type: string, enum: [draft, published] }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
@@ -2974,8 +2864,9 @@ components:
 
     LocationAutofillAssignment:
       type: object
-      required: [date, pair_number, subject_name, status]
+      required: [schedule_lesson_id, date, pair_number, subject_name, status]
       properties:
+        schedule_lesson_id: { type: integer, format: int64 }
         date: { type: string, format: date }
         pair_number: { type: integer, minimum: 1, maximum: 8 }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
@@ -2986,8 +2877,8 @@ components:
         status: { type: string, enum: [assigned, skipped] }
         reason:
           type: string
-          enum: [lesson_without_subject, no_available_location, cancel_override_exists]
-        override_action:
+          enum: [lesson_without_subject, no_available_location]
+        assignment_action:
           type: string
           enum: [created, updated]
 
@@ -3019,51 +2910,6 @@ components:
         assignments:
           type: array
           items: { $ref: "#/components/schemas/LocationAutofillAssignment" }
-
-    TemplateView:
-      type: object
-      required:
-        [
-          pair_number,
-          subject_id,
-          subject_name,
-          location_name,
-          lesson_format,
-          teacher_name,
-        ]
-      properties:
-        pair_number: { type: integer }
-        subject_id: { type: integer }
-        subject_name: { type: string }
-        location_id: { type: integer, nullable: true }
-        location_name: { type: string }
-        lesson_format: { type: string, enum: [offline, online, hybrid] }
-        teacher_name: { type: string }
-        teacher_manual: { type: boolean }
-        location_manual: { type: boolean }
-        subgroup: { type: integer, nullable: true, enum: [1, 2] }
-        flow_key: { type: string, nullable: true, maxLength: 80 }
-
-    OverrideView:
-      type: object
-      required: [id, pair_number, action_type, updated_at]
-      properties:
-        id: { type: integer, format: int64 }
-        pair_number: { type: integer }
-        action_type:
-          type: string
-          enum: [CANCEL, REPLACE, ADD]
-        new_subject_id: { type: integer, nullable: true }
-        new_subject_name: { type: string }
-        new_location_id: { type: integer, nullable: true }
-        new_location_name: { type: string }
-        new_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
-        new_teacher_manual: { type: boolean }
-        new_teacher_name: { type: string, nullable: true }
-        comment: { type: string, nullable: true }
-        subgroup: { type: integer, nullable: true, enum: [1, 2] }
-        flow_key: { type: string, nullable: true, maxLength: 80 }
-        updated_at: { type: string, format: date-time }
 
     Lesson:
       type: object
@@ -3209,36 +3055,52 @@ components:
       properties:
         token: { type: string }
 
-    ScheduleTemplate:
+    ScheduleLesson:
       type: object
       required:
         [
           group_id,
-          day_of_week,
-          week_parity,
+          lesson_date,
           pair_number,
-          subject_id,
           lesson_format,
+          status,
+          source,
+          version,
         ]
       properties:
         id: { type: integer, format: int64 }
         group_id: { type: integer }
-        day_of_week: { type: integer, minimum: 0, maximum: 5 }
-        week_parity:
-          type: string
-          enum: [numerator, denominator, both]
+        lesson_date: { type: string, format: date }
         pair_number: { type: integer, minimum: 1, maximum: 8 }
-        subject_id: { type: integer }
-        location_id: { type: integer, nullable: true }
-        lesson_format: { type: string, enum: [offline, online, hybrid] }
-        status: { type: string, enum: [draft, published] }
-        teacher_name: { type: string }
-        teacher_manual: { type: boolean }
-        location_manual: { type: boolean }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        subject_id: { type: integer, nullable: true }
+        teacher_id: { type: integer, nullable: true }
+        lesson_format: { type: string, enum: [offline, online, hybrid] }
+        status: { type: string, enum: [draft, published, cancelled] }
+        source: { type: string, enum: [manual, imported, auto, generated, replacement] }
+        version: { type: integer }
         flow_key: { type: string, nullable: true, maxLength: 80 }
+        comment: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+
+    ScheduleLessonRequest:
+      type: object
+      required: [group_id, lesson_date, pair_number]
+      properties:
+        group_id: { type: integer, minimum: 1 }
+        lesson_date: { type: string, format: date }
+        pair_number: { type: integer, minimum: 1, maximum: 8 }
+        subgroup: { type: integer, nullable: true, enum: [1, 2] }
+        subject_id: { type: integer, nullable: true }
+        teacher_id: { type: integer, nullable: true }
+        lesson_format: { type: string, enum: [offline, online, hybrid], default: offline }
+        status: { type: string, enum: [draft, published, cancelled], default: published }
+        source: { type: string, enum: [manual, imported, auto, generated, replacement], default: manual }
+        flow_key: { type: string, nullable: true, maxLength: 80 }
+        comment: { type: string, nullable: true }
+        expected_version: { type: integer, nullable: true }
+        confirm_constraints: { type: boolean, default: false }
 
     ExplainSlotResponse:
       type: object
@@ -3250,10 +3112,6 @@ components:
           week_parity,
           data_version,
           pair_number,
-          templates_published,
-          templates_draft,
-          overrides_raw,
-          overrides_normalized,
           lessons,
           decision,
         ]
@@ -3265,18 +3123,6 @@ components:
         data_version: { type: string }
         pair_number: { type: integer }
         subgroup: { type: integer, nullable: true }
-        templates_published:
-          type: array
-          items: { $ref: "#/components/schemas/TemplateView" }
-        templates_draft:
-          type: array
-          items: { $ref: "#/components/schemas/TemplateView" }
-        overrides_raw:
-          type: array
-          items: { $ref: "#/components/schemas/OverrideView" }
-        overrides_normalized:
-          type: array
-          items: { $ref: "#/components/schemas/OverrideView" }
         lessons:
           type: array
           items: { $ref: "#/components/schemas/Lesson" }
@@ -3342,49 +3188,50 @@ components:
 
     ScheduleOverride:
       type: object
-      required: [id, target_date, group_id, pair_number, action_type]
+      required: [id, group_id, lesson_date, pair_number, action_type, status]
       properties:
         id: { type: integer, format: int64 }
-        target_date:
-          type: string
-          format: date
-          description: Stored as DATE in DB
+        schedule_lesson_id: { type: integer, format: int64, nullable: true }
         group_id: { type: integer }
+        lesson_date: { type: string, format: date }
         pair_number: { type: integer, minimum: 1, maximum: 8 }
+        subgroup: { type: integer, nullable: true, enum: [1, 2] }
         action_type:
           type: string
-          enum: [CANCEL, REPLACE, ADD]
-        new_subject_id: { type: integer, nullable: true }
-        new_location_id: { type: integer, nullable: true }
-        new_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
-        new_teacher_manual: { type: boolean }
-        new_teacher_name: { type: string, nullable: true }
-        confirm_constraints: { type: boolean }
-        comment: { type: string, nullable: true }
-        subgroup: { type: integer, nullable: true, enum: [1, 2] }
-        flow_key: { type: string, nullable: true, maxLength: 80 }
+          enum: [add, replace, cancel, restore]
+        source_subject_id: { type: integer, nullable: true }
+        source_teacher_id: { type: integer, nullable: true }
+        source_location_id: { type: integer, nullable: true }
+        source_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
+        replacement_subject_id: { type: integer, nullable: true }
+        replacement_teacher_id: { type: integer, nullable: true }
+        replacement_location_id: { type: integer, nullable: true }
+        replacement_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
+        reason: { type: string, nullable: true }
+        status: { type: string, enum: [draft, applied, cancelled] }
+        expected_lesson_version: { type: integer, nullable: true }
+        applied_lesson_version: { type: integer, nullable: true }
+        created_by: { type: integer, nullable: true }
         created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
+        applied_at: { type: string, format: date-time, nullable: true }
 
-    AdminOverrideRequest:
+    ApplyScheduleOverrideRequest:
       type: object
-      required: [group_id, date, pair, action]
+      required: [group_id, lesson_date, pair_number, action_type]
       properties:
+        schedule_lesson_id: { type: integer, format: int64, nullable: true }
         group_id: { type: integer, minimum: 1 }
-        date: { type: string, format: date }
-        pair: { type: integer, minimum: 1, maximum: 8 }
-        action:
-          type: string
-          enum: [CANCEL, REPLACE, ADD]
-        new_subject_id: { type: integer, nullable: true }
-        new_location_id: { type: integer, nullable: true }
-        new_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
-        new_teacher_manual: { type: boolean }
-        new_teacher_name: { type: string, nullable: true }
-        confirm_constraints: { type: boolean }
-        comment: { type: string, nullable: true }
+        lesson_date: { type: string, format: date }
+        pair_number: { type: integer, minimum: 1, maximum: 8 }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
-        flow_key: { type: string, nullable: true, maxLength: 80 }
+        action_type: { type: string, enum: [add, replace, cancel, restore] }
+        replacement_subject_id: { type: integer, nullable: true }
+        replacement_teacher_id: { type: integer, nullable: true }
+        replacement_location_id: { type: integer, nullable: true }
+        replacement_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
+        reason: { type: string, nullable: true }
+        expected_lesson_version: { type: integer, nullable: true }
+        confirm_constraints: { type: boolean, default: false }
 
     ScheduleDayOverlay:
       type: object
@@ -3401,20 +3248,6 @@ components:
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
-    CalendarException:
-      type: object
-      required: [id, target_date, works_as_day]
-      properties:
-        id: { type: integer, format: int64 }
-        target_date:
-          type: string
-          format: date
-          description: Stored as DATE in DB
-        works_as_day: { type: integer, minimum: 0, maximum: 6 }
-        comment: { type: string, nullable: true }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
-
     AdminOverlayRequest:
       type: object
       required: [group_id, date, text]
@@ -3423,14 +3256,6 @@ components:
         date: { type: string, format: date }
         text: { type: string }
         style_preset: { type: string, nullable: true }
-
-    AdminCalendarExceptionRequest:
-      type: object
-      required: [date, works_as_day]
-      properties:
-        date: { type: string, format: date }
-        works_as_day: { type: integer, minimum: 0, maximum: 6 }
-        comment: { type: string, nullable: true }
 
     ScheduleDayEvent:
       type: object
@@ -3463,55 +3288,6 @@ components:
         title: { type: string }
         details: { type: string, nullable: true }
         location_id: { type: integer, nullable: true }
-
-    AdminBulkOverridesRequest:
-      type: object
-      required: [group_id, start_date, end_date, action_type]
-      properties:
-        group_id: { type: integer, minimum: 1 }
-        start_date: { type: string, format: date }
-        end_date: { type: string, format: date }
-        days_of_week:
-          type: array
-          items: { type: integer, minimum: 0, maximum: 6 }
-        pair_number: { type: integer, minimum: 1, maximum: 8, nullable: true }
-        pair_numbers:
-          type: array
-          items: { type: integer, minimum: 1, maximum: 8 }
-        action_type:
-          type: string
-          enum: [CANCEL, REPLACE, ADD]
-        new_subject_id: { type: integer, nullable: true }
-        new_location_id: { type: integer, nullable: true }
-        new_lesson_format: { type: string, nullable: true, enum: [offline, online, hybrid] }
-        new_teacher_name: { type: string, nullable: true }
-        confirm_constraints: { type: boolean }
-        comment: { type: string, nullable: true }
-        subgroup: { type: integer, nullable: true, enum: [1, 2] }
-        only_teaching_days: { type: boolean, nullable: true }
-        on_conflict:
-          type: string
-          enum: [error, skip]
-          nullable: true
-
-    AdminBulkOverridesResponse:
-      type: object
-      required: [created, skipped]
-      properties:
-        created: { type: integer }
-        skipped: { type: integer }
-
-    AdminMovePairRequest:
-      type: object
-      required: [group_id, target_date, from_pair_number, to_pair_number]
-      properties:
-        group_id: { type: integer, minimum: 1 }
-        target_date: { type: string, format: date }
-        from_pair_number: { type: integer, minimum: 1, maximum: 8 }
-        to_pair_number: { type: integer, minimum: 1, maximum: 8 }
-        subgroup: { type: integer, nullable: true, enum: [1, 2] }
-        comment: { type: string, nullable: true }
-        confirm_constraints: { type: boolean }
 
     ImportResponse:
       type: object

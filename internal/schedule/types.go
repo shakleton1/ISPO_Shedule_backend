@@ -1,5 +1,7 @@
 package schedule
 
+import "strings"
+
 type WeekParity string
 
 const (
@@ -11,7 +13,19 @@ const (
 type OverrideAction string
 
 const (
-	OverrideCancel  OverrideAction = "CANCEL"
-	OverrideReplace OverrideAction = "REPLACE"
-	OverrideAdd     OverrideAction = "ADD"
+	OverrideAdd     OverrideAction = "add"
+	OverrideReplace OverrideAction = "replace"
+	OverrideCancel  OverrideAction = "cancel"
+	OverrideRestore OverrideAction = "restore"
 )
+
+func normalizeLessonFormat(v string) string {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "online":
+		return "online"
+	case "hybrid":
+		return "hybrid"
+	default:
+		return "offline"
+	}
+}

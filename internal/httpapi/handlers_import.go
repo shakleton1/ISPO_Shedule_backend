@@ -92,7 +92,7 @@ func handleAdminImportTemplatesCSV(repo *schedule.Repository, pushSvc *push.Serv
 		if pushSvc != nil && status == schedule.StatusPublished {
 			pushSvc.NotifyScheduleUpdatedAsync(groupID, ver)
 		}
-		writeAudit(c, repo, "import", "schedule_templates", fmt.Sprintf("group:%d", groupID), gin.H{"inserted": inserted})
+		writeAudit(c, repo, "import", "schedule_lessons", fmt.Sprintf("group:%d", groupID), gin.H{"inserted": inserted})
 		c.JSON(http.StatusOK, gin.H{"inserted": inserted, "status": status, "schedule_version": ver.UTC().Format(time.RFC3339Nano)})
 	}
 }
@@ -138,7 +138,7 @@ func handleAdminImportTemplatesXLSX(repo *schedule.Repository, pushSvc *push.Ser
 		if pushSvc != nil && status == schedule.StatusPublished {
 			pushSvc.NotifyScheduleUpdatedAsync(groupID, ver)
 		}
-		writeAudit(c, repo, "import", "schedule_templates", fmt.Sprintf("group:%d", groupID), gin.H{"inserted": inserted})
+		writeAudit(c, repo, "import", "schedule_lessons", fmt.Sprintf("group:%d", groupID), gin.H{"inserted": inserted})
 		c.JSON(http.StatusOK, gin.H{"inserted": inserted, "status": status, "schedule_version": ver.UTC().Format(time.RFC3339Nano)})
 	}
 }
@@ -333,73 +333,9 @@ func getUploadedFile(c *gin.Context, field string) (io.ReadCloser, error) {
 }
 
 func importTemplatesReplace(c *gin.Context, repo *schedule.Repository, groupID int, status schedule.EntityStatus, rows []importTemplateRow) (int, time.Time, error) {
-	if len(rows) == 0 {
-		return 0, time.Time{}, fmt.Errorf("empty file")
-	}
-
-	var inserted int
-	err := repo.DB().Transaction(func(tx *gorm.DB) error {
-		// ensure group exists
-		var g schedule.Group
-		if err := tx.First(&g, "id = ?", groupID).Error; err != nil {
-			return err
-		}
-
-		if err := tx.Where("group_id = ? AND status = ?", groupID, status).Delete(&schedule.ScheduleTemplate{}).Error; err != nil {
-			return err
-		}
-
-		templates := make([]schedule.ScheduleTemplate, 0, len(rows))
-		for i, r := range rows {
-			subID, err := getOrCreateSubjectID(tx, r.SubjectName)
-			if err != nil {
-				return fmt.Errorf("row %d: subject: %w", i+1, err)
-			}
-			locID, err := getOrCreateLocationID(tx, r.Location)
-			if err != nil {
-				return fmt.Errorf("row %d: location: %w", i+1, err)
-			}
-			teacherID, err := getOrCreateTeacherID(tx, r.TeacherName)
-			if err != nil {
-				return fmt.Errorf("row %d: teacher: %w", i+1, err)
-			}
-			templates = append(templates, schedule.ScheduleTemplate{
-				GroupID:    groupID,
-				DayOfWeek:  r.DayOfWeek,
-				WeekParity: r.WeekParity,
-				PairNumber: r.PairNumber,
-				SubjectID:  subID,
-				LocationID: &locID,
-				Status:     status,
-				TeacherID:  teacherID,
-				Subgroup:   r.Subgroup,
-				FlowKey:    r.FlowKey,
-				CreatedAt:  time.Now().UTC(),
-				UpdatedAt:  time.Now().UTC(),
-			})
-		}
-		if err := tx.CreateInBatches(&templates, 200).Error; err != nil {
-			return err
-		}
-		inserted = len(templates)
-		return nil
-	})
-	if err != nil {
-		return 0, time.Time{}, err
-	}
-	if status != schedule.StatusPublished {
-		// Draft import must not affect clients; return current version.
-		state, err := repo.GetSystemState()
-		if err != nil {
-			return inserted, time.Time{}, err
-		}
-		return inserted, state.ScheduleVersion, nil
-	}
-	ver, err := bumpScheduleVersionAndGet(repo)
-	if err != nil {
-		return inserted, time.Time{}, err
-	}
-	return inserted, ver, nil
+	_, _, _, _ = c, repo, groupID, status
+	_ = rows
+	return 0, time.Time{}, fmt.Errorf("template import is removed; import concrete schedule lessons instead")
 }
 
 func importCurriculumItems(c *gin.Context, repo *schedule.Repository, curriculumID int64, rows []importCurriculumItemRow) (int, time.Time, error) {

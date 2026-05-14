@@ -7,6 +7,7 @@ type EntityStatus string
 const (
 	StatusDraft     EntityStatus = "draft"
 	StatusPublished EntityStatus = "published"
+	StatusCancelled EntityStatus = "cancelled"
 )
 
 type Group struct {
@@ -96,7 +97,25 @@ type CourseAssignment struct {
 
 func (CourseAssignment) TableName() string { return "course_assignments" }
 
-type ScheduleTemplate struct {
+type ScheduleLesson struct {
+	ID           int64        `gorm:"primaryKey" json:"id"`
+	GroupID      int          `gorm:"not null" json:"group_id"`
+	LessonDate   time.Time    `gorm:"type:date;not null" json:"lesson_date"`
+	PairNumber   int16        `gorm:"not null" json:"pair_number"`
+	Subgroup     *int16       `json:"subgroup"`
+	SubjectID    *int         `json:"subject_id"`
+	TeacherID    *int         `json:"teacher_id"`
+	LessonFormat string       `gorm:"type:text;not null;default:'offline'" json:"lesson_format"`
+	Status       EntityStatus `gorm:"type:text;not null;default:'published'" json:"status"`
+	Source       string       `gorm:"type:text;not null;default:'manual'" json:"source"`
+	FlowKey      *string      `gorm:"size:80" json:"flow_key"`
+	Comment      *string      `json:"comment"`
+	Version      int          `gorm:"not null;default:1" json:"version"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+}
+
+type scheduleTemplateLegacy struct {
 	ID             int64        `gorm:"primaryKey" json:"id"`
 	GroupID        int          `gorm:"not null;index:idx_tpl_query,priority:1" json:"group_id"`
 	DayOfWeek      int16        `gorm:"not null;index:idx_tpl_query,priority:2" json:"day_of_week"`
@@ -117,23 +136,28 @@ type ScheduleTemplate struct {
 }
 
 type ScheduleOverride struct {
-	ID                 int64          `gorm:"primaryKey" json:"id"`
-	TargetDate         time.Time      `gorm:"type:date;not null;index:idx_ovr_query,priority:2" json:"target_date"`
-	GroupID            int            `gorm:"not null;index:idx_ovr_query,priority:1" json:"group_id"`
-	PairNumber         int16          `gorm:"not null" json:"pair_number"`
-	ActionType         OverrideAction `gorm:"type:text;not null" json:"action_type"`
-	NewSubjectID       *int           `json:"new_subject_id"`
-	NewLocationID      *int           `json:"new_location_id"`
-	NewLessonFormat    *string        `gorm:"type:text" json:"new_lesson_format"`
-	NewTeacherID       *int           `json:"-"`
-	NewTeacherManual   bool           `gorm:"not null;default:false" json:"new_teacher_manual"`
-	NewTeacherName     *string        `gorm:"column:new_teacher_name;->" json:"new_teacher_name"`
-	Comment            *string        `json:"comment"`
-	Subgroup           *int16         `json:"subgroup"` // nil = для всех
-	FlowKey            *string        `gorm:"size:80" json:"flow_key"`
-	ConfirmConstraints bool           `gorm:"-" json:"confirm_constraints,omitempty"`
-	CreatedAt          time.Time      `json:"created_at"`
-	UpdatedAt          time.Time      `json:"updated_at"`
+	ID                      int64          `gorm:"primaryKey" json:"id"`
+	ScheduleLessonID        *int64         `json:"schedule_lesson_id"`
+	LessonDate              time.Time      `gorm:"type:date;not null" json:"lesson_date"`
+	GroupID                 int            `gorm:"not null" json:"group_id"`
+	PairNumber              int16          `gorm:"not null" json:"pair_number"`
+	ActionType              OverrideAction `gorm:"type:text;not null" json:"action_type"`
+	SourceSubjectID         *int           `json:"source_subject_id"`
+	SourceTeacherID         *int           `json:"source_teacher_id"`
+	SourceLocationID        *int           `json:"source_location_id"`
+	SourceLessonFormat      *string        `gorm:"type:text" json:"source_lesson_format"`
+	Subgroup                *int16         `json:"subgroup"` // nil = для всех
+	ReplacementSubjectID    *int           `json:"replacement_subject_id"`
+	ReplacementTeacherID    *int           `json:"replacement_teacher_id"`
+	ReplacementLocationID   *int           `json:"replacement_location_id"`
+	ReplacementLessonFormat *string        `gorm:"type:text" json:"replacement_lesson_format"`
+	Reason                  *string        `json:"reason"`
+	Status                  string         `gorm:"type:text;not null;default:'applied'" json:"status"`
+	ExpectedLessonVersion   *int           `json:"expected_lesson_version"`
+	AppliedLessonVersion    *int           `json:"applied_lesson_version"`
+	CreatedBy               *int           `json:"created_by"`
+	CreatedAt               time.Time      `json:"created_at"`
+	AppliedAt               *time.Time     `json:"applied_at"`
 }
 
 type ScheduleDayOverlay struct {
@@ -146,7 +170,7 @@ type ScheduleDayOverlay struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-type CalendarException struct {
+type calendarExceptionLegacy struct {
 	ID         int64     `gorm:"primaryKey" json:"id"`
 	TargetDate time.Time `gorm:"type:date;not null;uniqueIndex" json:"target_date"`
 	WorksAsDay int16     `gorm:"not null" json:"works_as_day"`
@@ -339,12 +363,11 @@ type RoomRequest struct {
 }
 
 type RoomAssignment struct {
-	ID                 int64        `gorm:"primaryKey" json:"id"`
-	ScheduleTemplateID *int64       `json:"schedule_template_id"`
-	ScheduleOverrideID *int64       `json:"schedule_override_id"`
-	LocationID         int          `gorm:"not null" json:"location_id"`
-	Source             string       `gorm:"type:text;not null;default:'manual'" json:"source"`
-	Status             EntityStatus `gorm:"type:text;not null;default:'published'" json:"status"`
-	CreatedAt          time.Time    `json:"created_at"`
-	UpdatedAt          time.Time    `json:"updated_at"`
+	ID               int64        `gorm:"primaryKey" json:"id"`
+	ScheduleLessonID int64        `gorm:"not null" json:"schedule_lesson_id"`
+	LocationID       int          `gorm:"not null" json:"location_id"`
+	Source           string       `gorm:"type:text;not null;default:'manual'" json:"source"`
+	Status           EntityStatus `gorm:"type:text;not null;default:'published'" json:"status"`
+	CreatedAt        time.Time    `json:"created_at"`
+	UpdatedAt        time.Time    `json:"updated_at"`
 }

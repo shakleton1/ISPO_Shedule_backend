@@ -1,10 +1,10 @@
 # Производительность
 
-Этот проект собирает ответы расписания, комбинируя данные из:
+Этот проект собирает ответы расписания из фактических занятий на конкретные даты:
 
-- шаблонов (`schedule_templates`)
-- overrides/оверрайдов (`schedule_overrides`)
-- переносов дней (`calendar_exceptions`)
+- занятий (`schedule_lessons`)
+- кабинетов занятий (`room_assignments`)
+- applied-журнала замен (`schedule_overrides`) для отчетов, не для merge рендера
 - дневных оверлеев/событий
 
 ## 1) Кэш недели (на стороне сервера)
@@ -40,42 +40,39 @@ go run .\cmd\api
 
 ## 3) EXPLAIN / EXPLAIN ANALYZE (Postgres)
 
-Для критичных schedule-эндпоинтов самые “горячие” запросы обычно — templates/overrides.
+Для критичных schedule-эндпоинтов самые “горячие” запросы обычно — `schedule_lessons` + `room_assignments`.
 
-### 3.1) Запрос шаблонов
+### 3.1) Запрос фактических занятий
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS)
-SELECT st.day_of_week, st.pair_number, st.subject_id, s.name AS subject_name,
-       st.location_id, l.name AS location_name, COALESCE(t.name, '') AS teacher_name,
-       st.teacher_manual, st.location_manual, st.subgroup
-FROM schedule_templates st
-JOIN subjects s ON s.id = st.subject_id
-JOIN locations l ON l.id = st.location_id
-LEFT JOIN teachers t ON t.id = st.teacher_id
-WHERE st.group_id = 1
-  AND st.day_of_week BETWEEN 0 AND 5
-  AND st.week_parity IN ('numerator', 'both')
-  AND st.status = 'published'
-ORDER BY st.day_of_week, st.pair_number, COALESCE(st.subgroup, 0), st.id;
+SELECT sl.lesson_date, sl.pair_number, sl.subject_id, s.name AS subject_name,
+       ra.location_id, l.name AS location_name, COALESCE(t.name, '') AS teacher_name,
+       sl.subgroup, sl.lesson_format, sl.status, sl.version
+FROM schedule_lessons sl
+LEFT JOIN subjects s ON s.id = sl.subject_id
+LEFT JOIN room_assignments ra ON ra.schedule_lesson_id = sl.id AND ra.status = 'published'
+LEFT JOIN locations l ON l.id = ra.location_id
+LEFT JOIN teachers t ON t.id = sl.teacher_id
+WHERE sl.group_id = 1
+  AND sl.lesson_date BETWEEN '2026-02-23' AND '2026-02-28'
+  AND sl.status <> 'cancelled'
+ORDER BY sl.lesson_date, sl.pair_number, COALESCE(sl.subgroup, 0), sl.id;
 ```
 
-### 3.2) Запрос overrides
+### 3.2) Журнал замен
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS)
-SELECT so.target_date, so.id, so.pair_number, so.action_type,
-       so.new_subject_id, COALESCE(s.name, '') AS new_subject_name,
-       so.new_location_id, COALESCE(l.name, '') AS new_location_name,
-       so.new_teacher_manual, t.name AS new_teacher_name,
-       so.comment, so.subgroup, so.updated_at
+SELECT so.lesson_date, so.id, so.pair_number, so.action_type,
+       so.source_subject_id, so.replacement_subject_id,
+       so.source_location_id, so.replacement_location_id,
+       so.source_teacher_id, so.replacement_teacher_id,
+       so.reason, so.status, so.applied_at
 FROM schedule_overrides so
-LEFT JOIN subjects s ON s.id = so.new_subject_id
-LEFT JOIN locations l ON l.id = so.new_location_id
-LEFT JOIN teachers t ON t.id = so.new_teacher_id
 WHERE so.group_id = 1
-  AND so.target_date BETWEEN '2026-02-23' AND '2026-02-28'
-ORDER BY so.target_date, so.pair_number, COALESCE(so.subgroup, 0), so.id;
+  AND so.lesson_date BETWEEN '2026-02-23' AND '2026-02-28'
+ORDER BY so.lesson_date, so.pair_number, COALESCE(so.subgroup, 0), so.id;
 ```
 
 Если в этих EXPLAIN видно последовательное сканирование (seq scan) по большим таблицам — добавляйте/правьте индексы (лучше через миграции).

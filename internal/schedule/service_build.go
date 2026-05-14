@@ -47,8 +47,7 @@ func inferSemesterForDate(d time.Time, course int) *int16 {
 }
 
 func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySchedule, error) {
-	group, err := s.repo.GetGroup(groupID)
-	if err != nil {
+	if _, err := s.repo.GetGroup(groupID); err != nil {
 		return nil, err
 	}
 	chainIDs, err := s.scheduleInheritanceChainIDs(groupID)
@@ -58,49 +57,6 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 
 	startDate = dateOnly(startDate)
 	endDate = dateOnly(endDate)
-
-	assignmentRows := make([]CourseAssignmentTeacherView, 0)
-	// Process leaf->base so this group's assignments win.
-	for i := len(chainIDs) - 1; i >= 0; i-- {
-		rows, err := s.repo.ListCourseAssignmentTeachersForGroup(chainIDs[i])
-		if err != nil {
-			return nil, err
-		}
-		assignmentRows = append(assignmentRows, rows...)
-	}
-	assignmentsBySemester := map[int16]map[assignmentKey]assignmentResolve{}
-	latestAssignments := map[assignmentKey]assignmentResolve{}
-	for _, a := range assignmentRows {
-		if a.TeacherName == nil || *a.TeacherName == "" {
-			continue
-		}
-		k := assignmentKey{SubjectID: a.SubjectID, Subgroup: subgroupKey(a.Subgroup)}
-		m, ok := assignmentsBySemester[a.Semester]
-		if !ok {
-			m = map[assignmentKey]assignmentResolve{}
-			assignmentsBySemester[a.Semester] = m
-		}
-		res := assignmentResolve{}
-		if a.TeacherName != nil {
-			res.TeacherName = *a.TeacherName
-		}
-		if _, exists := m[k]; !exists {
-			m[k] = res
-		}
-		if _, exists := latestAssignments[k]; !exists {
-			latestAssignments[k] = res
-		}
-	}
-
-	// Preload calendar exceptions for range
-	exceptions, err := s.repo.ListCalendarExceptionsBetween(startDate, endDate)
-	if err != nil {
-		return nil, err
-	}
-	worksAs := map[string]int16{}
-	for _, e := range exceptions {
-		worksAs[e.TargetDate.Format("2006-01-02")] = e.WorksAsDay
-	}
 
 	overlays, err := s.repo.ListOverlaysBetween(groupID, startDate, endDate)
 	if err != nil {
@@ -137,246 +93,45 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 		})
 	}
 
-	// Preload academic calendar weeks (if group is linked to a curriculum).
-	teachingWeeks, err := s.repo.ListTeachingWeeksForGroupBetween(groupID, startDate, endDate)
-	if err != nil {
+	if _, err := s.repo.ListTeachingWeeksForGroupBetween(groupID, startDate, endDate); err != nil {
 		return nil, err
 	}
 
-	// Precompute parity per date and set of parities used in the range.
 	parityByDay := map[string]WeekParity{}
-	paritySet := map[WeekParity]bool{}
 	for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
 		k := d.Format("2006-01-02")
-		p := s.weekParityForDate(d)
-		parityByDay[k] = p
-		paritySet[p] = true
-	}
-	parities := make([]WeekParity, 0, len(paritySet))
-	for p := range paritySet {
-		parities = append(parities, p)
+		parityByDay[k] = s.weekParityForDate(d)
 	}
 
-	// Batch load templates (per group in chain, per parity used).
-	tplByGroupParityDay := map[int]map[WeekParity]map[int16][]TemplateView{}
+	lessonsByDay := map[string]map[slotKey]ScheduleLessonView{}
 	for _, gid := range chainIDs {
-		pm := map[WeekParity]map[int16][]TemplateView{}
-		for _, p := range parities {
-			rows, err := s.repo.ListTemplatesForWeekStatus(gid, p, StatusPublished)
-			if err != nil {
-				return nil, err
-			}
-			byDay := map[int16][]TemplateView{}
-			for _, r := range rows {
-				byDay[r.DayOfWeek] = append(byDay[r.DayOfWeek], TemplateView{
-					PairNumber:     r.PairNumber,
-					SubjectID:      r.SubjectID,
-					SubjectName:    r.SubjectName,
-					LocationID:     r.LocationID,
-					LocationName:   r.LocationName,
-					LessonFormat:   r.LessonFormat,
-					TeacherName:    r.TeacherName,
-					TeacherManual:  r.TeacherManual,
-					LocationManual: r.LocationManual,
-					Subgroup:       r.Subgroup,
-					FlowKey:        r.FlowKey,
-				})
-			}
-			pm[p] = byDay
-		}
-		tplByGroupParityDay[gid] = pm
-	}
-
-	// Batch load overrides (per group in chain, whole range), then resolve inheritance base->leaf.
-	overridesByDay := map[string]map[overrideKey]OverrideView{}
-	for _, gid := range chainIDs {
-		rows, err := s.repo.ListOverridesBetween(gid, startDate, endDate)
+		rows, err := s.repo.ListScheduleLessonViewsBetween([]int{gid}, startDate, endDate, false)
 		if err != nil {
 			return nil, err
 		}
 		for _, r := range rows {
-			dayKey := dateOnly(r.TargetDate).Format("2006-01-02")
-			m, ok := overridesByDay[dayKey]
+			dayKey := dateOnly(r.LessonDate).Format("2006-01-02")
+			m, ok := lessonsByDay[dayKey]
 			if !ok {
-				m = map[overrideKey]OverrideView{}
-				overridesByDay[dayKey] = m
+				m = map[slotKey]ScheduleLessonView{}
+				lessonsByDay[dayKey] = m
 			}
-			k := overrideKey{PairNumber: r.PairNumber, Subgroup: -1}
-			if r.Subgroup != nil {
-				k.Subgroup = *r.Subgroup
-			}
-			m[k] = OverrideView{
-				ID:               r.ID,
-				PairNumber:       r.PairNumber,
-				ActionType:       r.ActionType,
-				NewSubjectID:     r.NewSubjectID,
-				NewSubjectName:   r.NewSubjectName,
-				NewLocationID:    r.NewLocationID,
-				NewLocationName:  r.NewLocationName,
-				NewLessonFormat:  r.NewLessonFormat,
-				NewTeacherManual: r.NewTeacherManual,
-				NewTeacherName:   r.NewTeacherName,
-				Comment:          r.Comment,
-				Subgroup:         r.Subgroup,
-				FlowKey:          r.FlowKey,
-				UpdatedAt:        r.UpdatedAt,
-			}
+			m[slotKey{PairNumber: r.PairNumber, Subgroup: subgroupKey(r.Subgroup)}] = r
 		}
 	}
 
 	var out []DaySchedule
 	for d := dateOnly(startDate); !d.After(endDate); d = d.AddDate(0, 0, 1) {
 		dayKey := d.Format("2006-01-02")
-		dayOfWeek := dayOfWeekForDate(d, worksAs)
-
-		weekKey := mondayOfWeek(d).Format("2006-01-02")
-		nonTeaching := false
-		if v, ok := teachingWeeks[weekKey]; ok && !v {
-			nonTeaching = true
-		}
+		dayOfWeek := dayOfWeekForDate(d, nil)
 
 		parity := parityByDay[dayKey]
 
-		var tpls []TemplateView
-		if !nonTeaching {
-			tplByKey := map[slotKey]TemplateView{}
-			for _, gid := range chainIDs {
-				byParity := tplByGroupParityDay[gid]
-				byDay := byParity[parity]
-				rows := byDay[dayOfWeek]
-				for _, t := range rows {
-					tplByKey[slotKey{PairNumber: t.PairNumber, Subgroup: subgroupKey(t.Subgroup)}] = t
-				}
-			}
-			tpls = make([]TemplateView, 0, len(tplByKey))
-			for _, v := range tplByKey {
-				tpls = append(tpls, v)
-			}
+		lessons := make([]Lesson, 0, len(lessonsByDay[dayKey]))
+		for _, row := range lessonsByDay[dayKey] {
+			lessons = append(lessons, lessonFromScheduleLessonView(row))
 		}
 
-		ovrByKey := overridesByDay[dayKey]
-		ovrs := make([]OverrideView, 0, len(ovrByKey))
-		for _, v := range ovrByKey {
-			ovrs = append(ovrs, v)
-		}
-
-		lessons, err := mergeLessons(tpls, ovrs)
-		if err != nil {
-			return nil, err
-		}
-
-		ovrsNorm := normalizeOverrides(ovrs)
-
-		// Manual-empty suppression flags for teacher auto-resolve.
-		tplManualEmpty := map[slotKey]bool{}
-		for _, t := range tpls {
-			if t.TeacherManual && t.TeacherName == "" {
-				tplManualEmpty[slotKey{PairNumber: t.PairNumber, Subgroup: subgroupKey(t.Subgroup)}] = true
-			}
-		}
-		ovrManualEmptyAll := map[int16]bool{}
-		ovrManualEmpty := map[slotKey]bool{}
-		for _, o := range ovrsNorm {
-			if !o.NewTeacherManual {
-				continue
-			}
-			// If manual flag is set but new teacher is NULL => dispatcher explicitly cleared teacher.
-			if o.NewTeacherName != nil {
-				continue
-			}
-			if o.Subgroup == nil {
-				ovrManualEmptyAll[o.PairNumber] = true
-				continue
-			}
-			ovrManualEmpty[slotKey{PairNumber: o.PairNumber, Subgroup: subgroupKey(o.Subgroup)}] = true
-		}
-
-		semester := inferSemesterForDate(d, group.Course)
-		var semesterAssignments map[assignmentKey]assignmentResolve
-		if semester != nil {
-			semesterAssignments = assignmentsBySemester[*semester]
-		}
-		for i := range lessons {
-			if lessons[i].TeacherName != "" {
-				continue
-			}
-			if lessons[i].SubjectID == nil {
-				continue
-			}
-			if ovrManualEmptyAll[lessons[i].PairNumber] {
-				continue
-			}
-			sgKey := subgroupKey(lessons[i].Subgroup)
-			if ovrManualEmpty[slotKey{PairNumber: lessons[i].PairNumber, Subgroup: sgKey}] {
-				continue
-			}
-			if tplManualEmpty[slotKey{PairNumber: lessons[i].PairNumber, Subgroup: sgKey}] {
-				continue
-			}
-
-			// Match subgroup strictly for whole-group lessons; for subgroup lessons allow fallback to whole-group assignment.
-			var candidates []assignmentKey
-			if lessons[i].Subgroup == nil {
-				candidates = []assignmentKey{{SubjectID: *lessons[i].SubjectID, Subgroup: 0}}
-			} else {
-				candidates = []assignmentKey{
-					{SubjectID: *lessons[i].SubjectID, Subgroup: subgroupKey(lessons[i].Subgroup)},
-					{SubjectID: *lessons[i].SubjectID, Subgroup: 0},
-				}
-			}
-
-			var resolved string
-			if semesterAssignments != nil {
-				for _, k := range candidates {
-					if v, ok := semesterAssignments[k]; ok {
-						resolved = v.TeacherName
-						break
-					}
-				}
-			}
-			if resolved == "" {
-				for _, k := range candidates {
-					if v, ok := latestAssignments[k]; ok {
-						resolved = v.TeacherName
-						break
-					}
-				}
-			}
-			if resolved != "" {
-				lessons[i].TeacherName = resolved
-			}
-		}
-
-		// Auto-fill location from room data only. Course assignments resolve teachers, not rooms.
-		for i := range lessons {
-			if lessons[i].LocationID != nil {
-				continue
-			}
-			if lessons[i].SubjectID == nil {
-				continue
-			}
-
-			if pref, err := s.repo.ResolveTeacherPreferredLocation(lessons[i].TeacherName, d); err != nil {
-				return nil, err
-			} else if pref != nil {
-				locationID := pref.ID
-				lessons[i].LocationID = &locationID
-				lessons[i].LocationName = pref.Name
-				continue
-			}
-
-			requested, err := s.repo.ResolveRequestedLocation(groupID, *lessons[i].SubjectID, semester)
-			if err != nil {
-				return nil, err
-			}
-			if requested != nil {
-				locationID := requested.ID
-				lessons[i].LocationID = &locationID
-				lessons[i].LocationName = requested.Name
-			}
-		}
-
-		// Sort lessons by pair_number then subgroup
 		sort.SliceStable(lessons, func(i, j int) bool {
 			if lessons[i].PairNumber != lessons[j].PairNumber {
 				return lessons[i].PairNumber < lessons[j].PairNumber
@@ -414,6 +169,22 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 	}
 
 	return out, nil
+}
+
+func lessonFromScheduleLessonView(row ScheduleLessonView) Lesson {
+	return Lesson{
+		PairNumber:   row.PairNumber,
+		SubjectID:    row.SubjectID,
+		SubjectName:  row.SubjectName,
+		LocationID:   row.LocationID,
+		LocationName: row.LocationName,
+		LessonFormat: normalizeLessonFormat(row.LessonFormat),
+		TeacherName:  row.TeacherName,
+		Subgroup:     row.Subgroup,
+		FlowKey:      row.FlowKey,
+		IsChanged:    row.Source == "replacement",
+		Comment:      row.Comment,
+	}
 }
 
 func dayOfWeekForDate(d time.Time, worksAs map[string]int16) int16 {
