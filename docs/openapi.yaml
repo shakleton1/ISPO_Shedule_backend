@@ -1,30 +1,30 @@
 openapi: 3.0.3
 info:
-  title: ISPO Smart Schedule API
+  title: API умного расписания ИСПО
   version: 1.0.0
   description: |
-    Backend API для системы "Умное расписание" (ИСПО СПбПУ).
+    API бэкенда для системы "Умное расписание" (ИСПО СПбПУ).
 
 servers:
   - url: http://localhost:8080
 
 tags:
-  - name: Health
-  - name: Auth
-  - name: Schedule
-  - name: Push
-  - name: Dictionaries
-  - name: Admin
-  - name: Observability
+  - name: Состояние
+  - name: Авторизация
+  - name: Расписание
+  - name: Пуш-уведомления
+  - name: Справочники
+  - name: Администрирование
+  - name: Мониторинг
 
 paths:
   /metrics:
     get:
-      tags: [Observability]
-      summary: Prometheus metrics
+      tags: [Мониторинг]
+      summary: Метрики Prometheus
       responses:
         "200":
-          description: Prometheus metrics text
+          description: Текстовые метрики Prometheus
           content:
             text/plain:
               schema:
@@ -32,11 +32,11 @@ paths:
 
   /openapi.yaml:
     get:
-      tags: [Observability]
-      summary: OpenAPI specification (YAML)
+      tags: [Мониторинг]
+      summary: Спецификация OpenAPI (YAML)
       responses:
         "200":
-          description: OpenAPI YAML
+          description: YAML-файл OpenAPI
           content:
             application/yaml:
               schema:
@@ -44,11 +44,11 @@ paths:
 
   /api/v1/health:
     get:
-      tags: [Health]
-      summary: Service health
+      tags: [Состояние]
+      summary: Состояние сервиса
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -56,11 +56,11 @@ paths:
 
   /api/v1/metrics/health:
     get:
-      tags: [Observability]
-      summary: Metrics/DB health
+      tags: [Мониторинг]
+      summary: Состояние метрик и БД
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -71,8 +71,8 @@ paths:
 
   /api/v1/auth/login:
     post:
-      tags: [Auth]
-      summary: Login and get JWT
+      tags: [Авторизация]
+      summary: Войти и получить JWT
       requestBody:
         required: true
         content:
@@ -81,7 +81,7 @@ paths:
               $ref: "#/components/schemas/LoginRequest"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -93,8 +93,8 @@ paths:
 
   /api/v1/auth/refresh:
     post:
-      tags: [Auth]
-      summary: Rotate refresh token and get new JWT
+      tags: [Авторизация]
+      summary: Обновить токен обновления и получить новый JWT
       requestBody:
         required: true
         content:
@@ -103,7 +103,7 @@ paths:
               $ref: "#/components/schemas/RefreshRequest"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -115,8 +115,8 @@ paths:
 
   /api/v1/auth/logout:
     post:
-      tags: [Auth]
-      summary: Revoke refresh token
+      tags: [Авторизация]
+      summary: Отозвать токен обновления
       requestBody:
         required: true
         content:
@@ -125,19 +125,19 @@ paths:
               $ref: "#/components/schemas/RefreshRequest"
       responses:
         "204":
-          description: No Content
+          description: Нет содержимого
         "400":
           $ref: "#/components/responses/BadRequest"
 
   /api/v1/auth/me:
     get:
-      tags: [Auth]
-      summary: Current user
+      tags: [Авторизация]
+      summary: Текущий пользователь
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -147,8 +147,8 @@ paths:
 
   /api/v1/schedule/current:
     get:
-      tags: [Schedule]
-      summary: Current week schedule
+      tags: [Расписание]
+      summary: Расписание текущей недели
       parameters:
         - in: query
           name: group_id
@@ -157,11 +157,11 @@ paths:
         - in: query
           name: date
           required: false
-          description: "Reference date (YYYY-MM-DD). Default: today (UTC)"
+          description: "Опорная дата (YYYY-MM-DD). По умолчанию: сегодня (UTC)"
           schema: { type: string, format: date }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -171,8 +171,8 @@ paths:
 
   /api/v1/schedule/range:
     get:
-      tags: [Schedule]
-      summary: Schedule for date range
+      tags: [Расписание]
+      summary: Расписание за период
       parameters:
         - in: query
           name: group_id
@@ -188,7 +188,7 @@ paths:
           schema: { type: string, format: date }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -198,11 +198,11 @@ paths:
 
   /api/v1/schedule/version:
     get:
-      tags: [Schedule]
-      summary: Current schedule data version
+      tags: [Расписание]
+      summary: Текущая версия данных расписания
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -211,12 +211,12 @@ paths:
                 properties:
                   data_version:
                     type: string
-                    description: RFC3339 timestamp
+                    description: Метка времени RFC3339
 
   /api/v1/schedule/pdf:
     get:
-      tags: [Schedule]
-      summary: PDF for two weeks (week1+week2)
+      tags: [Расписание]
+      summary: PDF на две недели (неделя 1 + неделя 2)
       parameters:
         - in: query
           name: group_id
@@ -225,11 +225,11 @@ paths:
         - in: query
           name: date_start
           required: true
-          description: Any date in week1 (YYYY-MM-DD)
+          description: Любая дата первой недели (YYYY-MM-DD)
           schema: { type: string, format: date }
       responses:
         "200":
-          description: PDF document
+          description: PDF-документ
           content:
             application/pdf:
               schema:
@@ -240,8 +240,8 @@ paths:
 
   /api/v1/push/register:
     post:
-      tags: [Push]
-      summary: Register device token for group
+      tags: [Пуш-уведомления]
+      summary: Зарегистрировать токен устройства для группы
       requestBody:
         required: true
         content:
@@ -250,14 +250,14 @@ paths:
               $ref: "#/components/schemas/PushRegisterRequest"
       responses:
         "201":
-          description: Registered
+          description: Зарегистрировано
         "400":
           $ref: "#/components/responses/BadRequest"
 
   /api/v1/push/unregister:
     post:
-      tags: [Push]
-      summary: Unregister device token
+      tags: [Пуш-уведомления]
+      summary: Удалить регистрацию токена устройства
       requestBody:
         required: true
         content:
@@ -266,20 +266,20 @@ paths:
               $ref: "#/components/schemas/PushUnregisterRequest"
       responses:
         "204":
-          description: Unregistered
+          description: Регистрация удалена
         "400":
           $ref: "#/components/responses/BadRequest"
 
   /api/v1/groups:
     get:
-      tags: [Dictionaries]
-      summary: List groups (public)
+      tags: [Справочники]
+      summary: Список групп (публично)
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -288,14 +288,14 @@ paths:
 
   /api/v1/subjects:
     get:
-      tags: [Dictionaries]
-      summary: List subjects (public)
+      tags: [Справочники]
+      summary: Список дисциплин (публично)
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -304,14 +304,14 @@ paths:
 
   /api/v1/locations:
     get:
-      tags: [Dictionaries]
-      summary: List locations (public)
+      tags: [Справочники]
+      summary: Список аудиторий (публично)
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -320,14 +320,14 @@ paths:
 
   /api/v1/campuses:
     get:
-      tags: [Dictionaries]
-      summary: List campuses (public)
+      tags: [Справочники]
+      summary: Список корпусов (публично)
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -336,14 +336,14 @@ paths:
 
   /api/v1/location-types:
     get:
-      tags: [Dictionaries]
-      summary: List location types (public)
+      tags: [Справочники]
+      summary: Список типов помещений (публично)
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -352,23 +352,23 @@ paths:
 
   /api/v1/admin/groups:
     get:
-      tags: [Admin]
-      summary: List groups
+      tags: [Администрирование]
+      summary: Список групп
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Group" }
     post:
-      tags: [Admin]
-      summary: Create group (admin only)
+      tags: [Администрирование]
+      summary: Создать группу (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -377,15 +377,15 @@ paths:
             schema: { $ref: "#/components/schemas/Group" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Group" }
 
   /api/v1/admin/groups/{id}:
     put:
-      tags: [Admin]
-      summary: Update group (admin only)
+      tags: [Администрирование]
+      summary: Обновить группу (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -399,13 +399,13 @@ paths:
             schema: { $ref: "#/components/schemas/Group" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Group" }
     delete:
-      tags: [Admin]
-      summary: Delete group (admin only)
+      tags: [Администрирование]
+      summary: Удалить группу (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -413,27 +413,27 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/subjects:
     get:
-      tags: [Admin]
-      summary: List subjects
+      tags: [Администрирование]
+      summary: Список дисциплин
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Subject" }
     post:
-      tags: [Admin]
-      summary: Create subject (admin only)
+      tags: [Администрирование]
+      summary: Создать дисциплину (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -442,15 +442,15 @@ paths:
             schema: { $ref: "#/components/schemas/Subject" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Subject" }
 
   /api/v1/admin/subjects/{id}:
     put:
-      tags: [Admin]
-      summary: Update subject (admin only)
+      tags: [Администрирование]
+      summary: Обновить дисциплину (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -464,13 +464,13 @@ paths:
             schema: { $ref: "#/components/schemas/Subject" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Subject" }
     delete:
-      tags: [Admin]
-      summary: Delete subject (admin only)
+      tags: [Администрирование]
+      summary: Удалить дисциплину (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -478,27 +478,27 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/locations:
     get:
-      tags: [Admin]
-      summary: List locations
+      tags: [Администрирование]
+      summary: Список аудиторий
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Location" }
     post:
-      tags: [Admin]
-      summary: Create location (admin only)
+      tags: [Администрирование]
+      summary: Создать аудиторию (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -507,15 +507,15 @@ paths:
             schema: { $ref: "#/components/schemas/Location" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Location" }
 
   /api/v1/admin/locations/{id}:
     put:
-      tags: [Admin]
-      summary: Update location (admin only)
+      tags: [Администрирование]
+      summary: Обновить аудиторию (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -529,13 +529,13 @@ paths:
             schema: { $ref: "#/components/schemas/Location" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Location" }
     delete:
-      tags: [Admin]
-      summary: Delete location (admin only)
+      tags: [Администрирование]
+      summary: Удалить аудиторию (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -543,27 +543,27 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/campuses:
     get:
-      tags: [Admin]
-      summary: List campuses
+      tags: [Администрирование]
+      summary: Список корпусов
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Campus" }
     post:
-      tags: [Admin]
-      summary: Create campus
+      tags: [Администрирование]
+      summary: Создать корпус
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -572,15 +572,15 @@ paths:
             schema: { $ref: "#/components/schemas/Campus" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Campus" }
 
   /api/v1/admin/campuses/{id}:
     put:
-      tags: [Admin]
-      summary: Update campus
+      tags: [Администрирование]
+      summary: Обновить корпус
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -594,13 +594,13 @@ paths:
             schema: { $ref: "#/components/schemas/Campus" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Campus" }
     delete:
-      tags: [Admin]
-      summary: Delete campus
+      tags: [Администрирование]
+      summary: Удалить корпус
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -608,27 +608,27 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/location-types:
     get:
-      tags: [Admin]
-      summary: List location types
+      tags: [Администрирование]
+      summary: Список типов помещений
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/LocationType" }
     post:
-      tags: [Admin]
-      summary: Create location type
+      tags: [Администрирование]
+      summary: Создать тип помещения
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -637,15 +637,15 @@ paths:
             schema: { $ref: "#/components/schemas/LocationType" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LocationType" }
 
   /api/v1/admin/location-types/{id}:
     put:
-      tags: [Admin]
-      summary: Update location type
+      tags: [Администрирование]
+      summary: Обновить тип помещения
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -659,13 +659,13 @@ paths:
             schema: { $ref: "#/components/schemas/LocationType" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LocationType" }
     delete:
-      tags: [Admin]
-      summary: Delete location type
+      tags: [Администрирование]
+      summary: Удалить тип помещения
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -673,12 +673,12 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/location-type-links:
     get:
-      tags: [Admin]
-      summary: List location/type links
+      tags: [Администрирование]
+      summary: Список связей аудитория-тип
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -689,15 +689,15 @@ paths:
           schema: { type: integer, minimum: 1 }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/LocationTypeLink" }
     post:
-      tags: [Admin]
-      summary: Link location to type
+      tags: [Администрирование]
+      summary: Связать аудиторию с типом
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -706,15 +706,15 @@ paths:
             schema: { $ref: "#/components/schemas/LocationTypeLink" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LocationTypeLink" }
 
   /api/v1/admin/location-type-links/{location_id}/{type_id}:
     delete:
-      tags: [Admin]
-      summary: Delete location/type link
+      tags: [Администрирование]
+      summary: Удалить связь аудитория-тип
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -726,27 +726,27 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/teachers:
     get:
-      tags: [Admin]
-      summary: List teachers
+      tags: [Администрирование]
+      summary: Список преподавателей
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Teacher" }
     post:
-      tags: [Admin]
-      summary: Create teacher (admin only)
+      tags: [Администрирование]
+      summary: Создать преподавателя (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -755,15 +755,15 @@ paths:
             schema: { $ref: "#/components/schemas/Teacher" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Teacher" }
 
   /api/v1/admin/teachers/{id}:
     put:
-      tags: [Admin]
-      summary: Update teacher (admin only)
+      tags: [Администрирование]
+      summary: Обновить преподавателя (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -777,13 +777,13 @@ paths:
             schema: { $ref: "#/components/schemas/Teacher" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Teacher" }
     delete:
-      tags: [Admin]
-      summary: Delete teacher (admin only)
+      tags: [Администрирование]
+      summary: Удалить преподавателя (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -791,12 +791,12 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/teacher-subjects:
     get:
-      tags: [Admin]
-      summary: List teacher-subject links
+      tags: [Администрирование]
+      summary: Список связей преподаватель-дисциплина
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -811,15 +811,15 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/TeacherSubject" }
     post:
-      tags: [Admin]
-      summary: Create teacher-subject link (admin only)
+      tags: [Администрирование]
+      summary: Создать связь преподаватель-дисциплина (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -828,15 +828,15 @@ paths:
             schema: { $ref: "#/components/schemas/TeacherSubject" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TeacherSubject" }
 
   /api/v1/admin/teacher-subjects/{teacher_id}/{subject_id}:
     delete:
-      tags: [Admin]
-      summary: Delete teacher-subject link (admin only)
+      tags: [Администрирование]
+      summary: Удалить связь преподаватель-дисциплина (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -848,12 +848,12 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/course-assignments:
     get:
-      tags: [Admin]
-      summary: List course assignments
+      tags: [Администрирование]
+      summary: Список назначений дисциплин
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -880,15 +880,15 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/CourseAssignment" }
     post:
-      tags: [Admin]
-      summary: Create course assignment (dispatcher/admin)
+      tags: [Администрирование]
+      summary: Создать назначение дисциплины (диспетчер/администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -897,15 +897,15 @@ paths:
             schema: { $ref: "#/components/schemas/CourseAssignment" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CourseAssignment" }
 
   /api/v1/admin/course-assignments/publish:
     post:
-      tags: [Admin]
-      summary: Publish draft course assignments (dispatcher/admin)
+      tags: [Администрирование]
+      summary: Опубликовать черновики назначений дисциплин (диспетчер/администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -917,12 +917,12 @@ paths:
           required: false
           schema: { type: integer, minimum: 1, maximum: 12 }
       responses:
-        "200": { description: OK }
+        "200": { description: Успешно }
 
   /api/v1/admin/course-assignments/discard-drafts:
     post:
-      tags: [Admin]
-      summary: Discard draft course assignments (dispatcher/admin)
+      tags: [Администрирование]
+      summary: Отбросить черновики назначений дисциплин (диспетчер/администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -934,12 +934,12 @@ paths:
           required: false
           schema: { type: integer, minimum: 1, maximum: 12 }
       responses:
-        "200": { description: OK }
+        "200": { description: Успешно }
 
   /api/v1/admin/course-assignments/{id}:
     put:
-      tags: [Admin]
-      summary: Update course assignment (dispatcher/admin)
+      tags: [Администрирование]
+      summary: Обновить назначение дисциплины (диспетчер/администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -953,13 +953,13 @@ paths:
             schema: { $ref: "#/components/schemas/CourseAssignment" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CourseAssignment" }
     delete:
-      tags: [Admin]
-      summary: Delete course assignment (dispatcher/admin)
+      tags: [Администрирование]
+      summary: Удалить назначение дисциплины (диспетчер/администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -967,12 +967,12 @@ paths:
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/teacher-location-preferences:
     get:
-      tags: [Admin]
-      summary: List teacher location preferences
+      tags: [Администрирование]
+      summary: Список предпочтений кабинетов преподавателей
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -985,15 +985,15 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/TeacherLocationPreference" }
     post:
-      tags: [Admin]
-      summary: Create teacher location preference
+      tags: [Администрирование]
+      summary: Создать предпочтение кабинета преподавателя
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -1002,15 +1002,15 @@ paths:
             schema: { $ref: "#/components/schemas/TeacherLocationPreference" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TeacherLocationPreference" }
 
   /api/v1/admin/teacher-location-preferences/{id}:
     put:
-      tags: [Admin]
-      summary: Update teacher location preference
+      tags: [Администрирование]
+      summary: Обновить предпочтение кабинета преподавателя
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1024,13 +1024,13 @@ paths:
             schema: { $ref: "#/components/schemas/TeacherLocationPreference" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TeacherLocationPreference" }
     delete:
-      tags: [Admin]
-      summary: Delete teacher location preference
+      tags: [Администрирование]
+      summary: Удалить предпочтение кабинета преподавателя
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1038,12 +1038,12 @@ paths:
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/room-requests:
     get:
-      tags: [Admin]
-      summary: List room requests
+      tags: [Администрирование]
+      summary: Список заявок на помещение
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -1065,15 +1065,15 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/RoomRequest" }
     post:
-      tags: [Admin]
-      summary: Create room request
+      tags: [Администрирование]
+      summary: Создать заявку на помещение
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -1082,15 +1082,15 @@ paths:
             schema: { $ref: "#/components/schemas/RoomRequest" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/RoomRequest" }
 
   /api/v1/admin/room-requests/{id}:
     put:
-      tags: [Admin]
-      summary: Update room request
+      tags: [Администрирование]
+      summary: Обновить заявку на помещение
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1104,13 +1104,13 @@ paths:
             schema: { $ref: "#/components/schemas/RoomRequest" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/RoomRequest" }
     delete:
-      tags: [Admin]
-      summary: Delete room request
+      tags: [Администрирование]
+      summary: Удалить заявку на помещение
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1118,12 +1118,12 @@ paths:
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/room-assignments:
     get:
-      tags: [Admin]
-      summary: List room assignments
+      tags: [Администрирование]
+      summary: Список назначений кабинетов
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -1139,15 +1139,15 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/RoomAssignment" }
     post:
-      tags: [Admin]
-      summary: Create room assignment
+      tags: [Администрирование]
+      summary: Создать назначение кабинета
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -1156,15 +1156,15 @@ paths:
             schema: { $ref: "#/components/schemas/RoomAssignment" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/RoomAssignment" }
 
   /api/v1/admin/room-assignments/{id}:
     put:
-      tags: [Admin]
-      summary: Update room assignment
+      tags: [Администрирование]
+      summary: Обновить назначение кабинета
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1178,13 +1178,13 @@ paths:
             schema: { $ref: "#/components/schemas/RoomAssignment" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/RoomAssignment" }
     delete:
-      tags: [Admin]
-      summary: Delete room assignment
+      tags: [Администрирование]
+      summary: Удалить назначение кабинета
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1192,16 +1192,16 @@ paths:
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/db/schema:
     get:
-      tags: [Admin]
-      summary: Atlas-style DB schema diagram (Mermaid HTML)
+      tags: [Администрирование]
+      summary: Диаграмма схемы БД в стиле Atlas (Mermaid HTML)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       responses:
         "200":
-          description: HTML page containing Mermaid diagram
+          description: HTML-страница с Mermaid-диаграммой
           content:
             text/html:
               schema:
@@ -1209,23 +1209,23 @@ paths:
 
   /api/v1/admin/specialties:
     get:
-      tags: [Admin]
-      summary: List specialties
+      tags: [Администрирование]
+      summary: Список специальностей
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Specialty" }
     post:
-      tags: [Admin]
-      summary: Create specialty (admin only)
+      tags: [Администрирование]
+      summary: Создать специальность (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -1234,15 +1234,15 @@ paths:
             schema: { $ref: "#/components/schemas/Specialty" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Specialty" }
 
   /api/v1/admin/specialties/{id}:
     put:
-      tags: [Admin]
-      summary: Update specialty (admin only)
+      tags: [Администрирование]
+      summary: Обновить специальность (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1256,13 +1256,13 @@ paths:
             schema: { $ref: "#/components/schemas/Specialty" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Specialty" }
     delete:
-      tags: [Admin]
-      summary: Delete specialty (admin only)
+      tags: [Администрирование]
+      summary: Удалить специальность (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1270,12 +1270,12 @@ paths:
           required: true
           schema: { type: integer, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/curricula:
     get:
-      tags: [Admin]
-      summary: List curricula
+      tags: [Администрирование]
+      summary: Список учебных планов
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -1294,15 +1294,15 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Curriculum" }
     post:
-      tags: [Admin]
-      summary: Create curriculum (admin only)
+      tags: [Администрирование]
+      summary: Создать учебный план (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -1311,15 +1311,15 @@ paths:
             schema: { $ref: "#/components/schemas/Curriculum" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Curriculum" }
 
   /api/v1/admin/curricula/{id}:
     put:
-      tags: [Admin]
-      summary: Update curriculum (admin only)
+      tags: [Администрирование]
+      summary: Обновить учебный план (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1333,13 +1333,13 @@ paths:
             schema: { $ref: "#/components/schemas/Curriculum" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Curriculum" }
     delete:
-      tags: [Admin]
-      summary: Delete curriculum (admin only)
+      tags: [Администрирование]
+      summary: Удалить учебный план (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1347,12 +1347,12 @@ paths:
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/curricula/{id}/calendars:
     get:
-      tags: [Admin]
-      summary: List academic calendars for curriculum
+      tags: [Администрирование]
+      summary: Список академических календарей учебного плана
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1363,15 +1363,15 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/AcademicCalendar" }
     post:
-      tags: [Admin]
-      summary: Create academic calendar for curriculum (admin only)
+      tags: [Администрирование]
+      summary: Создать академический календарь учебного плана (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1385,15 +1385,15 @@ paths:
             schema: { $ref: "#/components/schemas/AcademicCalendar" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AcademicCalendar" }
 
   /api/v1/admin/calendars/{id}:
     delete:
-      tags: [Admin]
-      summary: Delete academic calendar (admin only)
+      tags: [Администрирование]
+      summary: Удалить академический календарь (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1401,12 +1401,12 @@ paths:
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/calendars/{id}/weeks:
     get:
-      tags: [Admin]
-      summary: List academic calendar weeks
+      tags: [Администрирование]
+      summary: Список недель академического календаря
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1417,15 +1417,15 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/AcademicCalendarWeek" }
     put:
-      tags: [Admin]
-      summary: Upsert academic calendar weeks (admin only)
+      tags: [Администрирование]
+      summary: Создать или обновить недели академического календаря (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1441,7 +1441,7 @@ paths:
               items: { $ref: "#/components/schemas/AcademicCalendarWeek" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -1450,8 +1450,8 @@ paths:
 
   /api/v1/admin/curricula/{id}/items:
     get:
-      tags: [Admin]
-      summary: List curriculum items
+      tags: [Администрирование]
+      summary: Список элементов учебного плана
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1461,13 +1461,13 @@ paths:
         - in: query
           name: tree
           required: false
-          description: When true, returns items as a hierarchy (parent_id -> children)
+          description: Если true, возвращает элементы в виде иерархии (parent_id -> children)
           schema: { type: boolean }
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -1478,8 +1478,8 @@ paths:
                     items:
                       { $ref: "#/components/schemas/CurriculumItemTreeNode" }
     post:
-      tags: [Admin]
-      summary: Create curriculum item (admin only)
+      tags: [Администрирование]
+      summary: Создать элемент учебного плана (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1493,15 +1493,15 @@ paths:
             schema: { $ref: "#/components/schemas/CurriculumItem" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CurriculumItem" }
 
   /api/v1/admin/curriculum-items/{id}:
     put:
-      tags: [Admin]
-      summary: Update curriculum item (admin only)
+      tags: [Администрирование]
+      summary: Обновить элемент учебного плана (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1515,13 +1515,13 @@ paths:
             schema: { $ref: "#/components/schemas/CurriculumItem" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CurriculumItem" }
     delete:
-      tags: [Admin]
-      summary: Delete curriculum item (admin only)
+      tags: [Администрирование]
+      summary: Удалить элемент учебного плана (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1529,12 +1529,12 @@ paths:
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/curriculum-items/{id}/allocations:
     get:
-      tags: [Admin]
-      summary: List curriculum item allocations
+      tags: [Администрирование]
+      summary: Список распределений часов элемента учебного плана
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1545,15 +1545,15 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/CurriculumItemAllocation" }
     put:
-      tags: [Admin]
-      summary: Upsert curriculum item allocations (admin only)
+      tags: [Администрирование]
+      summary: Создать или обновить распределения часов элемента учебного плана (только администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1569,7 +1569,7 @@ paths:
               items: { $ref: "#/components/schemas/CurriculumItemAllocation" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -1578,8 +1578,8 @@ paths:
 
   /api/v1/admin/schedule-lessons:
     get:
-      tags: [Admin]
-      summary: List concrete schedule lessons
+      tags: [Администрирование]
+      summary: Список фактических занятий расписания
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -1610,15 +1610,15 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/ScheduleLesson" }
     post:
-      tags: [Admin]
-      summary: Create concrete schedule lesson
+      tags: [Администрирование]
+      summary: Создать фактическое занятие расписания
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -1627,20 +1627,20 @@ paths:
             schema: { $ref: "#/components/schemas/ScheduleLessonRequest" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScheduleLesson" }
         "409":
-          description: Global day constraint or version conflict
+          description: Глобальное ограничение дня или конфликт версии
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorResponse" }
 
   /api/v1/admin/schedule-lessons/{id}:
     patch:
-      tags: [Admin]
-      summary: Update concrete schedule lesson
+      tags: [Администрирование]
+      summary: Обновить фактическое занятие расписания
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1654,18 +1654,18 @@ paths:
             schema: { $ref: "#/components/schemas/ScheduleLessonRequest" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScheduleLesson" }
         "409":
-          description: Global day constraint or version conflict
+          description: Глобальное ограничение дня или конфликт версии
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorResponse" }
     delete:
-      tags: [Admin]
-      summary: Delete concrete schedule lesson
+      tags: [Администрирование]
+      summary: Удалить фактическое занятие расписания
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1673,12 +1673,12 @@ paths:
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/schedule-lessons/{id}/cancel:
     post:
-      tags: [Admin]
-      summary: Cancel concrete schedule lesson
+      tags: [Администрирование]
+      summary: Отменить фактическое занятие расписания
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1696,15 +1696,15 @@ paths:
                 reason: { type: string, nullable: true }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScheduleLesson" }
 
   /api/v1/admin/schedule/explain:
     get:
-      tags: [Admin]
-      summary: Explain how a schedule slot was built
+      tags: [Администрирование]
+      summary: Пояснить, как сформирован слот расписания
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -1725,15 +1725,15 @@ paths:
           schema: { type: integer, nullable: true, enum: [1, 2] }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ExplainSlotResponse" }
 
   /api/v1/admin/schedule/view:
     get:
-      tags: [Admin]
-      summary: Filter schedule view by group, teacher, or location
+      tags: [Администрирование]
+      summary: Отфильтровать расписание по группе, преподавателю или аудитории
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -1768,15 +1768,15 @@ paths:
           schema: { type: string, format: date }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScheduleViewResponse" }
 
   /api/v1/admin/overrides:
     get:
-      tags: [Admin]
-      summary: List applied schedule override operations
+      tags: [Администрирование]
+      summary: Список примененных операций замен расписания
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -1803,7 +1803,7 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -1812,8 +1812,8 @@ paths:
 
   /api/v1/admin/schedule/validate:
     get:
-      tags: [Admin]
-      summary: Validate schedule lessons against curriculum allocations
+      tags: [Администрирование]
+      summary: Проверить занятия расписания по распределению часов учебного плана
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -1830,7 +1830,7 @@ paths:
           schema: { type: string, format: date }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -1838,8 +1838,8 @@ paths:
 
   /api/v1/admin/reports/schedule-overrides:
     get:
-      tags: [Admin]
-      summary: Report applied schedule override operations
+      tags: [Администрирование]
+      summary: Отчет по примененным операциям замен расписания
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -1860,7 +1860,7 @@ paths:
           schema: { type: string, format: date }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -1869,8 +1869,8 @@ paths:
 
   /api/v1/admin/schedule-overrides/apply:
     post:
-      tags: [Admin]
-      summary: Apply add/replace/cancel/restore operation
+      tags: [Администрирование]
+      summary: Применить операцию добавления, замены, отмены или восстановления
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -1879,7 +1879,7 @@ paths:
             schema: { $ref: "#/components/schemas/ApplyScheduleOverrideRequest" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScheduleOverride" }
@@ -1888,8 +1888,8 @@ paths:
 
   /api/v1/admin/day-events:
     get:
-      tags: [Admin]
-      summary: List day events
+      tags: [Администрирование]
+      summary: Список событий дня
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -1904,15 +1904,15 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/ScheduleDayEvent" }
     post:
-      tags: [Admin]
-      summary: Create day event (dispatcher/admin)
+      tags: [Администрирование]
+      summary: Создать событие дня (диспетчер/администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -1921,15 +1921,15 @@ paths:
             schema: { $ref: "#/components/schemas/AdminDayEventRequest" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScheduleDayEvent" }
 
   /api/v1/admin/day-events/{id}:
     put:
-      tags: [Admin]
-      summary: Update day event (dispatcher/admin)
+      tags: [Администрирование]
+      summary: Обновить событие дня (диспетчер/администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1943,13 +1943,13 @@ paths:
             schema: { $ref: "#/components/schemas/AdminDayEventRequest" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScheduleDayEvent" }
     delete:
-      tags: [Admin]
-      summary: Delete day event (dispatcher/admin)
+      tags: [Администрирование]
+      summary: Удалить событие дня (диспетчер/администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -1957,12 +1957,12 @@ paths:
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/overlay:
     post:
-      tags: [Admin]
-      summary: Upsert day overlay (dispatcher/admin)
+      tags: [Администрирование]
+      summary: Создать или обновить плашку дня (диспетчер/администратор)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -1971,15 +1971,15 @@ paths:
             schema: { $ref: "#/components/schemas/AdminOverlayRequest" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScheduleDayOverlay" }
 
   /api/v1/admin/import/curriculum-items/csv:
     post:
-      tags: [Admin]
-      summary: Import curriculum items from CSV (upsert by discipline and semester)
+      tags: [Администрирование]
+      summary: Импортировать элементы учебного плана из CSV (создание/обновление по дисциплине и семестру)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -1993,15 +1993,15 @@ paths:
                 file: { type: string, format: binary }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ImportResponse" }
 
   /api/v1/admin/import/curriculum-items/xlsx:
     post:
-      tags: [Admin]
-      summary: Import curriculum items from XLSX (upsert by discipline and semester)
+      tags: [Администрирование]
+      summary: Импортировать элементы учебного плана из XLSX (создание/обновление по дисциплине и семестру)
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -2015,19 +2015,19 @@ paths:
                 file: { type: string, format: binary }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ImportResponse" }
 
   /api/v1/admin/import/plx-curriculum/xlsx:
     post:
-      tags: [Admin]
-      summary: Import PLX/XLSX curriculum and academic calendar
+      tags: [Администрирование]
+      summary: Импортировать учебный план и академический календарь из PLX/XLSX
       description: >
-        Parses PLX-style workbooks with sheets "План" and "График".
-        Creates or updates specialty, curriculum, curriculum items,
-        semester allocations, subjects and the curriculum academic calendar.
+        Разбирает книги в стиле PLX с листами "План" и "График".
+        Создает или обновляет специальность, учебный план, элементы учебного плана,
+        распределения по семестрам, дисциплины и академический календарь учебного плана.
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -2040,38 +2040,38 @@ paths:
                 file: { type: string, format: binary }
                 specialty_code:
                   type: string
-                  description: Optional; inferred from file name like 09.02.01_24_11.plx.xlsx.
+                  description: Необязательно; определяется из имени файла, например 09.02.01_24_11.plx.xlsx.
                 specialty_name: { type: string }
                 admission_year:
                   type: integer
                   minimum: 2000
                   maximum: 2100
-                  description: Optional; inferred from file name token like _24_.
+                  description: Необязательно; определяется из части имени файла, например _24_.
                 base_grade:
                   type: integer
                   enum: [9, 11]
-                  description: Optional; inferred from file name token like _11.
+                  description: Необязательно; определяется из части имени файла, например _11.
                 variant:
                   type: string
-                  description: Defaults to base_9/base_11 or plx.
+                  description: По умолчанию base_9/base_11 или plx.
                 academic_year_start:
                   type: string
                   format: date
-                  description: Defaults to 2026-09-01.
+                  description: По умолчанию 2026-09-01.
                 replace:
                   type: boolean
-                  description: Defaults to true; clears existing items and same-year calendar for the curriculum.
+                  description: По умолчанию true; очищает существующие элементы и календарь того же года для учебного плана.
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ImportResponse" }
 
   /api/v1/admin/import/study-calendar/csv:
     post:
-      tags: [Admin]
-      summary: Import group study calendar weeks from CSV
+      tags: [Администрирование]
+      summary: Импортировать недели учебного календаря группы из CSV
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -2084,15 +2084,15 @@ paths:
                 file: { type: string, format: binary }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ImportResponse" }
 
   /api/v1/admin/import/study-calendar/xlsx:
     post:
-      tags: [Admin]
-      summary: Import group study calendar weeks from XLSX
+      tags: [Администрирование]
+      summary: Импортировать недели учебного календаря группы из XLSX
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -2105,27 +2105,27 @@ paths:
                 file: { type: string, format: binary }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ImportResponse" }
 
   /api/v1/admin/study-activities:
     get:
-      tags: [Admin]
-      summary: List study activities
+      tags: [Администрирование]
+      summary: Список видов учебной активности
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/StudyActivity" }
     post:
-      tags: [Admin]
-      summary: Create study activity
+      tags: [Администрирование]
+      summary: Создать вид учебной активности
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -2134,15 +2134,15 @@ paths:
             schema: { $ref: "#/components/schemas/StudyActivity" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/StudyActivity" }
 
   /api/v1/admin/study-calendar-weeks:
     get:
-      tags: [Admin]
-      summary: List group study calendar weeks
+      tags: [Администрирование]
+      summary: Список недель учебного календаря группы
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -2153,7 +2153,7 @@ paths:
           schema: { type: integer, minimum: 1, maximum: 60 }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -2162,8 +2162,8 @@ paths:
 
   /api/v1/admin/groups/{id}/study-calendar-weeks:
     put:
-      tags: [Admin]
-      summary: Upsert group study calendar weeks
+      tags: [Администрирование]
+      summary: Создать или обновить недели учебного календаря группы
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -2179,7 +2179,7 @@ paths:
               items: { $ref: "#/components/schemas/StudyCalendarWeekRequest" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -2188,20 +2188,20 @@ paths:
 
   /api/v1/admin/teacher-day-constraints:
     get:
-      tags: [Admin]
-      summary: List teacher day constraints
+      tags: [Администрирование]
+      summary: Список дневных ограничений преподавателей
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/TeacherDayConstraint" }
     post:
-      tags: [Admin]
-      summary: Create teacher day constraint
+      tags: [Администрирование]
+      summary: Создать дневное ограничение преподавателя
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -2210,15 +2210,15 @@ paths:
             schema: { $ref: "#/components/schemas/TeacherDayConstraintRequest" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TeacherDayConstraint" }
 
   /api/v1/admin/calendar-day-constraints:
     get:
-      tags: [Admin]
-      summary: List global calendar day constraints
+      tags: [Администрирование]
+      summary: Список глобальных ограничений календарного дня
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -2237,15 +2237,15 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/CalendarDayConstraint" }
     post:
-      tags: [Admin]
-      summary: Create global calendar day constraint
+      tags: [Администрирование]
+      summary: Создать глобальное ограничение календарного дня
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -2254,15 +2254,15 @@ paths:
             schema: { $ref: "#/components/schemas/CalendarDayConstraintRequest" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CalendarDayConstraint" }
 
   /api/v1/admin/calendar-day-constraints/{id}:
     patch:
-      tags: [Admin]
-      summary: Update global calendar day constraint
+      tags: [Администрирование]
+      summary: Обновить глобальное ограничение календарного дня
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -2276,13 +2276,13 @@ paths:
             schema: { $ref: "#/components/schemas/CalendarDayConstraintRequest" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CalendarDayConstraint" }
     delete:
-      tags: [Admin]
-      summary: Delete global calendar day constraint
+      tags: [Администрирование]
+      summary: Удалить глобальное ограничение календарного дня
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -2290,24 +2290,24 @@ paths:
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/replacements:
     get:
-      tags: [Admin]
-      summary: List replacement journal records
+      tags: [Администрирование]
+      summary: Список записей журнала замен
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/ScheduleReplacement" }
     post:
-      tags: [Admin]
-      summary: Create replacement journal record
+      tags: [Администрирование]
+      summary: Создать запись журнала замен
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -2316,15 +2316,15 @@ paths:
             schema: { $ref: "#/components/schemas/ScheduleReplacementRequest" }
       responses:
         "201":
-          description: Created
+          description: Создано
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScheduleReplacement" }
 
   /api/v1/admin/location-availability/weeks:
     get:
-      tags: [Admin]
-      summary: List weekly location availability
+      tags: [Администрирование]
+      summary: Список недельной доступности аудиторий
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -2337,15 +2337,15 @@ paths:
         - $ref: "#/components/parameters/Offset"
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/LocationWeekAvailability" }
     put:
-      tags: [Admin]
-      summary: Upsert weekly location availability
+      tags: [Администрирование]
+      summary: Создать или обновить недельную доступность аудитории
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: query
@@ -2361,7 +2361,7 @@ paths:
               items: { $ref: "#/components/schemas/LocationWeekAvailabilityRequest" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema:
@@ -2370,8 +2370,8 @@ paths:
 
   /api/v1/admin/location-availability/weeks/{id}:
     delete:
-      tags: [Admin]
-      summary: Delete weekly location availability row
+      tags: [Администрирование]
+      summary: Удалить строку недельной доступности аудитории
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       parameters:
         - in: path
@@ -2379,12 +2379,12 @@ paths:
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
       responses:
-        "204": { description: Deleted }
+        "204": { description: Удалено }
 
   /api/v1/admin/location-availability/autofill:
     post:
-      tags: [Admin]
-      summary: Auto-fill free locations for a group date range
+      tags: [Администрирование]
+      summary: Автоматически заполнить свободные аудитории для группы за период
       security: [{ bearerAuth: [] }, { adminKey: [] }]
       requestBody:
         required: true
@@ -2393,7 +2393,7 @@ paths:
             schema: { $ref: "#/components/schemas/LocationAutofillRequest" }
       responses:
         "200":
-          description: OK
+          description: Успешно
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LocationAutofillResponse" }
@@ -2415,8 +2415,8 @@ components:
       name: limit
       required: false
       description: |
-        Pagination limit. When omitted, pagination is disabled and the endpoint may return the full list.
-        Maximum: 500.
+        Лимит пагинации. Если он не указан, пагинация отключена и метод может вернуть полный список.
+        Максимум: 500.
       schema:
         type: integer
         minimum: 1
@@ -2425,56 +2425,56 @@ components:
       in: query
       name: offset
       required: false
-      description: Pagination offset (0-based). Used only when `limit` is provided.
+      description: Смещение пагинации (с нуля). Используется только если указан `limit`.
       schema:
         type: integer
         minimum: 0
 
   responses:
     BadRequest:
-      description: Bad request
+      description: Неверный запрос
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     Unauthorized:
-      description: Unauthorized
+      description: Не авторизован
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     Forbidden:
-      description: Forbidden
+      description: Доступ запрещен
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     NotFound:
-      description: Not found
+      description: Не найдено
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     Conflict:
-      description: Conflict
+      description: Конфликт
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     MethodNotAllowed:
-      description: Method not allowed
+      description: Метод не разрешен
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     InternalServerError:
-      description: Internal server error
+      description: Внутренняя ошибка сервера
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     ServiceUnavailable:
-      description: Service unavailable
+      description: Сервис недоступен
       content:
         application/json:
           schema:
@@ -2487,13 +2487,13 @@ components:
       properties:
         code:
           type: string
-          description: Stable machine-readable error code
+          description: Стабильный машиночитаемый код ошибки
         field:
           type: string
-          description: Field name related to error (may be empty)
+          description: Имя поля, связанного с ошибкой (может быть пустым)
         message:
           type: string
-          description: Human-readable error message
+          description: Человекочитаемое сообщение об ошибке
 
     HealthResponse:
       type: object
@@ -2596,7 +2596,7 @@ components:
         academic_year_start:
           type: string
           format: date
-          description: Academic year start date (YYYY-MM-DD)
+          description: Дата начала учебного года (YYYY-MM-DD)
         weeks_total: { type: integer }
         notes: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
@@ -2620,7 +2620,7 @@ components:
         week_start_date:
           type: string
           format: date
-          description: Week start date (YYYY-MM-DD)
+          description: Дата начала недели (YYYY-MM-DD)
         activity_code: { type: string }
         activity_name: { type: string, nullable: true }
         is_teaching: { type: boolean }
@@ -3005,7 +3005,7 @@ components:
         replace_virtual:
           type: boolean
           default: true
-          description: Treat virtual/current placeholder rooms as unassigned.
+          description: Считать виртуальные или служебные текущие аудитории неназначенными.
         dry_run: { type: boolean, default: false }
         comment: { type: string, nullable: true }
 
@@ -3394,7 +3394,7 @@ components:
         target_date:
           type: string
           format: date
-          description: Stored as DATE in DB
+          description: Хранится в БД как DATE
         group_id: { type: integer }
         text: { type: string }
         style_preset: { type: string }
@@ -3418,7 +3418,7 @@ components:
         target_date:
           type: string
           format: date
-          description: Stored as DATE in DB
+          description: Хранится в БД как DATE
         group_id: { type: integer }
         event_type:
           type: string
