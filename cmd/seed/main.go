@@ -295,6 +295,7 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	for i := int16(1); i <= 52; i++ {
 		start := acYearStart.AddDate(0, 0, int((i-1)*7))
 		academicWeeks = append(academicWeeks, schedule.AcademicCalendarWeek{
+			CourseNumber:  1,
 			WeekNumber:    i,
 			WeekStartDate: start,
 			ActivityCode:  "TEACHING",
@@ -303,6 +304,18 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		})
 	}
 	if _, err := repo.UpsertAcademicCalendarWeeks(calID, academicWeeks); err != nil {
+		return nil, err
+	}
+	if err := upsertAcademicCalendarDayOverride(db, schedule.AcademicCalendarDayOverride{
+		CalendarID:   calID,
+		CourseNumber: 1,
+		WeekNumber:   4,
+		DayOfWeek:    4,
+		ActivityCode: "TEACHING",
+		ActivityName: ptrString("Учебные занятия"),
+		IsTeaching:   true,
+		Comment:      ptrString("Seed day override inside academic calendar week"),
+	}); err != nil {
 		return nil, err
 	}
 
@@ -959,6 +972,32 @@ func getOrCreateAcademicCalendar(db *gorm.DB, ac schedule.AcademicCalendar) (int
 		return 0, err
 	}
 	return ac.ID, nil
+}
+
+func upsertAcademicCalendarDayOverride(db *gorm.DB, row schedule.AcademicCalendarDayOverride) error {
+	if row.CourseNumber == 0 {
+		row.CourseNumber = 1
+	}
+	return db.Exec(`
+INSERT INTO academic_calendar_day_overrides
+  (calendar_id, course_number, week_number, day_of_week, activity_code, activity_name, is_teaching, comment)
+VALUES
+  (?, ?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT (calendar_id, course_number, week_number, day_of_week)
+DO UPDATE SET
+  activity_code = EXCLUDED.activity_code,
+  activity_name = EXCLUDED.activity_name,
+  is_teaching = EXCLUDED.is_teaching,
+  comment = EXCLUDED.comment`,
+		row.CalendarID,
+		row.CourseNumber,
+		row.WeekNumber,
+		row.DayOfWeek,
+		row.ActivityCode,
+		row.ActivityName,
+		row.IsTeaching,
+		row.Comment,
+	).Error
 }
 
 func getOrCreateGroup(db *gorm.DB, g schedule.Group) (int, error) {

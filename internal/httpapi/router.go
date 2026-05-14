@@ -224,6 +224,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminRead.GET("/curricula", handleAdminListCurricula(deps.Repo))
 				adminRead.GET("/curricula/:id/calendars", handleAdminListAcademicCalendars(deps.Repo))
 				adminRead.GET("/calendars/:id/weeks", handleAdminListAcademicCalendarWeeks(deps.Repo))
+				adminRead.GET("/calendars/:id/day-overrides", handleAdminListAcademicCalendarDayOverrides(deps.Repo))
 				adminRead.GET("/curricula/:id/items", handleAdminListCurriculumItems(deps.Repo))
 				adminRead.GET("/curriculum-items/:id/allocations", handleAdminListCurriculumItemAllocations(deps.Repo))
 
@@ -263,6 +264,10 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminDictWrite.POST("/curricula/:id/calendars", handleAdminCreateAcademicCalendar(deps.Repo))
 				adminDictWrite.DELETE("/calendars/:id", handleAdminDeleteAcademicCalendar(deps.Repo))
 				adminDictWrite.PUT("/calendars/:id/weeks", handleAdminUpsertAcademicCalendarWeeks(deps.Repo))
+				adminDictWrite.POST("/calendars/:id/day-overrides", handleAdminCreateAcademicCalendarDayOverride(deps.Repo))
+				adminDictWrite.PATCH("/academic-calendar-day-overrides/:id", handleAdminUpdateAcademicCalendarDayOverride(deps.Repo))
+				adminDictWrite.PUT("/academic-calendar-day-overrides/:id", handleAdminUpdateAcademicCalendarDayOverride(deps.Repo))
+				adminDictWrite.DELETE("/academic-calendar-day-overrides/:id", handleAdminDeleteAcademicCalendarDayOverride(deps.Repo))
 
 				adminDictWrite.POST("/curricula/:id/items", handleAdminCreateCurriculumItem(deps.Repo))
 				adminDictWrite.PUT("/curriculum-items/:id", handleAdminUpdateCurriculumItem(deps.Repo))

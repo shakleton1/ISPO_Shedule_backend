@@ -226,6 +226,7 @@ func toAcademicCalendarDTO(a schedule.AcademicCalendar) academicCalendarDTO {
 type academicCalendarWeekDTO struct {
 	ID            int64     `json:"id"`
 	CalendarID    int64     `json:"calendar_id"`
+	CourseNumber  int16     `json:"course_number"`
 	WeekNumber    int16     `json:"week_number"`
 	WeekStartDate time.Time `json:"week_start_date"`
 	ActivityCode  string    `json:"activity_code"`
@@ -240,6 +241,7 @@ func toAcademicCalendarWeekDTO(w schedule.AcademicCalendarWeek) academicCalendar
 	return academicCalendarWeekDTO{
 		ID:            w.ID,
 		CalendarID:    w.CalendarID,
+		CourseNumber:  w.CourseNumber,
 		WeekNumber:    w.WeekNumber,
 		WeekStartDate: w.WeekStartDate,
 		ActivityCode:  w.ActivityCode,
@@ -248,6 +250,36 @@ func toAcademicCalendarWeekDTO(w schedule.AcademicCalendarWeek) academicCalendar
 		Comment:       w.Comment,
 		CreatedAt:     w.CreatedAt,
 		UpdatedAt:     w.UpdatedAt,
+	}
+}
+
+type academicCalendarDayOverrideDTO struct {
+	ID           int64     `json:"id"`
+	CalendarID   int64     `json:"calendar_id"`
+	CourseNumber int16     `json:"course_number"`
+	WeekNumber   int16     `json:"week_number"`
+	DayOfWeek    int16     `json:"day_of_week"`
+	ActivityCode string    `json:"activity_code"`
+	ActivityName *string   `json:"activity_name"`
+	IsTeaching   bool      `json:"is_teaching"`
+	Comment      *string   `json:"comment"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+func toAcademicCalendarDayOverrideDTO(row schedule.AcademicCalendarDayOverride) academicCalendarDayOverrideDTO {
+	return academicCalendarDayOverrideDTO{
+		ID:           row.ID,
+		CalendarID:   row.CalendarID,
+		CourseNumber: row.CourseNumber,
+		WeekNumber:   row.WeekNumber,
+		DayOfWeek:    row.DayOfWeek,
+		ActivityCode: row.ActivityCode,
+		ActivityName: row.ActivityName,
+		IsTeaching:   row.IsTeaching,
+		Comment:      row.Comment,
+		CreatedAt:    row.CreatedAt,
+		UpdatedAt:    row.UpdatedAt,
 	}
 }
 

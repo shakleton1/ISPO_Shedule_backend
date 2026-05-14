@@ -1359,6 +1359,14 @@ paths:
           name: id
           required: true
           schema: { type: integer, format: int64, minimum: 1 }
+        - in: query
+          name: course_number
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 6 }
+        - in: query
+          name: week_number
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 60 }
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
@@ -1447,6 +1455,112 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/AcademicCalendarWeek" }
+
+  /api/v1/admin/calendars/{id}/day-overrides:
+    get:
+      tags: [Администрирование]
+      summary: Список дневных уточнений академического календаря
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+        - in: query
+          name: course_number
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 6 }
+        - in: query
+          name: week_number
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 60 }
+        - in: query
+          name: day_of_week
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 7 }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AcademicCalendarDayOverride" }
+    post:
+      tags: [Администрирование]
+      summary: Создать дневное уточнение академического календаря
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AcademicCalendarDayOverrideRequest" }
+      responses:
+        "201":
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcademicCalendarDayOverride" }
+
+  /api/v1/admin/academic-calendar-day-overrides/{id}:
+    patch:
+      tags: [Администрирование]
+      summary: Обновить дневное уточнение академического календаря
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AcademicCalendarDayOverrideRequest" }
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcademicCalendarDayOverride" }
+    put:
+      tags: [Администрирование]
+      summary: Обновить дневное уточнение академического календаря
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AcademicCalendarDayOverrideRequest" }
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcademicCalendarDayOverride" }
+    delete:
+      tags: [Администрирование]
+      summary: Удалить дневное уточнение академического календаря
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Удалено }
 
   /api/v1/admin/curricula/{id}/items:
     get:
@@ -2608,6 +2722,7 @@ components:
         [
           id,
           calendar_id,
+          course_number,
           week_number,
           week_start_date,
           activity_code,
@@ -2616,6 +2731,7 @@ components:
       properties:
         id: { type: integer, format: int64 }
         calendar_id: { type: integer, format: int64 }
+        course_number: { type: integer, minimum: 1, maximum: 6, default: 1 }
         week_number: { type: integer }
         week_start_date:
           type: string
@@ -2627,6 +2743,51 @@ components:
         comment: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+
+    AcademicCalendarDayOverride:
+      type: object
+      required:
+        [
+          id,
+          calendar_id,
+          course_number,
+          week_number,
+          day_of_week,
+          activity_code,
+          is_teaching,
+        ]
+      properties:
+        id: { type: integer, format: int64 }
+        calendar_id: { type: integer, format: int64 }
+        course_number: { type: integer, minimum: 1, maximum: 6 }
+        week_number: { type: integer, minimum: 1, maximum: 60 }
+        day_of_week:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: 1 = понедельник, 7 = воскресенье.
+        activity_code: { type: string }
+        activity_name: { type: string, nullable: true }
+        is_teaching: { type: boolean }
+        comment: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    AcademicCalendarDayOverrideRequest:
+      type: object
+      required: [course_number, week_number, day_of_week, activity_code]
+      properties:
+        course_number: { type: integer, minimum: 1, maximum: 6 }
+        week_number: { type: integer, minimum: 1, maximum: 60 }
+        day_of_week:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: 1 = понедельник, 7 = воскресенье.
+        activity_code: { type: string }
+        activity_name: { type: string, nullable: true }
+        is_teaching: { type: boolean, default: true }
+        comment: { type: string, nullable: true }
 
     CurriculumItem:
       type: object
@@ -3084,6 +3245,17 @@ components:
         is_added: { type: boolean }
         comment: { type: string, nullable: true }
 
+    StudyDayState:
+      type: object
+      required: [activity_code, is_teaching, source]
+      properties:
+        activity_code: { type: string }
+        activity_name: { type: string, nullable: true }
+        is_teaching: { type: boolean }
+        source:
+          type: string
+          enum: [default, academic_week, academic_day_override, study_week]
+
     DaySchedule:
       type: object
       required: [date, day_of_week, week_parity, lessons, events]
@@ -3094,6 +3266,10 @@ components:
           type: string
           enum: [numerator, denominator, both]
         overlay_text: { type: string, nullable: true }
+        study_day_state:
+          allOf:
+            - $ref: "#/components/schemas/StudyDayState"
+          nullable: true
         global_day_constraint:
           allOf:
             - $ref: "#/components/schemas/CalendarDayConstraintView"

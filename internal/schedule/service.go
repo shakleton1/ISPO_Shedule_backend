@@ -48,9 +48,17 @@ type DaySchedule struct {
 	DayOfWeek           int16                      `json:"day_of_week"` // 0=Пн
 	WeekParity          WeekParity                 `json:"week_parity"`
 	OverlayText         *string                    `json:"overlay_text"`
+	StudyDayState       *StudyDayState             `json:"study_day_state,omitempty"`
 	GlobalDayConstraint *CalendarDayConstraintView `json:"global_day_constraint,omitempty"`
 	Events              []DayEvent                 `json:"events"`
 	Lessons             []Lesson                   `json:"lessons"`
+}
+
+type StudyDayState struct {
+	ActivityCode string  `json:"activity_code"`
+	ActivityName *string `json:"activity_name"`
+	IsTeaching   bool    `json:"is_teaching"`
+	Source       string  `json:"source"`
 }
 
 type CalendarDayConstraintView struct {

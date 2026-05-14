@@ -641,39 +641,43 @@ func parsePLXGraphSheet(rows [][]string, admissionYear int16, academicYearStart 
 	if weekHeaderRow < 0 {
 		return nil, []string{"graph week header row not found"}
 	}
-	currentCourse := int(academicYearStart.Year()) - int(admissionYear) + 1
-	if currentCourse < 1 || currentCourse > 6 {
-		return nil, []string{fmt.Sprintf("cannot infer course %d from admission year %d and academic year %d", currentCourse, admissionYear, academicYearStart.Year())}
+	courseRows := findPLXGraphCourseRows(rows)
+	if len(courseRows) == 0 {
+		return nil, []string{"graph course rows I..VI not found"}
 	}
-	courseRow := findPLXGraphCourseRow(rows, currentCourse)
-	if courseRow < 0 {
-		return nil, []string{fmt.Sprintf("graph row for course %d not found", currentCourse)}
-	}
-	weekStart := mondayOfWeekHTTP(academicYearStart)
+
 	weeks := []schedule.AcademicCalendarWeek{}
-	for col := 0; col < len(rows[weekHeaderRow]); col++ {
-		weekNum := parsePLXInt(cell(rows[weekHeaderRow], col))
-		if weekNum <= 0 || weekNum > 60 {
+	for course := 1; course <= 6; course++ {
+		courseRow, ok := courseRows[course]
+		if !ok {
 			continue
 		}
-		symbol := strings.TrimSpace(cell(rows[courseRow], col))
-		code, name, isTeaching := mapPLXGraphActivity(symbol)
-		activityName := name
-		comment := ""
-		if symbol != "" && symbol != "=" {
-			comment = fmt.Sprintf("PLX code: %s", symbol)
+		weekStart := mondayOfWeekHTTP(academicYearStart.AddDate(course-1, 0, 0))
+		for col := 0; col < len(rows[weekHeaderRow]); col++ {
+			weekNum := parsePLXInt(cell(rows[weekHeaderRow], col))
+			if weekNum <= 0 || weekNum > 60 {
+				continue
+			}
+			symbol := strings.TrimSpace(cell(rows[courseRow], col))
+			code, name, isTeaching := mapPLXGraphActivity(symbol)
+			activityName := name
+			comment := ""
+			if symbol != "" && symbol != "=" {
+				comment = fmt.Sprintf("PLX code: %s", symbol)
+			}
+			week := schedule.AcademicCalendarWeek{
+				CourseNumber:  int16(course),
+				WeekNumber:    int16(weekNum),
+				WeekStartDate: weekStart.AddDate(0, 0, (weekNum-1)*7),
+				ActivityCode:  code,
+				ActivityName:  &activityName,
+				IsTeaching:    isTeaching,
+			}
+			if comment != "" {
+				week.Comment = &comment
+			}
+			weeks = append(weeks, week)
 		}
-		week := schedule.AcademicCalendarWeek{
-			WeekNumber:    int16(weekNum),
-			WeekStartDate: weekStart.AddDate(0, 0, (weekNum-1)*7),
-			ActivityCode:  code,
-			ActivityName:  &activityName,
-			IsTeaching:    isTeaching,
-		}
-		if comment != "" {
-			week.Comment = &comment
-		}
-		weeks = append(weeks, week)
 	}
 	if len(weeks) == 0 {
 		warnings = append(warnings, "graph has no week cells")
@@ -703,9 +707,22 @@ func findPLXGraphWeekHeaderRow(rows [][]string) int {
 	return -1
 }
 
+func findPLXGraphCourseRows(rows [][]string) map[int]int {
+	out := map[int]int{}
+	for i, row := range rows {
+		for col := 0; col < len(row) && col < 3; col++ {
+			if course, ok := parsePLXRomanCourse(strings.TrimSpace(row[col])); ok {
+				if _, exists := out[course]; !exists {
+					out[course] = i
+				}
+			}
+		}
+	}
+	return out
+}
+
 func findPLXGraphCourseRow(rows [][]string, course int) int {
-	roman := []string{"", "I", "II", "III", "IV", "V", "VI"}
-	target := roman[course]
+	target := plxRomanCourse(course)
 	for i, row := range rows {
 		for col := 0; col < len(row) && col < 3; col++ {
 			if strings.EqualFold(strings.TrimSpace(row[col]), target) {
@@ -714,6 +731,44 @@ func findPLXGraphCourseRow(rows [][]string, course int) int {
 		}
 	}
 	return -1
+}
+
+func parsePLXRomanCourse(raw string) (int, bool) {
+	switch strings.ToUpper(strings.TrimSpace(raw)) {
+	case "I":
+		return 1, true
+	case "II":
+		return 2, true
+	case "III":
+		return 3, true
+	case "IV":
+		return 4, true
+	case "V":
+		return 5, true
+	case "VI":
+		return 6, true
+	default:
+		return 0, false
+	}
+}
+
+func plxRomanCourse(course int) string {
+	switch course {
+	case 1:
+		return "I"
+	case 2:
+		return "II"
+	case 3:
+		return "III"
+	case 4:
+		return "IV"
+	case 5:
+		return "V"
+	case 6:
+		return "VI"
+	default:
+		return ""
+	}
 }
 
 func mapPLXGraphActivity(symbol string) (string, string, bool) {
@@ -798,7 +853,7 @@ func importPLXCurriculum(repo *schedule.Repository, parsed *plxParsedCurriculum,
 			cal := schedule.AcademicCalendar{
 				CurriculumID:      curriculumID,
 				AcademicYearStart: parsed.AcademicYearStart,
-				WeeksTotal:        int16(len(parsed.CalendarWeeks)),
+				WeeksTotal:        plxWeeksTotal(parsed.CalendarWeeks),
 			}
 			note := "Imported from PLX"
 			cal.Notes = &note
@@ -810,9 +865,10 @@ func importPLXCurriculum(repo *schedule.Repository, parsed *plxParsedCurriculum,
 				week.CalendarID = cal.ID
 				if err := tx.Exec(`
 INSERT INTO academic_calendar_weeks
-  (calendar_id, week_number, week_start_date, activity_code, activity_name, is_teaching, comment)
-VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  (calendar_id, course_number, week_number, week_start_date, activity_code, activity_name, is_teaching, comment)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 					week.CalendarID,
+					week.CourseNumber,
 					week.WeekNumber,
 					dateOnlyHTTP(week.WeekStartDate),
 					week.ActivityCode,
@@ -838,6 +894,19 @@ VALUES (?, ?, ?, ?, ?, ?, ?)`,
 	}
 	result.ScheduleVersion = ver.UTC().Format(time.RFC3339Nano)
 	return result, nil
+}
+
+func plxWeeksTotal(weeks []schedule.AcademicCalendarWeek) int16 {
+	var maxWeek int16
+	for _, week := range weeks {
+		if week.WeekNumber > maxWeek {
+			maxWeek = week.WeekNumber
+		}
+	}
+	if maxWeek <= 0 {
+		return 52
+	}
+	return maxWeek
 }
 
 func upsertPLXSpecialty(tx *gorm.DB, code, name string) (int, error) {

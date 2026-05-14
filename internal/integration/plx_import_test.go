@@ -54,7 +54,7 @@ func TestHandleAdminImportPLXCurriculumXLSX_Success(t *testing.T) {
 	})
 	assert.Equal(t, 3, resp.Items)
 	assert.Equal(t, 2, resp.Allocations)
-	assert.Equal(t, 52, resp.CalendarWeeks)
+	assert.Equal(t, 104, resp.CalendarWeeks)
 	assert.NotZero(t, resp.CurriculumID)
 
 	var items int64
@@ -66,17 +66,22 @@ func TestHandleAdminImportPLXCurriculumXLSX_Success(t *testing.T) {
 	require.NotEmpty(t, calendars)
 	var weeks int64
 	require.NoError(t, db.Model(&schedule.AcademicCalendarWeek{}).Where("calendar_id = ?", calendars[0].ID).Count(&weeks).Error)
-	assert.Equal(t, int64(52), weeks)
+	assert.Equal(t, int64(104), weeks)
 
 	var practiceWeek schedule.AcademicCalendarWeek
-	require.NoError(t, db.Where("calendar_id = ? AND week_number = ?", calendars[0].ID, 2).First(&practiceWeek).Error)
+	require.NoError(t, db.Where("calendar_id = ? AND course_number = ? AND week_number = ?", calendars[0].ID, 1, 2).First(&practiceWeek).Error)
 	assert.Equal(t, "PRACTICE", practiceWeek.ActivityCode)
 	assert.False(t, practiceWeek.IsTeaching)
 
 	var vacationWeek schedule.AcademicCalendarWeek
-	require.NoError(t, db.Where("calendar_id = ? AND week_number = ?", calendars[0].ID, 4).First(&vacationWeek).Error)
+	require.NoError(t, db.Where("calendar_id = ? AND course_number = ? AND week_number = ?", calendars[0].ID, 1, 4).First(&vacationWeek).Error)
 	assert.Equal(t, "VACATION", vacationWeek.ActivityCode)
 	assert.False(t, vacationWeek.IsTeaching)
+
+	var secondCourseWeek schedule.AcademicCalendarWeek
+	require.NoError(t, db.Where("calendar_id = ? AND course_number = ? AND week_number = ?", calendars[0].ID, 2, 2).First(&secondCourseWeek).Error)
+	assert.Equal(t, "PRACTICE", secondCourseWeek.ActivityCode)
+	assert.False(t, secondCourseWeek.IsTeaching)
 }
 
 func multipartXLSXForIntegration(t *testing.T, field, filename string, f *excelize.File) (*bytes.Buffer, string) {
@@ -137,5 +142,8 @@ func newPLXWorkbookForIntegration(t *testing.T) *excelize.File {
 	_ = f.SetCellValue(graph, "C13", "У")
 	_ = f.SetCellValue(graph, "D13", "Э")
 	_ = f.SetCellValue(graph, "E13", "К")
+	_ = f.SetCellValue(graph, "A14", "II")
+	_ = f.SetCellValue(graph, "B14", "=")
+	_ = f.SetCellValue(graph, "C14", "ПП")
 	return f
 }

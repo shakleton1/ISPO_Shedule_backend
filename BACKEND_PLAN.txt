@@ -1147,3 +1147,19 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
 [x] Добавить confirm_global_day_constraint в ScheduleLessonRequest и ApplyScheduleOverrideRequest отдельно от confirm_constraints преподавателя.
 [x] Добавить seed-примеры: blocked праздник, warning мероприятие с подтверждением, info пометка.
 [x] Тесты: repository CRUD/list/validation, schedule response с global_day_constraint, create lesson blocked/warning, override blocked/warning.
+
+17) Двухуровневый учебный календарь по курсам и дням
+[x] Добавить course_number в academic_calendar_weeks, чтобы один учебный план хранил график I-VI курсов.
+    Где: db/migrations/20260514170000_academic_calendar_courses_day_overrides.sql, internal/schedule/models.go, repository_curricula.go.
+[x] Добавить academic_calendar_day_overrides для дневных уточнений внутри недели учебного плана.
+    Где: новая таблица, модель AcademicCalendarDayOverride, repository CRUD.
+[x] Добавить admin API для дневных уточнений: GET/POST /admin/calendars/:id/day-overrides, PATCH/PUT/DELETE /admin/academic-calendar-day-overrides/:id.
+    Где: handlers_curricula.go, router.go, dto.go, docs/openapi.yaml.
+[x] Расширить GET /admin/calendars/:id/weeks фильтрами course_number и week_number.
+[x] Переделать PLX "График" с одного currentCourse на импорт всех строк курсов I-VI.
+    Правило: week_start_date для курса N считается от academic_year_start + (N-1) год.
+[x] Добавить study_day_state в публичный DaySchedule.
+    Приоритет сейчас: academic_calendar_day_overrides -> study_calendar_weeks -> academic_calendar_weeks -> default; global_day_constraint остается отдельным слоем поверх.
+[x] Добавить validation warning study_calendar_non_teaching_day, если фактическая пара стоит на неучебный день учебного календаря.
+[x] Обновить cmd/seed: academic_calendar_weeks заполняются с course_number, добавлен пример academic_calendar_day_overrides.
+[x] Тесты: PLX парсит несколько курсов, repository/handler для academic_calendar_day_overrides, schedule response показывает study_day_state.

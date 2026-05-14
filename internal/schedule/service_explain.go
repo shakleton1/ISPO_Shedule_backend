@@ -47,14 +47,20 @@ func (s *Service) ExplainSlot(groupID int, date time.Time, pairNumber int16, sub
 	parity := s.weekParityForDate(date)
 
 	nonTeaching := false
-	teachingWeeks, err := s.repo.ListTeachingWeeksForGroupBetween(groupID, date, date)
+	studyStates, err := s.repo.ListStudyDayStatesForGroupBetween(groupID, date, date)
 	if err != nil {
 		return nil, err
 	}
+	dayKey := dateOnly(date).Format("2006-01-02")
 	weekKey := mondayOfWeek(date).Format("2006-01-02")
-	if v, ok := teachingWeeks[weekKey]; ok && !v {
-		nonTeaching = true
+	studyState := defaultStudyDayState()
+	if state, ok := studyStates[weekKey]; ok {
+		studyState = state
 	}
+	if state, ok := studyStates[dayKey]; ok && state.Source == "academic_day_override" {
+		studyState = state
+	}
+	nonTeaching = !studyState.IsTeaching
 
 	semester := inferSemesterForDate(date, group.Course)
 	week, err := s.GetRange(groupID, dateOnly(date), dateOnly(date))

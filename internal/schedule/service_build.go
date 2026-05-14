@@ -108,7 +108,8 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 		})
 	}
 
-	if _, err := s.repo.ListTeachingWeeksForGroupBetween(groupID, startDate, endDate); err != nil {
+	studyStates, err := s.repo.ListStudyDayStatesForGroupBetween(groupID, startDate, endDate)
+	if err != nil {
 		return nil, err
 	}
 
@@ -168,6 +169,15 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 			overlayPtr = &t
 		}
 
+		studyState := defaultStudyDayState()
+		weekKey := mondayOfWeek(d).Format("2006-01-02")
+		if state, ok := studyStates[weekKey]; ok {
+			studyState = state
+		}
+		if state, ok := studyStates[dayKey]; ok && state.Source == "academic_day_override" {
+			studyState = state
+		}
+
 		dEvents := eventsByDay[dayKey]
 		if dEvents == nil {
 			dEvents = []DayEvent{}
@@ -184,6 +194,7 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 			DayOfWeek:           dayOfWeek,
 			WeekParity:          parity,
 			OverlayText:         overlayPtr,
+			StudyDayState:       &studyState,
 			GlobalDayConstraint: globalConstraint,
 			Events:              dEvents,
 			Lessons:             lessons,

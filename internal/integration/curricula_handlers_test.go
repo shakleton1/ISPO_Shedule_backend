@@ -249,6 +249,52 @@ func TestHandleAdminUpsertAcademicCalendarWeeks_Weeks(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "\"week_number\":1")
 }
 
+func TestHandleAdminAcademicCalendarDayOverrides(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	gin.SetMode(gin.TestMode)
+
+	db := getTestDB(t)
+	repo := schedule.NewRepository(db)
+	admin := makeAdminForCurriculaTests(t, db)
+	defer db.Where("id = ?", admin.ID).Delete(&auth.User{})
+
+	spec := &schedule.Specialty{Code: testSpecialtyCode("DO"), Name: "Day Override Spec"}
+	require.NoError(t, db.Create(spec).Error)
+	defer db.Where("id = ?", spec.ID).Delete(&schedule.Specialty{})
+
+	curr := &schedule.Curriculum{SpecialtyID: spec.ID, AdmissionYear: 2024, Variant: "v", Title: "Curr", IsActive: true}
+	require.NoError(t, db.Create(curr).Error)
+	defer db.Exec("DELETE FROM curricula WHERE id = ?", curr.ID)
+
+	ac := &schedule.AcademicCalendar{CurriculumID: curr.ID, AcademicYearStart: time.Date(2025, 9, 1, 0, 0, 0, 0, time.UTC), WeeksTotal: 52}
+	require.NoError(t, db.Create(ac).Error)
+	defer db.Where("id = ?", ac.ID).Delete(&schedule.AcademicCalendar{})
+
+	create := httpapi.HandleAdminCreateAcademicCalendarDayOverrideForTest(repo)
+	body := `{"course_number":1,"week_number":4,"day_of_week":4,"activity_code":"TEACHING","activity_name":"Учебные занятия","is_teaching":true}`
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = []gin.Param{{Key: "id", Value: strconv.FormatInt(ac.ID, 10)}}
+	c.Request = httptest.NewRequest(http.MethodPost, "/api/v1/admin/calendars/"+strconv.FormatInt(ac.ID, 10)+"/day-overrides", bytes.NewReader([]byte(body)))
+	c.Request.Header.Set("Content-Type", "application/json")
+	c.Set("auth.user", admin)
+	create(c)
+	require.Equal(t, http.StatusCreated, w.Code, w.Body.String())
+	assert.Contains(t, w.Body.String(), `"day_of_week":4`)
+
+	list := httpapi.HandleAdminListAcademicCalendarDayOverridesForTest(repo)
+	w = httptest.NewRecorder()
+	c, _ = gin.CreateTestContext(w)
+	c.Params = []gin.Param{{Key: "id", Value: strconv.FormatInt(ac.ID, 10)}}
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/v1/admin/calendars/"+strconv.FormatInt(ac.ID, 10)+"/day-overrides?course_number=1", nil)
+	c.Set("auth.user", admin)
+	list(c)
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.Contains(t, w.Body.String(), `"activity_code":"TEACHING"`)
+}
+
 func TestHandleAdminListCurriculumItems_Items(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")

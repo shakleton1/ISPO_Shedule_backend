@@ -62,6 +62,10 @@ func cloneWeekScheduleResponse(in WeekScheduleResponse) WeekScheduleResponse {
 
 func cloneDaySchedule(in DaySchedule) DaySchedule {
 	out := in
+	if in.StudyDayState != nil {
+		v := *in.StudyDayState
+		out.StudyDayState = &v
+	}
 	if in.GlobalDayConstraint != nil {
 		v := *in.GlobalDayConstraint
 		out.GlobalDayConstraint = &v

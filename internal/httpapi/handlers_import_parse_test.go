@@ -320,8 +320,11 @@ func TestParsePLXCurriculumXLSX_Basic(t *testing.T) {
 	if discipline.Allocations[1].Semester != 2 || discipline.Allocations[1].AssessmentType == nil || *discipline.Allocations[1].AssessmentType != "GRADED_CREDIT" {
 		t.Fatalf("unexpected semester 2 allocation: %+v", discipline.Allocations[1])
 	}
-	if len(parsed.CalendarWeeks) != 52 {
-		t.Fatalf("expected 52 calendar weeks, got %d", len(parsed.CalendarWeeks))
+	if len(parsed.CalendarWeeks) != 104 {
+		t.Fatalf("expected 104 calendar weeks, got %d", len(parsed.CalendarWeeks))
+	}
+	if parsed.CalendarWeeks[0].CourseNumber != 1 || parsed.CalendarWeeks[52].CourseNumber != 2 {
+		t.Fatalf("expected course 1 and 2 calendar rows, got week0=%+v week52=%+v", parsed.CalendarWeeks[0], parsed.CalendarWeeks[52])
 	}
 	if parsed.CalendarWeeks[1].ActivityCode != "PRACTICE" || parsed.CalendarWeeks[1].IsTeaching {
 		t.Fatalf("unexpected week 2 calendar cell: %+v", parsed.CalendarWeeks[1])
@@ -473,6 +476,9 @@ func newPLXTestWorkbook(t *testing.T) *excelize.File {
 	_ = f.SetCellValue(graph, "C13", "У")
 	_ = f.SetCellValue(graph, "D13", "Э")
 	_ = f.SetCellValue(graph, "E13", "К")
+	_ = f.SetCellValue(graph, "A14", "II")
+	_ = f.SetCellValue(graph, "B14", "=")
+	_ = f.SetCellValue(graph, "C14", "ПП")
 	return f
 }
 

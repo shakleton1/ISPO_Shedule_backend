@@ -90,13 +90,39 @@ func TestRepositoryCurricula_AcademicCalendarsAndWeeks(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, calendars)
 
-	weeks, err := repo.UpsertAcademicCalendarWeeks(ac.ID, []schedule.AcademicCalendarWeek{{WeekNumber: 1, WeekStartDate: time.Date(2025, 9, 1, 0, 0, 0, 0, time.UTC), ActivityCode: "EDU", IsTeaching: true}})
+	weeks, err := repo.UpsertAcademicCalendarWeeks(ac.ID, []schedule.AcademicCalendarWeek{
+		{CourseNumber: 1, WeekNumber: 1, WeekStartDate: time.Date(2025, 9, 1, 0, 0, 0, 0, time.UTC), ActivityCode: "EDU", IsTeaching: true},
+		{CourseNumber: 2, WeekNumber: 1, WeekStartDate: time.Date(2026, 8, 31, 0, 0, 0, 0, time.UTC), ActivityCode: "PRACTICE", IsTeaching: false},
+	})
 	require.NoError(t, err)
 	require.NotEmpty(t, weeks)
 
 	listedWeeks, err := repo.ListAcademicCalendarWeeks(ac.ID)
 	require.NoError(t, err)
-	assert.NotEmpty(t, listedWeeks)
+	require.Len(t, listedWeeks, 2)
+	assert.Equal(t, int16(1), listedWeeks[0].CourseNumber)
+	assert.Equal(t, int16(2), listedWeeks[1].CourseNumber)
+
+	course2 := int16(2)
+	filteredWeeks, err := repo.ListAcademicCalendarWeeksFiltered(ac.ID, schedule.AcademicCalendarWeekFilters{CourseNumber: &course2})
+	require.NoError(t, err)
+	require.Len(t, filteredWeeks, 1)
+	assert.Equal(t, "PRACTICE", filteredWeeks[0].ActivityCode)
+
+	override := &schedule.AcademicCalendarDayOverride{
+		CalendarID:   ac.ID,
+		CourseNumber: 2,
+		WeekNumber:   1,
+		DayOfWeek:    4,
+		ActivityCode: "TEACHING",
+		ActivityName: ptrString("Учебные занятия"),
+		IsTeaching:   true,
+	}
+	require.NoError(t, repo.CreateAcademicCalendarDayOverride(override))
+	overrides, err := repo.ListAcademicCalendarDayOverrides(ac.ID, schedule.AcademicCalendarDayOverrideFilters{CourseNumber: &course2})
+	require.NoError(t, err)
+	require.Len(t, overrides, 1)
+	assert.Equal(t, int16(4), overrides[0].DayOfWeek)
 
 	require.NoError(t, repo.DeleteAcademicCalendar(ac.ID))
 }

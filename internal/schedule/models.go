@@ -246,6 +246,7 @@ type AcademicCalendar struct {
 type AcademicCalendarWeek struct {
 	ID            int64     `gorm:"primaryKey" json:"id"`
 	CalendarID    int64     `gorm:"not null" json:"calendar_id"`
+	CourseNumber  int16     `gorm:"not null;default:1" json:"course_number"`
 	WeekNumber    int16     `gorm:"not null" json:"week_number"`
 	WeekStartDate time.Time `gorm:"type:date;not null" json:"week_start_date"`
 	ActivityCode  string    `gorm:"size:10;not null" json:"activity_code"`
@@ -254,6 +255,20 @@ type AcademicCalendarWeek struct {
 	Comment       *string   `json:"comment"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type AcademicCalendarDayOverride struct {
+	ID           int64     `gorm:"primaryKey" json:"id"`
+	CalendarID   int64     `gorm:"not null" json:"calendar_id"`
+	CourseNumber int16     `gorm:"not null" json:"course_number"`
+	WeekNumber   int16     `gorm:"not null" json:"week_number"`
+	DayOfWeek    int16     `gorm:"not null" json:"day_of_week"`
+	ActivityCode string    `gorm:"size:50;not null" json:"activity_code"`
+	ActivityName *string   `gorm:"size:200" json:"activity_name"`
+	IsTeaching   bool      `gorm:"not null;default:true" json:"is_teaching"`
+	Comment      *string   `json:"comment"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type CurriculumItem struct {

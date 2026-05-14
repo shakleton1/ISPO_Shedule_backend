@@ -63,6 +63,33 @@ func (s *Service) ValidateScheduleRange(groupID int, startDate, endDate time.Tim
 		return nil, err
 	}
 	resp.Warnings = append(resp.Warnings, validateScheduleBusinessRules(days, *group, locationMeta)...)
+	for _, day := range days {
+		if day.StudyDayState == nil || day.StudyDayState.IsTeaching {
+			continue
+		}
+		for _, l := range day.Lessons {
+			subjectID := 0
+			if l.SubjectID != nil {
+				subjectID = *l.SubjectID
+			}
+			sem := int16(0)
+			if d, err := time.Parse("2006-01-02", day.Date); err == nil {
+				if inferred := inferSemesterForDate(d, group.Course); inferred != nil {
+					sem = *inferred
+				}
+			}
+			resp.Warnings = append(resp.Warnings, ScheduleValidationWarning{
+				Code:        "study_calendar_non_teaching_day",
+				Date:        day.Date,
+				PairNumber:  l.PairNumber,
+				Subgroup:    l.Subgroup,
+				SubjectID:   subjectID,
+				SubjectName: l.SubjectName,
+				Semester:    sem,
+				Message:     "lesson is scheduled on non-teaching study calendar day (" + day.StudyDayState.Source + ": " + day.StudyDayState.ActivityCode + ")",
+			})
+		}
+	}
 
 	locationOccupancyWarnings, err := s.validateLocationOccupancySchedule(groupID, *group, startDate, endDate, days)
 	if err != nil {

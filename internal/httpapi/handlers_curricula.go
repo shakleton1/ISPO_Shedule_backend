@@ -64,6 +64,16 @@ func HandleAdminUpsertAcademicCalendarWeeksForTest(repo *schedule.Repository) gi
 	return handleAdminUpsertAcademicCalendarWeeks(repo)
 }
 
+// HandleAdminListAcademicCalendarDayOverridesForTest exports handleAdminListAcademicCalendarDayOverrides for integration tests
+func HandleAdminListAcademicCalendarDayOverridesForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminListAcademicCalendarDayOverrides(repo)
+}
+
+// HandleAdminCreateAcademicCalendarDayOverrideForTest exports handleAdminCreateAcademicCalendarDayOverride for integration tests
+func HandleAdminCreateAcademicCalendarDayOverrideForTest(repo *schedule.Repository) gin.HandlerFunc {
+	return handleAdminCreateAcademicCalendarDayOverride(repo)
+}
+
 // HandleAdminListCurriculumItemsForTest exports handleAdminListCurriculumItems for integration tests
 func HandleAdminListCurriculumItemsForTest(repo *schedule.Repository) gin.HandlerFunc {
 	return handleAdminListCurriculumItems(repo)
@@ -386,11 +396,15 @@ func handleAdminListAcademicCalendarWeeks(repo *schedule.Repository) gin.Handler
 			writeValidationError(c, "id", "invalid id")
 			return
 		}
+		filters, ok := academicCalendarWeekFiltersFromQuery(c)
+		if !ok {
+			return
+		}
 		var rows []schedule.AcademicCalendarWeek
 		if p.Limit != nil {
-			rows, err = repo.ListAcademicCalendarWeeksPaged(id, p.Limit, p.Offset)
+			rows, err = repo.ListAcademicCalendarWeeksPagedFiltered(id, filters, p.Limit, p.Offset)
 		} else {
-			rows, err = repo.ListAcademicCalendarWeeks(id)
+			rows, err = repo.ListAcademicCalendarWeeksFiltered(id, filters)
 		}
 		if err != nil {
 			writeDBError(c, err)
@@ -402,6 +416,29 @@ func handleAdminListAcademicCalendarWeeks(repo *schedule.Repository) gin.Handler
 		}
 		c.JSON(http.StatusOK, out)
 	}
+}
+
+func academicCalendarWeekFiltersFromQuery(c *gin.Context) (schedule.AcademicCalendarWeekFilters, bool) {
+	var filters schedule.AcademicCalendarWeekFilters
+	if v := c.Query("course_number"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 || n > 6 {
+			writeValidationError(c, "course_number", "course_number must be 1..6")
+			return filters, false
+		}
+		vv := int16(n)
+		filters.CourseNumber = &vv
+	}
+	if v := c.Query("week_number"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 || n > 60 {
+			writeValidationError(c, "week_number", "week_number must be 1..60")
+			return filters, false
+		}
+		vv := int16(n)
+		filters.WeekNumber = &vv
+	}
+	return filters, true
 }
 
 func handleAdminUpsertAcademicCalendarWeeks(repo *schedule.Repository) gin.HandlerFunc {
@@ -428,6 +465,167 @@ func handleAdminUpsertAcademicCalendarWeeks(repo *schedule.Repository) gin.Handl
 			out = append(out, toAcademicCalendarWeekDTO(r))
 		}
 		c.JSON(http.StatusOK, out)
+	}
+}
+
+type academicCalendarDayOverrideReq struct {
+	CourseNumber int16   `json:"course_number"`
+	WeekNumber   int16   `json:"week_number"`
+	DayOfWeek    int16   `json:"day_of_week"`
+	ActivityCode string  `json:"activity_code"`
+	ActivityName *string `json:"activity_name"`
+	IsTeaching   *bool   `json:"is_teaching"`
+	Comment      *string `json:"comment"`
+}
+
+func handleAdminListAcademicCalendarDayOverrides(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		p, ok := parseLimitOffset(c, nil, 500)
+		if !ok {
+			return
+		}
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			writeValidationError(c, "id", "invalid id")
+			return
+		}
+		filters, ok := academicCalendarDayOverrideFiltersFromQuery(c)
+		if !ok {
+			return
+		}
+		var rows []schedule.AcademicCalendarDayOverride
+		if p.Limit != nil {
+			rows, err = repo.ListAcademicCalendarDayOverridesPaged(id, filters, p.Limit, p.Offset)
+		} else {
+			rows, err = repo.ListAcademicCalendarDayOverrides(id, filters)
+		}
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		out := make([]academicCalendarDayOverrideDTO, 0, len(rows))
+		for _, row := range rows {
+			out = append(out, toAcademicCalendarDayOverrideDTO(row))
+		}
+		c.JSON(http.StatusOK, out)
+	}
+}
+
+func academicCalendarDayOverrideFiltersFromQuery(c *gin.Context) (schedule.AcademicCalendarDayOverrideFilters, bool) {
+	var filters schedule.AcademicCalendarDayOverrideFilters
+	if v := c.Query("course_number"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 || n > 6 {
+			writeValidationError(c, "course_number", "course_number must be 1..6")
+			return filters, false
+		}
+		vv := int16(n)
+		filters.CourseNumber = &vv
+	}
+	if v := c.Query("week_number"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 || n > 60 {
+			writeValidationError(c, "week_number", "week_number must be 1..60")
+			return filters, false
+		}
+		vv := int16(n)
+		filters.WeekNumber = &vv
+	}
+	if v := c.Query("day_of_week"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 || n > 7 {
+			writeValidationError(c, "day_of_week", "day_of_week must be 1..7")
+			return filters, false
+		}
+		vv := int16(n)
+		filters.DayOfWeek = &vv
+	}
+	return filters, true
+}
+
+func handleAdminCreateAcademicCalendarDayOverride(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		calendarID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			writeValidationError(c, "id", "invalid id")
+			return
+		}
+		var req academicCalendarDayOverrideReq
+		if err := c.ShouldBindJSON(&req); err != nil {
+			writeInvalidJSON(c)
+			return
+		}
+		row := academicCalendarDayOverrideFromRequest(calendarID, req)
+		if err := repo.CreateAcademicCalendarDayOverride(row); err != nil {
+			writeDBError(c, err)
+			return
+		}
+		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "create", "academic_calendar_day_overrides", strconv.FormatInt(row.ID, 10), row)
+		c.JSON(http.StatusCreated, toAcademicCalendarDayOverrideDTO(*row))
+	}
+}
+
+func handleAdminUpdateAcademicCalendarDayOverride(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			writeValidationError(c, "id", "invalid id")
+			return
+		}
+		var existing schedule.AcademicCalendarDayOverride
+		if err := repo.DB().First(&existing, id).Error; err != nil {
+			writeDBError(c, err)
+			return
+		}
+		var req academicCalendarDayOverrideReq
+		if err := c.ShouldBindJSON(&req); err != nil {
+			writeInvalidJSON(c)
+			return
+		}
+		patch := academicCalendarDayOverrideFromRequest(existing.CalendarID, req)
+		row, err := repo.UpdateAcademicCalendarDayOverride(id, patch)
+		if err != nil {
+			writeDBError(c, err)
+			return
+		}
+		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "update", "academic_calendar_day_overrides", strconv.FormatInt(id, 10), row)
+		c.JSON(http.StatusOK, toAcademicCalendarDayOverrideDTO(*row))
+	}
+}
+
+func handleAdminDeleteAcademicCalendarDayOverride(repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			writeValidationError(c, "id", "invalid id")
+			return
+		}
+		if err := repo.DeleteAcademicCalendarDayOverride(id); err != nil {
+			writeDBError(c, err)
+			return
+		}
+		_ = repo.BumpScheduleVersion()
+		writeAudit(c, repo, "delete", "academic_calendar_day_overrides", strconv.FormatInt(id, 10), nil)
+		c.Writer.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func academicCalendarDayOverrideFromRequest(calendarID int64, req academicCalendarDayOverrideReq) *schedule.AcademicCalendarDayOverride {
+	isTeaching := true
+	if req.IsTeaching != nil {
+		isTeaching = *req.IsTeaching
+	}
+	return &schedule.AcademicCalendarDayOverride{
+		CalendarID:   calendarID,
+		CourseNumber: req.CourseNumber,
+		WeekNumber:   req.WeekNumber,
+		DayOfWeek:    req.DayOfWeek,
+		ActivityCode: req.ActivityCode,
+		ActivityName: req.ActivityName,
+		IsTeaching:   isTeaching,
+		Comment:      req.Comment,
 	}
 }
 
