@@ -425,6 +425,34 @@ func toScheduleDayOverlayDTO(o schedule.ScheduleDayOverlay) scheduleDayOverlayDT
 	}
 }
 
+type calendarDayConstraintDTO struct {
+	ID                   int64   `json:"id"`
+	TargetDate           string  `json:"target_date"`
+	Title                string  `json:"title"`
+	Reason               *string `json:"reason"`
+	ConstraintType       string  `json:"constraint_type"`
+	AffectsLessons       bool    `json:"affects_lessons"`
+	RequiresConfirmation bool    `json:"requires_confirmation"`
+	StylePreset          string  `json:"style_preset"`
+	CreatedAt            string  `json:"created_at"`
+	UpdatedAt            string  `json:"updated_at"`
+}
+
+func toCalendarDayConstraintDTO(row schedule.CalendarDayConstraint) calendarDayConstraintDTO {
+	return calendarDayConstraintDTO{
+		ID:                   row.ID,
+		TargetDate:           row.TargetDate.Format("2006-01-02"),
+		Title:                row.Title,
+		Reason:               row.Reason,
+		ConstraintType:       row.ConstraintType,
+		AffectsLessons:       row.AffectsLessons,
+		RequiresConfirmation: row.RequiresConfirmation,
+		StylePreset:          row.StylePreset,
+		CreatedAt:            row.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:            row.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
 type scheduleDayEventDTO struct {
 	ID         int64     `json:"id"`
 	TargetDate time.Time `json:"target_date"`

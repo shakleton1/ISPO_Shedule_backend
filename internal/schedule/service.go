@@ -44,12 +44,21 @@ type Lesson struct {
 }
 
 type DaySchedule struct {
-	Date        string     `json:"date"`        // YYYY-MM-DD
-	DayOfWeek   int16      `json:"day_of_week"` // 0=Пн
-	WeekParity  WeekParity `json:"week_parity"`
-	OverlayText *string    `json:"overlay_text"`
-	Events      []DayEvent `json:"events"`
-	Lessons     []Lesson   `json:"lessons"`
+	Date                string                     `json:"date"`        // YYYY-MM-DD
+	DayOfWeek           int16                      `json:"day_of_week"` // 0=Пн
+	WeekParity          WeekParity                 `json:"week_parity"`
+	OverlayText         *string                    `json:"overlay_text"`
+	GlobalDayConstraint *CalendarDayConstraintView `json:"global_day_constraint,omitempty"`
+	Events              []DayEvent                 `json:"events"`
+	Lessons             []Lesson                   `json:"lessons"`
+}
+
+type CalendarDayConstraintView struct {
+	ID             int64   `json:"id"`
+	Title          string  `json:"title"`
+	Reason         *string `json:"reason"`
+	ConstraintType string  `json:"constraint_type"`
+	StylePreset    string  `json:"style_preset"`
 }
 
 type DayEvent struct {

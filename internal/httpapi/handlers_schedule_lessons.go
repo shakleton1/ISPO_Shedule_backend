@@ -14,35 +14,37 @@ import (
 )
 
 type adminScheduleLessonRequest struct {
-	GroupID            int                   `json:"group_id"`
-	LessonDate         string                `json:"lesson_date"`
-	PairNumber         int16                 `json:"pair_number"`
-	Subgroup           *int16                `json:"subgroup"`
-	SubjectID          *int                  `json:"subject_id"`
-	TeacherID          *int                  `json:"teacher_id"`
-	LessonFormat       string                `json:"lesson_format"`
-	Status             schedule.EntityStatus `json:"status"`
-	Source             string                `json:"source"`
-	FlowKey            *string               `json:"flow_key"`
-	Comment            *string               `json:"comment"`
-	ExpectedVersion    *int                  `json:"expected_version"`
-	ConfirmConstraints bool                  `json:"confirm_constraints"`
+	GroupID                    int                   `json:"group_id"`
+	LessonDate                 string                `json:"lesson_date"`
+	PairNumber                 int16                 `json:"pair_number"`
+	Subgroup                   *int16                `json:"subgroup"`
+	SubjectID                  *int                  `json:"subject_id"`
+	TeacherID                  *int                  `json:"teacher_id"`
+	LessonFormat               string                `json:"lesson_format"`
+	Status                     schedule.EntityStatus `json:"status"`
+	Source                     string                `json:"source"`
+	FlowKey                    *string               `json:"flow_key"`
+	Comment                    *string               `json:"comment"`
+	ExpectedVersion            *int                  `json:"expected_version"`
+	ConfirmConstraints         bool                  `json:"confirm_constraints"`
+	ConfirmGlobalDayConstraint bool                  `json:"confirm_global_day_constraint"`
 }
 
 type applyScheduleOverrideRequest struct {
-	ScheduleLessonID        *int64  `json:"schedule_lesson_id"`
-	GroupID                 int     `json:"group_id"`
-	LessonDate              string  `json:"lesson_date"`
-	PairNumber              int16   `json:"pair_number"`
-	Subgroup                *int16  `json:"subgroup"`
-	ActionType              string  `json:"action_type"`
-	ReplacementSubjectID    *int    `json:"replacement_subject_id"`
-	ReplacementTeacherID    *int    `json:"replacement_teacher_id"`
-	ReplacementLocationID   *int    `json:"replacement_location_id"`
-	ReplacementLessonFormat *string `json:"replacement_lesson_format"`
-	Reason                  *string `json:"reason"`
-	ExpectedLessonVersion   *int    `json:"expected_lesson_version"`
-	ConfirmConstraints      bool    `json:"confirm_constraints"`
+	ScheduleLessonID           *int64  `json:"schedule_lesson_id"`
+	GroupID                    int     `json:"group_id"`
+	LessonDate                 string  `json:"lesson_date"`
+	PairNumber                 int16   `json:"pair_number"`
+	Subgroup                   *int16  `json:"subgroup"`
+	ActionType                 string  `json:"action_type"`
+	ReplacementSubjectID       *int    `json:"replacement_subject_id"`
+	ReplacementTeacherID       *int    `json:"replacement_teacher_id"`
+	ReplacementLocationID      *int    `json:"replacement_location_id"`
+	ReplacementLessonFormat    *string `json:"replacement_lesson_format"`
+	Reason                     *string `json:"reason"`
+	ExpectedLessonVersion      *int    `json:"expected_lesson_version"`
+	ConfirmConstraints         bool    `json:"confirm_constraints"`
+	ConfirmGlobalDayConstraint bool    `json:"confirm_global_day_constraint"`
 }
 
 func handleAdminListScheduleLessons(repo *schedule.Repository) gin.HandlerFunc {
@@ -105,11 +107,11 @@ func handleAdminListScheduleLessons(repo *schedule.Repository) gin.HandlerFunc {
 
 func handleAdminCreateScheduleLesson(svc *schedule.Service, repo *schedule.Repository, pushSvc *push.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		row, _, confirmed, ok := bindScheduleLessonRequest(c)
+		row, _, confirmed, confirmedGlobal, ok := bindScheduleLessonRequest(c)
 		if !ok {
 			return
 		}
-		if err := svc.CreateScheduleLesson(row, confirmed); err != nil {
+		if err := svc.CreateScheduleLesson(row, confirmed, confirmedGlobal); err != nil {
 			writeScheduleWriteError(c, err)
 			return
 		}
@@ -129,11 +131,11 @@ func handleAdminUpdateScheduleLesson(svc *schedule.Service, repo *schedule.Repos
 			writeValidationError(c, "id", "invalid id")
 			return
 		}
-		row, expectedVersion, confirmed, ok := bindScheduleLessonRequest(c)
+		row, expectedVersion, confirmed, confirmedGlobal, ok := bindScheduleLessonRequest(c)
 		if !ok {
 			return
 		}
-		updated, err := svc.UpdateScheduleLesson(id, row, expectedVersion, confirmed)
+		updated, err := svc.UpdateScheduleLesson(id, row, expectedVersion, confirmed, confirmedGlobal)
 		if err != nil {
 			writeScheduleWriteError(c, err)
 			return
@@ -237,20 +239,21 @@ func handleAdminApplyScheduleOverride(svc *schedule.Service, repo *schedule.Repo
 			createdBy = &v
 		}
 		applied, err := svc.ApplyScheduleOverride(schedule.ApplyScheduleOverrideRequest{
-			ScheduleLessonID:        req.ScheduleLessonID,
-			GroupID:                 req.GroupID,
-			LessonDate:              lessonDate,
-			PairNumber:              req.PairNumber,
-			Subgroup:                req.Subgroup,
-			ActionType:              req.ActionType,
-			ReplacementSubjectID:    req.ReplacementSubjectID,
-			ReplacementTeacherID:    req.ReplacementTeacherID,
-			ReplacementLocationID:   req.ReplacementLocationID,
-			ReplacementLessonFormat: req.ReplacementLessonFormat,
-			Reason:                  req.Reason,
-			ExpectedLessonVersion:   req.ExpectedLessonVersion,
-			ConfirmConstraints:      req.ConfirmConstraints,
-			CreatedBy:               createdBy,
+			ScheduleLessonID:           req.ScheduleLessonID,
+			GroupID:                    req.GroupID,
+			LessonDate:                 lessonDate,
+			PairNumber:                 req.PairNumber,
+			Subgroup:                   req.Subgroup,
+			ActionType:                 req.ActionType,
+			ReplacementSubjectID:       req.ReplacementSubjectID,
+			ReplacementTeacherID:       req.ReplacementTeacherID,
+			ReplacementLocationID:      req.ReplacementLocationID,
+			ReplacementLessonFormat:    req.ReplacementLessonFormat,
+			Reason:                     req.Reason,
+			ExpectedLessonVersion:      req.ExpectedLessonVersion,
+			ConfirmConstraints:         req.ConfirmConstraints,
+			ConfirmGlobalDayConstraint: req.ConfirmGlobalDayConstraint,
+			CreatedBy:                  createdBy,
 		})
 		if err != nil {
 			writeScheduleWriteError(c, err)
@@ -318,16 +321,16 @@ func handleAdminListAppliedScheduleOverrides(repo *schedule.Repository) gin.Hand
 	}
 }
 
-func bindScheduleLessonRequest(c *gin.Context) (*schedule.ScheduleLesson, *int, bool, bool) {
+func bindScheduleLessonRequest(c *gin.Context) (*schedule.ScheduleLesson, *int, bool, bool, bool) {
 	var req adminScheduleLessonRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		writeValidationError(c, "body", "invalid json")
-		return nil, nil, false, false
+		return nil, nil, false, false, false
 	}
 	d, err := time.Parse("2006-01-02", strings.TrimSpace(req.LessonDate))
 	if err != nil {
 		writeValidationError(c, "lesson_date", "invalid lesson_date")
-		return nil, nil, false, false
+		return nil, nil, false, false, false
 	}
 	return &schedule.ScheduleLesson{
 		GroupID:      req.GroupID,
@@ -341,7 +344,7 @@ func bindScheduleLessonRequest(c *gin.Context) (*schedule.ScheduleLesson, *int, 
 		Source:       req.Source,
 		FlowKey:      req.FlowKey,
 		Comment:      req.Comment,
-	}, req.ExpectedVersion, req.ConfirmConstraints, true
+	}, req.ExpectedVersion, req.ConfirmConstraints, req.ConfirmGlobalDayConstraint, true
 }
 
 func parseQueryDate(c *gin.Context, name string) (*time.Time, bool) {
@@ -390,6 +393,28 @@ func writeScheduleWriteError(c *gin.Context, err error) {
 			"location_id": roomConflict.LocationID,
 			"date":        roomConflict.Date.Format("2006-01-02"),
 			"pair_number": roomConflict.PairNumber,
+		})
+		return
+	}
+	var globalConfirm *schedule.GlobalDayConstraintConfirmationRequiredError
+	if errors.As(err, &globalConfirm) {
+		c.JSON(http.StatusConflict, gin.H{
+			"error":           "global_day_constraint_confirmation_required",
+			"target_date":     globalConfirm.Constraint.TargetDate.Format("2006-01-02"),
+			"title":           globalConfirm.Constraint.Title,
+			"reason":          globalConfirm.Constraint.Reason,
+			"constraint_type": globalConfirm.Constraint.ConstraintType,
+		})
+		return
+	}
+	var globalBlock *schedule.GlobalDayBlockedError
+	if errors.As(err, &globalBlock) {
+		c.JSON(http.StatusConflict, gin.H{
+			"error":           "day_blocked_by_global_constraint",
+			"target_date":     globalBlock.Constraint.TargetDate.Format("2006-01-02"),
+			"title":           globalBlock.Constraint.Title,
+			"reason":          globalBlock.Constraint.Reason,
+			"constraint_type": globalBlock.Constraint.ConstraintType,
 		})
 		return
 	}

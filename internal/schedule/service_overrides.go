@@ -18,14 +18,15 @@ type ApplyScheduleOverrideRequest struct {
 	Subgroup         *int16    `json:"subgroup"`
 	ActionType       string    `json:"action_type"`
 
-	ReplacementSubjectID    *int    `json:"replacement_subject_id"`
-	ReplacementTeacherID    *int    `json:"replacement_teacher_id"`
-	ReplacementLocationID   *int    `json:"replacement_location_id"`
-	ReplacementLessonFormat *string `json:"replacement_lesson_format"`
-	Reason                  *string `json:"reason"`
-	ExpectedLessonVersion   *int    `json:"expected_lesson_version"`
-	ConfirmConstraints      bool    `json:"confirm_constraints"`
-	CreatedBy               *int    `json:"created_by"`
+	ReplacementSubjectID       *int    `json:"replacement_subject_id"`
+	ReplacementTeacherID       *int    `json:"replacement_teacher_id"`
+	ReplacementLocationID      *int    `json:"replacement_location_id"`
+	ReplacementLessonFormat    *string `json:"replacement_lesson_format"`
+	Reason                     *string `json:"reason"`
+	ExpectedLessonVersion      *int    `json:"expected_lesson_version"`
+	ConfirmConstraints         bool    `json:"confirm_constraints"`
+	ConfirmGlobalDayConstraint bool    `json:"confirm_global_day_constraint"`
+	CreatedBy                  *int    `json:"created_by"`
 }
 
 type TeacherConstraintConfirmationRequiredError struct {
@@ -42,6 +43,22 @@ type TeacherConstraintHardBlockError struct {
 
 func (e *TeacherConstraintHardBlockError) Error() string {
 	return "teacher day constraint hard block"
+}
+
+type GlobalDayConstraintConfirmationRequiredError struct {
+	Constraint CalendarDayConstraint
+}
+
+func (e *GlobalDayConstraintConfirmationRequiredError) Error() string {
+	return "global day constraint confirmation required"
+}
+
+type GlobalDayBlockedError struct {
+	Constraint CalendarDayConstraint
+}
+
+func (e *GlobalDayBlockedError) Error() string {
+	return "day blocked by global constraint"
 }
 
 type RoomConflictError struct {
@@ -96,7 +113,7 @@ func (s *Service) ApplyScheduleOverride(req ApplyScheduleOverrideRequest) (*Sche
 	return &out, nil
 }
 
-func (s *Service) CreateScheduleLesson(row *ScheduleLesson, confirmed bool) error {
+func (s *Service) CreateScheduleLesson(row *ScheduleLesson, confirmedTeacher bool, confirmedGlobalDay bool) error {
 	if row == nil {
 		return fmt.Errorf("schedule lesson is nil")
 	}
@@ -104,14 +121,19 @@ func (s *Service) CreateScheduleLesson(row *ScheduleLesson, confirmed bool) erro
 		if err := normalizeScheduleLesson(row); err != nil {
 			return err
 		}
-		if err := s.checkTeacherConstraintsTx(tx, row.TeacherID, row.LessonDate, confirmed); err != nil {
+		if row.Status != StatusCancelled {
+			if err := s.checkGlobalDayConstraintTx(tx, row.LessonDate, confirmedGlobalDay); err != nil {
+				return err
+			}
+		}
+		if err := s.checkTeacherConstraintsTx(tx, row.TeacherID, row.LessonDate, confirmedTeacher); err != nil {
 			return err
 		}
 		return tx.Create(row).Error
 	})
 }
 
-func (s *Service) UpdateScheduleLesson(id int64, patch *ScheduleLesson, expectedVersion *int, confirmed bool) (*ScheduleLesson, error) {
+func (s *Service) UpdateScheduleLesson(id int64, patch *ScheduleLesson, expectedVersion *int, confirmedTeacher bool, confirmedGlobalDay bool) (*ScheduleLesson, error) {
 	if patch == nil {
 		return nil, fmt.Errorf("schedule lesson patch is nil")
 	}
@@ -140,7 +162,12 @@ func (s *Service) UpdateScheduleLesson(id int64, patch *ScheduleLesson, expected
 		if err := normalizeScheduleLesson(&row); err != nil {
 			return err
 		}
-		if err := s.checkTeacherConstraintsTx(tx, row.TeacherID, row.LessonDate, confirmed); err != nil {
+		if row.Status != StatusCancelled {
+			if err := s.checkGlobalDayConstraintTx(tx, row.LessonDate, confirmedGlobalDay); err != nil {
+				return err
+			}
+		}
+		if err := s.checkTeacherConstraintsTx(tx, row.TeacherID, row.LessonDate, confirmedTeacher); err != nil {
 			return err
 		}
 		if err := tx.Save(&row).Error; err != nil {
@@ -204,6 +231,10 @@ func (s *Service) applyExistingLessonOverride(tx *gorm.DB, req ApplyScheduleOver
 			return nil, err
 		}
 		return override, nil
+	}
+
+	if err := s.checkGlobalDayConstraintTx(tx, lesson.LessonDate, req.ConfirmGlobalDayConstraint); err != nil {
+		return nil, err
 	}
 
 	nextSubjectID := lesson.SubjectID
@@ -283,6 +314,9 @@ func (s *Service) applyAddOverride(tx *gorm.DB, req ApplyScheduleOverrideRequest
 	}
 	if req.ReplacementSubjectID == nil {
 		return nil, fmt.Errorf("replacement_subject_id required for add")
+	}
+	if err := s.checkGlobalDayConstraintTx(tx, req.LessonDate, req.ConfirmGlobalDayConstraint); err != nil {
+		return nil, err
 	}
 	if err := s.checkTeacherConstraintsTx(tx, req.ReplacementTeacherID, req.LessonDate, req.ConfirmConstraints); err != nil {
 		return nil, err
@@ -383,6 +417,38 @@ func (s *Service) checkTeacherConstraintsTx(tx *gorm.DB, teacherID *int, lessonD
 		}
 	}
 	return nil
+}
+
+func (s *Service) checkGlobalDayConstraintTx(tx *gorm.DB, lessonDate time.Time, confirmed bool) error {
+	var row CalendarDayConstraint
+	err := tx.Model(&CalendarDayConstraint{}).
+		Where("target_date = ?", dateOnly(lessonDate)).
+		First(&row).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if !row.AffectsLessons {
+		return nil
+	}
+	switch strings.ToLower(strings.TrimSpace(row.ConstraintType)) {
+	case "blocked":
+		if row.RequiresConfirmation && confirmed {
+			return nil
+		}
+		return &GlobalDayBlockedError{Constraint: row}
+	case "warning":
+		if row.RequiresConfirmation && !confirmed {
+			return &GlobalDayConstraintConfirmationRequiredError{Constraint: row}
+		}
+		return nil
+	case "info":
+		return nil
+	default:
+		return nil
+	}
 }
 
 func ensureRoomAvailableTx(tx *gorm.DB, locationID int, lessonDate time.Time, pairNumber int16, flowKey *string, excludeLessonID *int64) error {

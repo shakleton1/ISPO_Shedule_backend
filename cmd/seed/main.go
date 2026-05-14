@@ -545,6 +545,39 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	}); err != nil {
 		return nil, err
 	}
+	for _, constraint := range []schedule.CalendarDayConstraint{
+		{
+			TargetDate:           time.Date(2026, 9, 5, 0, 0, 0, 0, time.UTC),
+			Title:                "Праздничный день",
+			Reason:               ptrString("Тестовый глобальный выходной"),
+			ConstraintType:       "blocked",
+			AffectsLessons:       true,
+			RequiresConfirmation: false,
+			StylePreset:          "danger",
+		},
+		{
+			TargetDate:           time.Date(2026, 9, 10, 0, 0, 0, 0, time.UTC),
+			Title:                "Мероприятие",
+			Reason:               ptrString("Большое мероприятие в колледже"),
+			ConstraintType:       "warning",
+			AffectsLessons:       true,
+			RequiresConfirmation: true,
+			StylePreset:          "warning",
+		},
+		{
+			TargetDate:           time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC),
+			Title:                "Информационная пометка",
+			Reason:               ptrString("Пары можно ставить"),
+			ConstraintType:       "info",
+			AffectsLessons:       false,
+			RequiresConfirmation: false,
+			StylePreset:          "info",
+		},
+	} {
+		if err := upsertCalendarDayConstraint(db, constraint); err != nil {
+			return nil, err
+		}
+	}
 	if err := upsertTeacherLocationPreference(db, schedule.TeacherLocationPreference{
 		TeacherID:  tuzovaID,
 		LocationID: loc403ID,
@@ -1072,6 +1105,33 @@ VALUES (?, ?, ?, ?, ?)
 ON CONFLICT (teacher_id, target_date)
 DO UPDATE SET reason = EXCLUDED.reason, constraint_level = EXCLUDED.constraint_level, requires_confirmation = EXCLUDED.requires_confirmation`,
 		d.TeacherID, dateOnly(d.TargetDate), d.Reason, d.ConstraintLevel, d.RequiresConfirmation,
+	).Error
+}
+
+func upsertCalendarDayConstraint(db *gorm.DB, d schedule.CalendarDayConstraint) error {
+	var reason any
+	if d.Reason != nil {
+		reason = *d.Reason
+	}
+	return db.Exec(`
+INSERT INTO calendar_day_constraints
+  (target_date, title, reason, constraint_type, affects_lessons, requires_confirmation, style_preset)
+VALUES (?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT (target_date)
+DO UPDATE SET
+  title = EXCLUDED.title,
+  reason = EXCLUDED.reason,
+  constraint_type = EXCLUDED.constraint_type,
+  affects_lessons = EXCLUDED.affects_lessons,
+  requires_confirmation = EXCLUDED.requires_confirmation,
+	style_preset = EXCLUDED.style_preset`,
+		dateOnly(d.TargetDate),
+		d.Title,
+		reason,
+		d.ConstraintType,
+		d.AffectsLessons,
+		d.RequiresConfirmation,
+		d.StylePreset,
 	).Error
 }
 

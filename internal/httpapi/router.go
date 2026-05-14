@@ -192,6 +192,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminRead.GET("/study-activities", handleAdminListStudyActivities(deps.Repo))
 				adminRead.GET("/study-calendar-weeks", handleAdminListStudyCalendarWeeks(deps.Repo))
 				adminRead.GET("/teacher-day-constraints", handleAdminListTeacherDayConstraints(deps.Repo))
+				adminRead.GET("/calendar-day-constraints", handleAdminListCalendarDayConstraints(deps.Repo))
 				adminRead.GET("/replacements", handleAdminListScheduleReplacements(deps.Repo))
 				adminRead.GET("/location-availability/weeks", handleAdminListLocationWeekAvailability(deps.Repo))
 
@@ -329,6 +330,10 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminScheduleWrite.POST("/teacher-day-constraints", handleAdminCreateTeacherDayConstraint(deps.Repo))
 				adminScheduleWrite.PUT("/teacher-day-constraints/:id", handleAdminUpdateTeacherDayConstraint(deps.Repo))
 				adminScheduleWrite.DELETE("/teacher-day-constraints/:id", handleAdminDeleteTeacherDayConstraint(deps.Repo))
+				adminScheduleWrite.POST("/calendar-day-constraints", handleAdminCreateCalendarDayConstraint(deps.Repo, deps.Push))
+				adminScheduleWrite.PATCH("/calendar-day-constraints/:id", handleAdminUpdateCalendarDayConstraint(deps.Repo, deps.Push))
+				adminScheduleWrite.PUT("/calendar-day-constraints/:id", handleAdminUpdateCalendarDayConstraint(deps.Repo, deps.Push))
+				adminScheduleWrite.DELETE("/calendar-day-constraints/:id", handleAdminDeleteCalendarDayConstraint(deps.Repo, deps.Push))
 
 				adminScheduleWrite.POST("/replacements", handleAdminCreateScheduleReplacement(deps.Repo))
 				adminScheduleWrite.PUT("/replacements/:id", handleAdminUpdateScheduleReplacement(deps.Repo))

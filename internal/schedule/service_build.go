@@ -67,6 +67,21 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 		overlayText[o.TargetDate.Format("2006-01-02")] = o.Text
 	}
 
+	globalConstraints, err := s.repo.ListCalendarDayConstraintsBetween(startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+	globalConstraintsByDay := map[string]CalendarDayConstraintView{}
+	for _, c := range globalConstraints {
+		globalConstraintsByDay[c.TargetDate.Format("2006-01-02")] = CalendarDayConstraintView{
+			ID:             c.ID,
+			Title:          c.Title,
+			Reason:         c.Reason,
+			ConstraintType: c.ConstraintType,
+			StylePreset:    c.StylePreset,
+		}
+	}
+
 	events := make([]dayEventViewRow, 0)
 	for _, gid := range chainIDs {
 		rows, err := s.repo.ListDayEventsBetween(gid, startDate, endDate)
@@ -158,13 +173,20 @@ func (s *Service) buildDays(groupID int, startDate, endDate time.Time) ([]DaySch
 			dEvents = []DayEvent{}
 		}
 
+		var globalConstraint *CalendarDayConstraintView
+		if c, ok := globalConstraintsByDay[dayKey]; ok {
+			row := c
+			globalConstraint = &row
+		}
+
 		out = append(out, DaySchedule{
-			Date:        dayKey,
-			DayOfWeek:   dayOfWeek,
-			WeekParity:  parity,
-			OverlayText: overlayPtr,
-			Events:      dEvents,
-			Lessons:     lessons,
+			Date:                dayKey,
+			DayOfWeek:           dayOfWeek,
+			WeekParity:          parity,
+			OverlayText:         overlayPtr,
+			GlobalDayConstraint: globalConstraint,
+			Events:              dEvents,
+			Lessons:             lessons,
 		})
 	}
 

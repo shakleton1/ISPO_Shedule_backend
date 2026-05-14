@@ -62,6 +62,10 @@ func cloneWeekScheduleResponse(in WeekScheduleResponse) WeekScheduleResponse {
 
 func cloneDaySchedule(in DaySchedule) DaySchedule {
 	out := in
+	if in.GlobalDayConstraint != nil {
+		v := *in.GlobalDayConstraint
+		out.GlobalDayConstraint = &v
+	}
 	out.Events = append([]DayEvent(nil), in.Events...)
 	out.Lessons = append([]Lesson(nil), in.Lessons...)
 	return out

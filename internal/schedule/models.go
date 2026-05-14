@@ -170,6 +170,19 @@ type ScheduleDayOverlay struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+type CalendarDayConstraint struct {
+	ID                   int64     `gorm:"primaryKey" json:"id"`
+	TargetDate           time.Time `gorm:"type:date;not null;uniqueIndex" json:"target_date"`
+	Title                string    `gorm:"size:200;not null" json:"title"`
+	Reason               *string   `json:"reason"`
+	ConstraintType       string    `gorm:"type:text;not null;default:'blocked'" json:"constraint_type"`
+	AffectsLessons       bool      `gorm:"not null;default:true" json:"affects_lessons"`
+	RequiresConfirmation bool      `gorm:"not null;default:false" json:"requires_confirmation"`
+	StylePreset          string    `gorm:"size:30;not null;default:'warning'" json:"style_preset"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
+}
+
 type calendarExceptionLegacy struct {
 	ID         int64     `gorm:"primaryKey" json:"id"`
 	TargetDate time.Time `gorm:"type:date;not null;uniqueIndex" json:"target_date"`

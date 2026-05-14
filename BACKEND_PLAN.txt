@@ -1134,3 +1134,16 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
 [x] Добавить API: /admin/schedule-lessons CRUD/cancel, /admin/schedule-overrides/apply, /admin/reports/schedule-overrides.
 [x] Обновить OpenAPI/DTO: ScheduleLessonDTO, ApplyScheduleOverrideRequest, новый ScheduleOverrideDTO, RoomAssignmentDTO(schedule_lesson_id).
 [x] Тесты: apply replace/cancel/add, version conflict, room_assignment schedule_lesson_id, public schedule сразу показывает примененную замену.
+
+16) Глобальные ограничения конкретных дней calendar_day_constraints
+[x] Добавить calendar_day_constraints без group_id/teacher_id: target_date, title, reason, constraint_type blocked/warning/info, affects_lessons, requires_confirmation, style_preset.
+    Где: новая миграция, internal/schedule/models.go, repository_calendar_constraints.go.
+[x] Добавить admin CRUD: GET/POST/PATCH/DELETE /admin/calendar-day-constraints с фильтрами date_from/date_to/constraint_type/affects_lessons.
+    Правило: изменения bump schedule_version, пишут audit и шлют push всем подписанным группам.
+[x] Добавить global_day_constraint в публичный DaySchedule; пары на заблокированный день не скрывать.
+    Где: internal/schedule/service.go, service_build.go, week_cache.go, docs/openapi.yaml.
+[x] Проверять calendar_day_constraints при создании/редактировании schedule_lessons и add/replace/restore schedule_overrides.
+    Ошибки: day_blocked_by_global_constraint и global_day_constraint_confirmation_required.
+[x] Добавить confirm_global_day_constraint в ScheduleLessonRequest и ApplyScheduleOverrideRequest отдельно от confirm_constraints преподавателя.
+[x] Добавить seed-примеры: blocked праздник, warning мероприятие с подтверждением, info пометка.
+[x] Тесты: repository CRUD/list/validation, schedule response с global_day_constraint, create lesson blocked/warning, override blocked/warning.
