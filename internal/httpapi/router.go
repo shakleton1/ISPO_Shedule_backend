@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 	"os"
@@ -65,14 +66,16 @@ func NewRouter(deps RouterDeps) http.Handler {
 	r.GET("/metrics", metricsHandler(deps.DBPing))
 
 	// OpenAPI spec (YAML).
-	r.GET("/openapi.yaml", func(c *gin.Context) {
+	openAPIHandler := func(c *gin.Context) {
 		b, err := os.ReadFile("docs/openapi.yaml")
 		if err != nil {
 			abortWithError(c, http.StatusInternalServerError, "openapi_unavailable", "", "openapi spec unavailable")
 			return
 		}
-		c.Data(http.StatusOK, "application/yaml; charset=utf-8", b)
-	})
+		c.DataFromReader(http.StatusOK, int64(len(b)), "application/yaml; charset=utf-8", bytes.NewReader(b), nil)
+	}
+	r.GET("/openapi.yaml", openAPIHandler)
+	r.HEAD("/openapi.yaml", openAPIHandler)
 
 	// Swagger UI (loads spec from /openapi.yaml).
 	swaggerUI := func(c *gin.Context) {
