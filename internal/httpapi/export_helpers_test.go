@@ -17,7 +17,8 @@ func TestBuildTwoWeekSchedulePDFHTML(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, html, "Расписание группы 22290907/1095")
 	require.Contains(t, html, "МДК.02.03 Математическое моделирование")
-	require.Contains(t, html, "Неделя 1")
+	require.Contains(t, html, "Числитель")
+	require.Contains(t, html, "Знаменатель")
 	require.Contains(t, html, "403 П")
 }
 
@@ -33,11 +34,11 @@ func TestBuildTwoWeekScheduleXLSX(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = f.Close() }()
 
-	title, err := f.GetCellValue("Неделя 1", "A1")
+	title, err := f.GetCellValue("2 недели", "A1")
 	require.NoError(t, err)
 	require.Equal(t, data.Title, title)
 
-	cell, err := f.GetCellValue("Неделя 1", "B5")
+	cell, err := f.GetCellValue("2 недели", "B6")
 	require.NoError(t, err)
 	require.Contains(t, cell, "МДК.02.03 Математическое моделирование")
 	require.Contains(t, cell, "Зернова Е.Н.")
@@ -88,7 +89,7 @@ func sampleTwoWeekExportData() *twoWeekScheduleExportData {
 		Pairs:       exportPairs(),
 		Weeks: []scheduleExportWeek{
 			{
-				Title:      "Неделя 1",
+				Title:      "Числитель",
 				RangeLabel: "23.03.2026 - 28.03.2026",
 				Days: []scheduleExportDay{
 					{
@@ -117,7 +118,7 @@ func sampleTwoWeekExportData() *twoWeekScheduleExportData {
 				},
 			},
 			{
-				Title:      "Неделя 2",
+				Title:      "Знаменатель",
 				RangeLabel: "30.03.2026 - 04.04.2026",
 				Days: []scheduleExportDay{
 					{

@@ -101,8 +101,8 @@ func buildGroupTwoWeekScheduleExportData(svc *schedule.Service, repo *schedule.R
 		GeneratedAt: "Сформировано: " + time.Now().UTC().Format("02.01.2006 15:04 UTC"),
 		Pairs:       exportPairs(),
 		Weeks: []scheduleExportWeek{
-			buildGroupExportWeek("Неделя 1", week1Start, week1.Days),
-			buildGroupExportWeek("Неделя 2", week2Start, week2.Days),
+			buildGroupExportWeek("Числитель", week1Start, week1.Days),
+			buildGroupExportWeek("Знаменатель", week2Start, week2.Days),
 		},
 	}, nil
 }
@@ -185,20 +185,24 @@ func buildTwoWeekScheduleXLSX(data *twoWeekScheduleExportData) ([]byte, error) {
 		return nil, err
 	}
 
-	for idx, week := range data.Weeks {
-		sheet := fmt.Sprintf("Неделя %d", idx+1)
-		if idx == 0 {
-			if err := f.SetSheetName("Sheet1", sheet); err != nil {
-				return nil, err
-			}
-		} else {
-			if _, err := f.NewSheet(sheet); err != nil {
-				return nil, err
-			}
-		}
-		if err := writeScheduleWeekSheet(f, styles, sheet, data, week); err != nil {
+	sheet := "2 недели"
+	if err := f.SetSheetName("Sheet1", sheet); err != nil {
+		return nil, err
+	}
+	if err := configureReportPrintLayout(f, sheet); err != nil {
+		return nil, err
+	}
+	if err := writeScheduleWorkbookHeader(f, styles, sheet, data); err != nil {
+		return nil, err
+	}
+	nextRow := 4
+	for _, week := range data.Weeks {
+		var err error
+		nextRow, err = writeScheduleWeekBlock(f, styles, sheet, week, nextRow)
+		if err != nil {
 			return nil, err
 		}
+		nextRow += 2
 	}
 	f.SetActiveSheet(0)
 
@@ -219,6 +223,9 @@ func buildScheduleOverridesXLSX(data *overridesExportData) ([]byte, error) {
 	}
 	sheet := "Замены"
 	if err := f.SetSheetName("Sheet1", sheet); err != nil {
+		return nil, err
+	}
+	if err := configureSchedulePrintLayout(f, sheet); err != nil {
 		return nil, err
 	}
 	if err := f.MergeCell(sheet, "A1", "G1"); err != nil {
@@ -303,22 +310,21 @@ func newExportWorkbookStyles(f *excelize.File) (exportWorkbookStyles, error) {
 		{Type: "bottom", Color: "B7C3C9", Style: 1},
 	}
 	title, err := f.NewStyle(&excelize.Style{
-		Font:      &excelize.Font{Bold: true, Size: 16, Color: "193847"},
+		Font:      &excelize.Font{Bold: true, Size: 15, Color: "111111"},
 		Alignment: &excelize.Alignment{Horizontal: "left", Vertical: "center"},
 	})
 	if err != nil {
 		return exportWorkbookStyles{}, err
 	}
 	subtitle, err := f.NewStyle(&excelize.Style{
-		Font:      &excelize.Font{Size: 10, Color: "52616B"},
+		Font:      &excelize.Font{Bold: true, Size: 10, Color: "333333"},
 		Alignment: &excelize.Alignment{Horizontal: "left", Vertical: "center"},
 	})
 	if err != nil {
 		return exportWorkbookStyles{}, err
 	}
 	header, err := f.NewStyle(&excelize.Style{
-		Font:      &excelize.Font{Bold: true, Color: "FFFFFF"},
-		Fill:      excelize.Fill{Type: "pattern", Pattern: 1, Color: []string{"203F4C"}},
+		Font:      &excelize.Font{Bold: true, Color: "111111"},
 		Border:    border,
 		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center", WrapText: true},
 	})
@@ -326,8 +332,7 @@ func newExportWorkbookStyles(f *excelize.File) (exportWorkbookStyles, error) {
 		return exportWorkbookStyles{}, err
 	}
 	day, err := f.NewStyle(&excelize.Style{
-		Font:      &excelize.Font{Bold: true, Color: "203F4C"},
-		Fill:      excelize.Fill{Type: "pattern", Pattern: 1, Color: []string{"EDF3F5"}},
+		Font:      &excelize.Font{Bold: true, Color: "111111"},
 		Border:    border,
 		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center", WrapText: true},
 	})
@@ -342,7 +347,6 @@ func newExportWorkbookStyles(f *excelize.File) (exportWorkbookStyles, error) {
 		return exportWorkbookStyles{}, err
 	}
 	lesson, err := f.NewStyle(&excelize.Style{
-		Fill:      excelize.Fill{Type: "pattern", Pattern: 1, Color: []string{"F8FBFC"}},
 		Border:    border,
 		Alignment: &excelize.Alignment{Horizontal: "left", Vertical: "top", WrapText: true},
 	})
@@ -350,8 +354,12 @@ func newExportWorkbookStyles(f *excelize.File) (exportWorkbookStyles, error) {
 		return exportWorkbookStyles{}, err
 	}
 	changed, err := f.NewStyle(&excelize.Style{
-		Fill:      excelize.Fill{Type: "pattern", Pattern: 1, Color: []string{"FFF7ED"}},
-		Border:    border,
+		Border: []excelize.Border{
+			{Type: "left", Color: "111111", Style: 2},
+			{Type: "right", Color: "B7C3C9", Style: 1},
+			{Type: "top", Color: "B7C3C9", Style: 1},
+			{Type: "bottom", Color: "B7C3C9", Style: 1},
+		},
 		Alignment: &excelize.Alignment{Horizontal: "left", Vertical: "top", WrapText: true},
 	})
 	if err != nil {
@@ -368,7 +376,45 @@ func newExportWorkbookStyles(f *excelize.File) (exportWorkbookStyles, error) {
 	return exportWorkbookStyles{title: title, subtitle: subtitle, header: header, day: day, body: body, lesson: lesson, changed: changed, empty: empty}, nil
 }
 
-func writeScheduleWeekSheet(f *excelize.File, styles exportWorkbookStyles, sheet string, data *twoWeekScheduleExportData, week scheduleExportWeek) error {
+func configureSchedulePrintLayout(f *excelize.File, sheet string) error {
+	orientation := "landscape"
+	paperSize := 9
+	fitToWidth := 1
+	fitToHeight := 1
+	blackAndWhite := true
+	fitToPage := true
+	if err := f.SetPageLayout(sheet, &excelize.PageLayoutOptions{
+		Orientation:   &orientation,
+		Size:          &paperSize,
+		FitToWidth:    &fitToWidth,
+		FitToHeight:   &fitToHeight,
+		BlackAndWhite: &blackAndWhite,
+	}); err != nil {
+		return err
+	}
+	return f.SetSheetProps(sheet, &excelize.SheetPropsOptions{FitToPage: &fitToPage})
+}
+
+func configureReportPrintLayout(f *excelize.File, sheet string) error {
+	orientation := "landscape"
+	paperSize := 9
+	fitToWidth := 1
+	fitToHeight := 0
+	blackAndWhite := true
+	fitToPage := true
+	if err := f.SetPageLayout(sheet, &excelize.PageLayoutOptions{
+		Orientation:   &orientation,
+		Size:          &paperSize,
+		FitToWidth:    &fitToWidth,
+		FitToHeight:   &fitToHeight,
+		BlackAndWhite: &blackAndWhite,
+	}); err != nil {
+		return err
+	}
+	return f.SetSheetProps(sheet, &excelize.SheetPropsOptions{FitToPage: &fitToPage})
+}
+
+func writeScheduleWorkbookHeader(f *excelize.File, styles exportWorkbookStyles, sheet string, data *twoWeekScheduleExportData) error {
 	if err := f.MergeCell(sheet, "A1", "I1"); err != nil {
 		return err
 	}
@@ -381,42 +427,54 @@ func writeScheduleWeekSheet(f *excelize.File, styles exportWorkbookStyles, sheet
 	if err := f.MergeCell(sheet, "A2", "I2"); err != nil {
 		return err
 	}
-	if err := f.SetCellValue(sheet, "A2", data.Subtitle+" | "+week.RangeLabel+" | "+data.GeneratedAt); err != nil {
+	if err := f.SetCellValue(sheet, "A2", data.Subtitle+" | 2 недели на одном листе | "+data.GeneratedAt); err != nil {
 		return err
 	}
 	if err := f.SetCellStyle(sheet, "A2", "I2", styles.subtitle); err != nil {
 		return err
 	}
+	if err := f.SetColWidth(sheet, "A", "A", 13); err != nil {
+		return err
+	}
+	return f.SetColWidth(sheet, "B", "I", 16)
+}
+
+func writeScheduleWeekBlock(f *excelize.File, styles exportWorkbookStyles, sheet string, week scheduleExportWeek, startRow int) (int, error) {
+	if err := f.MergeCell(sheet, fmt.Sprintf("A%d", startRow), fmt.Sprintf("I%d", startRow)); err != nil {
+		return startRow, err
+	}
+	if err := f.SetCellValue(sheet, fmt.Sprintf("A%d", startRow), week.Title+" | "+week.RangeLabel); err != nil {
+		return startRow, err
+	}
+	if err := f.SetCellStyle(sheet, fmt.Sprintf("A%d", startRow), fmt.Sprintf("I%d", startRow), styles.subtitle); err != nil {
+		return startRow, err
+	}
+
+	headerRow := startRow + 1
 	headers := []string{"День", "1 пара", "2 пара", "3 пара", "4 пара", "5 пара", "6 пара", "7 пара", "8 пара"}
 	for i, h := range headers {
-		cell, _ := excelize.CoordinatesToCellName(i+1, 4)
+		cell, _ := excelize.CoordinatesToCellName(i+1, headerRow)
 		if err := f.SetCellValue(sheet, cell, h); err != nil {
-			return err
+			return startRow, err
 		}
 	}
-	if err := f.SetCellStyle(sheet, "A4", "I4", styles.header); err != nil {
-		return err
-	}
-	if err := f.SetColWidth(sheet, "A", "A", 16); err != nil {
-		return err
-	}
-	if err := f.SetColWidth(sheet, "B", "I", 24); err != nil {
-		return err
+	if err := f.SetCellStyle(sheet, fmt.Sprintf("A%d", headerRow), fmt.Sprintf("I%d", headerRow), styles.header); err != nil {
+		return startRow, err
 	}
 	for i, day := range week.Days {
-		row := i + 5
-		if err := f.SetRowHeight(sheet, row, 92); err != nil {
-			return err
+		row := headerRow + 1 + i
+		if err := f.SetRowHeight(sheet, row, 42); err != nil {
+			return startRow, err
 		}
 		dayText := day.DayName + "\n" + day.DateLabel
 		if day.Note != "" {
 			dayText += "\n" + day.Note
 		}
 		if err := f.SetCellValue(sheet, fmt.Sprintf("A%d", row), dayText); err != nil {
-			return err
+			return startRow, err
 		}
 		if err := f.SetCellStyle(sheet, fmt.Sprintf("A%d", row), fmt.Sprintf("A%d", row), styles.day); err != nil {
-			return err
+			return startRow, err
 		}
 		for _, cell := range day.Cells {
 			addr, _ := excelize.CoordinatesToCellName(cell.PairNumber+1, row)
@@ -425,7 +483,7 @@ func writeScheduleWeekSheet(f *excelize.File, styles exportWorkbookStyles, sheet
 				text = "-"
 			}
 			if err := f.SetCellValue(sheet, addr, text); err != nil {
-				return err
+				return startRow, err
 			}
 			style := styles.lesson
 			if len(cell.Lessons) == 0 {
@@ -434,11 +492,11 @@ func writeScheduleWeekSheet(f *excelize.File, styles exportWorkbookStyles, sheet
 				style = styles.changed
 			}
 			if err := f.SetCellStyle(sheet, addr, addr, style); err != nil {
-				return err
+				return startRow, err
 			}
 		}
 	}
-	return nil
+	return headerRow + 1 + len(week.Days), nil
 }
 
 func buildGroupExportWeek(title string, start time.Time, days []schedule.DaySchedule) scheduleExportWeek {
@@ -458,8 +516,8 @@ func buildTeacherExportWeeks(days []schedule.ScheduleViewDay, week1Start time.Ti
 	week2Start := week1Start.AddDate(0, 0, 7)
 	week2End := week2Start.AddDate(0, 0, 5)
 	weeks := []scheduleExportWeek{
-		{Title: "Неделя 1", RangeLabel: formatDateRange(week1Start, week1End)},
-		{Title: "Неделя 2", RangeLabel: formatDateRange(week2Start, week2End)},
+		{Title: "Числитель", RangeLabel: formatDateRange(week1Start, week1End)},
+		{Title: "Знаменатель", RangeLabel: formatDateRange(week2Start, week2End)},
 	}
 	for _, day := range days {
 		d, err := time.Parse("2006-01-02", day.Date)

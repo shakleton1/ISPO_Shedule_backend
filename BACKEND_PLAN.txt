@@ -1171,5 +1171,5 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
     Где: /api/v1/admin/reports/teacher-schedule/{pdf,xlsx}, источник данных schedule view scope=teacher.
 [x] Добавить PDF/XLSX экспорт журнала замен.
     Где: /api/v1/admin/reports/schedule-overrides/{pdf,xlsx}, источник данных schedule_overrides со snapshot source_* и replacement_*.
-[x] Сделать строгий читаемый формат: A4 landscape для PDF, XLSX с листами по неделям, цветными заголовками, переносами строк и кабинетами/преподавателями/группами в ячейках.
+[x] Сделать строгий читаемый формат: A4 landscape для PDF, обе недели на одном листе как числитель/знаменатель, XLSX одним листом "2 недели", минимум заливок для ЧБ-печати и экономии чернил.
 [x] Обновить OpenAPI и тесты генерации PDF HTML/XLSX.
