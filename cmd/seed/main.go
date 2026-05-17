@@ -146,87 +146,56 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		return nil, err
 	}
 
-	loc403ID, err := getOrCreateLocation(db, schedule.Location{Name: "403 П", CampusID: &campusID, Kind: "physical", IsActive: true, Capacity: ptrI16(30)})
+	primorskayaLocations, err := seedLocationCatalog(db, campusID, []seedLocationRoom{
+		{Name: "101"}, {Name: "102"}, {Name: "103"}, {Name: "104"}, {Name: "105"}, {Name: "106"}, {Name: "107"}, {Name: "109"}, {Name: "110"}, {Name: "113"}, {Name: "115"}, {Name: "117"},
+		{Name: "201"}, {Name: "202"}, {Name: "203"}, {Name: "204"}, {Name: "205"}, {Name: "206"}, {Name: "207"}, {Name: "208"}, {Name: "209"}, {Name: "210"}, {Name: "211"}, {Name: "212"}, {Name: "214"}, {Name: "216"}, {Name: "217"}, {Name: "218"}, {Name: "219"}, {Name: "221"}, {Name: "223"}, {Name: "225"}, {Name: "227"}, {Name: "229"}, {Name: "231"}, {Name: "233"}, {Name: "235"}, {Name: "237"}, {Name: "241"}, {Name: "243"}, {Name: "245"}, {Name: "247"}, {Name: "249"}, {Name: "251"}, {Name: "253"}, {Name: "255"}, {Name: "257"}, {Name: "259"},
+		{Name: "301"}, {Name: "302"}, {Name: "303"}, {Name: "304"}, {Name: "305"}, {Name: "306"}, {Name: "307"}, {Name: "308"}, {Name: "310"}, {Name: "311"}, {Name: "312"}, {Name: "314"}, {Name: "315"}, {Name: "316"}, {Name: "318"}, {Name: "319"}, {Name: "320"}, {Name: "321"}, {Name: "322"}, {Name: "323"}, {Name: "324"}, {Name: "325"}, {Name: "326"}, {Name: "327"}, {Name: "329"}, {Name: "331"}, {Name: "333"}, {Name: "335"}, {Name: "337"}, {Name: "339"}, {Name: "341"}, {Name: "343"}, {Name: "345"}, {Name: "347"}, {Name: "349"},
+		{Name: "401"}, {Name: "402"}, {Name: "403", Capacity: 30, TypeIDs: []int{computerTypeID}}, {Name: "404", Capacity: 30, TypeIDs: []int{computerTypeID}}, {Name: "405"}, {Name: "406"}, {Name: "408"}, {Name: "409"}, {Name: "410"}, {Name: "411"}, {Name: "413"}, {Name: "415"}, {Name: "417"}, {Name: "428"}, {Name: "430"}, {Name: "432"}, {Name: "434"}, {Name: "436"}, {Name: "438"}, {Name: "439"}, {Name: "441", Capacity: 18}, {Name: "443"}, {Name: "445"},
+		{Name: "501"}, {Name: "502"}, {Name: "503"}, {Name: "504"}, {Name: "505"}, {Name: "506"}, {Name: "508"}, {Name: "509"}, {Name: "510"}, {Name: "511"}, {Name: "513"}, {Name: "515"}, {Name: "541"}, {Name: "542"}, {Name: "544"}, {Name: "545"}, {Name: "546"}, {Name: "547"}, {Name: "548", Capacity: 18}, {Name: "549"}, {Name: "550"}, {Name: "551"},
+		{Name: "Спортивный зал", Capacity: 90, TypeIDs: []int{gymTypeID}},
+		{Name: "Бассейн", Capacity: 45, TypeIDs: []int{poolTypeID}},
+	}, classroomTypeID)
 	if err != nil {
 		return nil, err
 	}
-	loc441ID, err := getOrCreateLocation(db, schedule.Location{Name: "441", CampusID: &campusID, Kind: "physical", IsActive: true, Capacity: ptrI16(18)})
+	engelsLocations, err := seedLocationCatalog(db, engelsCampusID, []seedLocationRoom{
+		{Name: "101"}, {Name: "102"}, {Name: "103"}, {Name: "104"}, {Name: "105"}, {Name: "106"}, {Name: "107"}, {Name: "109"}, {Name: "110"}, {Name: "113"}, {Name: "115"}, {Name: "117"},
+		{Name: "200"}, {Name: "201"}, {Name: "202"}, {Name: "203"}, {Name: "204"}, {Name: "206"}, {Name: "207"}, {Name: "208"}, {Name: "209"}, {Name: "210"}, {Name: "211"}, {Name: "212"}, {Name: "214"}, {Name: "215"}, {Name: "216", Capacity: 30, TypeIDs: []int{computerTypeID}}, {Name: "217"}, {Name: "218"}, {Name: "219"}, {Name: "221"}, {Name: "222"}, {Name: "223"}, {Name: "224"}, {Name: "225"}, {Name: "226"}, {Name: "227"}, {Name: "229"}, {Name: "231"}, {Name: "233"}, {Name: "235"}, {Name: "237"}, {Name: "243"}, {Name: "245"}, {Name: "247"}, {Name: "249"}, {Name: "251"}, {Name: "253"}, {Name: "255"}, {Name: "257"}, {Name: "259"},
+		{Name: "301"}, {Name: "302"}, {Name: "303"}, {Name: "304"}, {Name: "305"}, {Name: "306"}, {Name: "307"}, {Name: "308"}, {Name: "310"}, {Name: "311"}, {Name: "312"}, {Name: "314", Capacity: 24, TypeIDs: []int{classroomTypeID, labTypeID}}, {Name: "315"}, {Name: "316"}, {Name: "318"}, {Name: "319"}, {Name: "319а"}, {Name: "320"}, {Name: "321"}, {Name: "322"}, {Name: "323"}, {Name: "324"}, {Name: "325", Capacity: 24, TypeIDs: []int{classroomTypeID, labTypeID}}, {Name: "326"}, {Name: "327"}, {Name: "329"}, {Name: "331"}, {Name: "331а"}, {Name: "333"}, {Name: "335"}, {Name: "337"}, {Name: "339"}, {Name: "341"}, {Name: "343"}, {Name: "345"}, {Name: "347"}, {Name: "349"},
+		{Name: "401"}, {Name: "402"}, {Name: "403"}, {Name: "404"}, {Name: "405"}, {Name: "406"}, {Name: "408"}, {Name: "409"}, {Name: "410"}, {Name: "411"}, {Name: "413"}, {Name: "415"}, {Name: "417"}, {Name: "428"}, {Name: "430"}, {Name: "432"}, {Name: "434"}, {Name: "436"}, {Name: "438"}, {Name: "439"}, {Name: "441"}, {Name: "443"}, {Name: "445"},
+		{Name: "501"}, {Name: "502"}, {Name: "503"}, {Name: "504"}, {Name: "505"}, {Name: "506"}, {Name: "508"}, {Name: "509"}, {Name: "510"}, {Name: "511"}, {Name: "513"}, {Name: "515"}, {Name: "541"}, {Name: "542"}, {Name: "544"}, {Name: "545"}, {Name: "546"}, {Name: "547"}, {Name: "548"}, {Name: "549"}, {Name: "550"}, {Name: "551"}, {Name: "599А"}, {Name: "599Б"}, {Name: "600"},
+		{Name: "Конференц-зал", Capacity: 80},
+		{Name: "Библиотека", Capacity: 40},
+		{Name: "Квант", Capacity: 30, TypeIDs: []int{classroomTypeID, labTypeID}},
+		{Name: "Спортивный зал", Capacity: 90, TypeIDs: []int{gymTypeID}},
+		{Name: "Бассейн", Capacity: 45, TypeIDs: []int{poolTypeID}},
+	}, classroomTypeID)
 	if err != nil {
 		return nil, err
 	}
-	loc548ID, err := getOrCreateLocation(db, schedule.Location{Name: "548", CampusID: &campusID, Kind: "physical", IsActive: true, Capacity: ptrI16(18)})
-	if err != nil {
-		return nil, err
-	}
-	locSK5ID, err := getOrCreateLocation(db, schedule.Location{Name: "СК5", CampusID: &campusID, Kind: "physical", IsActive: true, Capacity: ptrI16(90)})
-	if err != nil {
-		return nil, err
-	}
-	locEconomicsID, err := getOrCreateLocation(db, schedule.Location{Name: "1#", CampusID: &campusID, Kind: "physical", IsActive: true, Capacity: ptrI16(32)})
-	if err != nil {
-		return nil, err
-	}
-	locModelingID, err := getOrCreateLocation(db, schedule.Location{Name: "!", CampusID: &campusID, Kind: "physical", IsActive: true, Capacity: ptrI16(32)})
-	if err != nil {
-		return nil, err
-	}
-	locTRPOID, err := getOrCreateLocation(db, schedule.Location{Name: "{{", CampusID: &campusID, Kind: "physical", IsActive: true, Capacity: ptrI16(32)})
-	if err != nil {
-		return nil, err
-	}
-	locComputerID, err := getOrCreateLocation(db, schedule.Location{Name: "ВЦ-1", CampusID: &campusID, Kind: "physical", IsActive: true, Capacity: ptrI16(30)})
-	if err != nil {
-		return nil, err
-	}
-	locComputer2ID, err := getOrCreateLocation(db, schedule.Location{Name: "ВЦ-2", CampusID: &campusID, Kind: "physical", IsActive: true, Capacity: ptrI16(30)})
-	if err != nil {
-		return nil, err
-	}
-	locPoolID, err := getOrCreateLocation(db, schedule.Location{Name: "Бассейн", CampusID: &campusID, Kind: "physical", IsActive: true, Capacity: ptrI16(45)})
-	if err != nil {
-		return nil, err
-	}
-	locEngels201ID, err := getOrCreateLocation(db, schedule.Location{Name: "201 Э", CampusID: &engelsCampusID, Kind: "physical", IsActive: true, Capacity: ptrI16(30)})
-	if err != nil {
-		return nil, err
-	}
-	locEngels202ID, err := getOrCreateLocation(db, schedule.Location{Name: "202 Э", CampusID: &engelsCampusID, Kind: "physical", IsActive: true, Capacity: ptrI16(30)})
-	if err != nil {
-		return nil, err
-	}
-	locEngelsVCID, err := getOrCreateLocation(db, schedule.Location{Name: "ВЦ-Э", CampusID: &engelsCampusID, Kind: "physical", IsActive: true, Capacity: ptrI16(28)})
-	if err != nil {
-		return nil, err
-	}
-	locEngelsLabID, err := getOrCreateLocation(db, schedule.Location{Name: "Лаб. Э-1", CampusID: &engelsCampusID, Kind: "physical", IsActive: true, Capacity: ptrI16(24)})
-	if err != nil {
-		return nil, err
-	}
+	loc403ID := primorskayaLocations["403"]
+	loc441ID := primorskayaLocations["441"]
+	loc548ID := primorskayaLocations["548"]
+	locSK5ID := primorskayaLocations["Спортивный зал"]
+	locEconomicsID := primorskayaLocations["405"]
+	locModelingID := primorskayaLocations["409"]
+	locTRPOID := primorskayaLocations["411"]
+	locComputerID := primorskayaLocations["403"]
+	locComputer2ID := primorskayaLocations["404"]
+	locPoolID := primorskayaLocations["Бассейн"]
+	locEngels201ID := engelsLocations["201"]
+	locEngels202ID := engelsLocations["202"]
+	locEngelsVCID := engelsLocations["216"]
+	locEngelsLabID := engelsLocations["314"]
 	locOnlineID, err := getOrCreateLocation(db, schedule.Location{Name: "Дистант", Kind: "virtual", IsActive: true})
 	if err != nil {
 		return nil, err
 	}
-	for _, link := range []struct{ locationID, typeID int }{
-		{loc403ID, computerTypeID},
-		{loc441ID, classroomTypeID},
-		{loc548ID, classroomTypeID},
-		{locSK5ID, gymTypeID},
-		{locEconomicsID, classroomTypeID},
-		{locModelingID, classroomTypeID},
-		{locTRPOID, classroomTypeID},
-		{locComputerID, computerTypeID},
-		{locComputer2ID, computerTypeID},
-		{locPoolID, poolTypeID},
-		{locEngels201ID, classroomTypeID},
-		{locEngels202ID, classroomTypeID},
-		{locEngelsVCID, computerTypeID},
-		{locEngelsLabID, classroomTypeID},
-		{locEngelsLabID, labTypeID},
-		{locOnlineID, onlineTypeID},
-	} {
-		if err := ensureLocationTypeLink(db, link.locationID, link.typeID); err != nil {
-			return nil, err
-		}
+	if err := ensureLocationTypeLink(db, locOnlineID, onlineTypeID); err != nil {
+		return nil, err
+	}
+	if err := deactivateLegacySeedLocations(db); err != nil {
+		return nil, err
 	}
 
 	tuzovaID, err := getOrCreateTeacher(db, schedule.Teacher{Name: "Тузова Д.А."})
@@ -765,7 +734,7 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 
 	weekStart := time.Date(2026, 3, 23, 0, 0, 0, 0, time.UTC)
 	for _, availability := range []schedule.LocationWeekAvailability{
-		{LocationID: loc403ID, IsAvailable: true, Comment: ptrString("403 П на неделю")},
+		{LocationID: loc403ID, IsAvailable: true, Comment: ptrString("403 на неделю")},
 		{LocationID: loc441ID, IsAvailable: true},
 		{LocationID: loc548ID, IsAvailable: true},
 		{LocationID: locSK5ID, IsAvailable: true},
@@ -1039,6 +1008,23 @@ func resetSeedTeacherPreferences(db *gorm.DB, teacherIDs []int) error {
 	return db.Exec("DELETE FROM teacher_location_preferences WHERE teacher_id IN ?", teacherIDs).Error
 }
 
+func deactivateLegacySeedLocations(db *gorm.DB) error {
+	legacyNames := []string{
+		"403 П",
+		"СК5",
+		"1#",
+		"!",
+		"{{",
+		"ВЦ-1",
+		"ВЦ-2",
+		"201 Э",
+		"202 Э",
+		"ВЦ-Э",
+		"Лаб. Э-1",
+	}
+	return db.Exec("UPDATE locations SET is_active = false WHERE name IN ?", legacyNames).Error
+}
+
 func resetSeedGroupPlanning(db *gorm.DB, groupIDs []int) error {
 	if len(groupIDs) == 0 {
 		return nil
@@ -1111,12 +1097,55 @@ func getOrCreateLocationType(db *gorm.DB, t schedule.LocationType) (int, error) 
 	return t.ID, nil
 }
 
+type seedLocationRoom struct {
+	Name     string
+	Capacity int16
+	TypeIDs  []int
+}
+
+func seedLocationCatalog(db *gorm.DB, campusID int, rooms []seedLocationRoom, defaultTypeID int) (map[string]int, error) {
+	out := make(map[string]int, len(rooms))
+	for _, room := range rooms {
+		capacity := room.Capacity
+		if capacity == 0 {
+			capacity = 30
+		}
+		locationID, err := getOrCreateLocation(db, schedule.Location{
+			Name:     room.Name,
+			CampusID: &campusID,
+			Kind:     "physical",
+			IsActive: true,
+			Capacity: ptrI16(capacity),
+		})
+		if err != nil {
+			return nil, err
+		}
+		typeIDs := room.TypeIDs
+		if len(typeIDs) == 0 {
+			typeIDs = []int{defaultTypeID}
+		}
+		for _, typeID := range typeIDs {
+			if err := ensureLocationTypeLink(db, locationID, typeID); err != nil {
+				return nil, err
+			}
+		}
+		out[room.Name] = locationID
+	}
+	return out, nil
+}
+
 func getOrCreateLocation(db *gorm.DB, l schedule.Location) (int, error) {
 	if l.Kind == "" {
 		l.Kind = "physical"
 	}
 	var row schedule.Location
-	if err := db.Where("name = ?", l.Name).First(&row).Error; err == nil {
+	query := db.Where("name = ?", l.Name)
+	if l.CampusID == nil {
+		query = query.Where("campus_id IS NULL")
+	} else {
+		query = query.Where("campus_id = ?", *l.CampusID)
+	}
+	if err := query.First(&row).Error; err == nil {
 		row.CampusID = l.CampusID
 		row.Kind = l.Kind
 		row.Capacity = l.Capacity
