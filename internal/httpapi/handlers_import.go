@@ -508,7 +508,7 @@ func getOrCreateStudyActivityID(tx *gorm.DB, code, name, kind string, allowsLess
 		return 0, fmt.Errorf("activity code or name required")
 	}
 	if kind == "" {
-		kind = "OTHER"
+		kind = schedule.StudyActivityKindForCode(code)
 	}
 	var out struct {
 		ID int `gorm:"column:id"`

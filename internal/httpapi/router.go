@@ -240,6 +240,8 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminRead.GET("/reports/group-schedule/xlsx", handleAdminExportGroupScheduleXLSX(deps.ScheduleSvc, deps.Repo))
 				adminRead.GET("/reports/teacher-schedule/pdf", handleAdminExportTeacherSchedulePDF(deps.ScheduleSvc, deps.Repo, pdfEngineAdapter{e: deps.PDF}))
 				adminRead.GET("/reports/teacher-schedule/xlsx", handleAdminExportTeacherScheduleXLSX(deps.ScheduleSvc, deps.Repo))
+				adminRead.GET("/reports/teacher-schedules/pdf", handleAdminExportTeacherSchedulesPDF(deps.ScheduleSvc, deps.Repo, pdfEngineAdapter{e: deps.PDF}))
+				adminRead.GET("/reports/teacher-schedules/xlsx", handleAdminExportTeacherSchedulesXLSX(deps.ScheduleSvc, deps.Repo))
 				adminRead.GET("/day-events", handleAdminListDayEvents(deps.Repo))
 			}
 

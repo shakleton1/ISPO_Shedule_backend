@@ -64,6 +64,22 @@ type overridesExportData struct {
 	Rows        []overrideExportRow
 }
 
+type teacherBoardExportData struct {
+	Title       string
+	Subtitle    string
+	GeneratedAt string
+	Pages       []teacherBoardPage
+}
+
+type teacherBoardPage struct {
+	Teachers []teacherBoardTeacher
+}
+
+type teacherBoardTeacher struct {
+	Name  string
+	Weeks []scheduleExportWeek
+}
+
 type overrideExportRow struct {
 	Date            string
 	Pair            string
@@ -76,6 +92,7 @@ type overrideExportRow struct {
 
 var twoWeekScheduleExportTpl = pdf.MustParseTemplate("two_week_schedule_export", twoWeekScheduleExportHTMLTemplate)
 var scheduleOverridesExportTpl = pdf.MustParseTemplate("schedule_overrides_export", scheduleOverridesExportHTMLTemplate)
+var teacherBoardExportTpl = pdf.MustParseTemplate("teacher_board_export", teacherBoardExportHTMLTemplate)
 
 func buildGroupTwoWeekScheduleExportData(svc *schedule.Service, repo *schedule.Repository, groupID int, refDate time.Time) (*twoWeekScheduleExportData, error) {
 	if groupID <= 0 {
@@ -130,6 +147,59 @@ func buildTeacherTwoWeekScheduleExportData(svc *schedule.Service, repo *schedule
 	}, nil
 }
 
+func buildTeacherBoardExportData(svc *schedule.Service, repo *schedule.Repository, teacherIDs []int, refDate time.Time) (*teacherBoardExportData, error) {
+	week1Start, _, endDate := twoWeekExportBounds(refDate)
+	teachers, err := resolveTeacherBoardTeachers(repo, teacherIDs)
+	if err != nil {
+		return nil, err
+	}
+	out := &teacherBoardExportData{
+		Title:       "Расписание преподавателей",
+		Subtitle:    formatDateRange(week1Start, endDate),
+		GeneratedAt: "Сформировано: " + time.Now().UTC().Format("02.01.2006 15:04 UTC"),
+	}
+	page := teacherBoardPage{Teachers: make([]teacherBoardTeacher, 0, 3)}
+	for _, teacher := range teachers {
+		teacherID := teacher.ID
+		view, err := svc.GetScheduleView(schedule.ScheduleViewFilter{Scope: "teacher", TeacherID: &teacherID}, week1Start, endDate)
+		if err != nil {
+			return nil, err
+		}
+		page.Teachers = append(page.Teachers, teacherBoardTeacher{
+			Name:  teacher.Name,
+			Weeks: buildTeacherExportWeeks(view.Days, week1Start),
+		})
+		if len(page.Teachers) == 3 {
+			out.Pages = append(out.Pages, page)
+			page = teacherBoardPage{Teachers: make([]teacherBoardTeacher, 0, 3)}
+		}
+	}
+	if len(page.Teachers) > 0 || len(out.Pages) == 0 {
+		out.Pages = append(out.Pages, page)
+	}
+	return out, nil
+}
+
+func resolveTeacherBoardTeachers(repo *schedule.Repository, ids []int) ([]schedule.Teacher, error) {
+	if len(ids) == 0 {
+		return repo.ListTeachers()
+	}
+	out := make([]schedule.Teacher, 0, len(ids))
+	seen := map[int]bool{}
+	for _, id := range ids {
+		if id <= 0 || seen[id] {
+			continue
+		}
+		teacher, err := repo.GetTeacher(id)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, *teacher)
+		seen[id] = true
+	}
+	return out, nil
+}
+
 func buildScheduleOverridesExportData(repo *schedule.Repository, filters schedule.ScheduleOverrideFilters, startDate, endDate *time.Time) (*overridesExportData, error) {
 	rows, err := repo.ListScheduleOverrideReportRows(filters)
 	if err != nil {
@@ -176,6 +246,10 @@ func buildScheduleOverridesPDFHTML(data *overridesExportData) (string, error) {
 	return pdf.RenderTemplate(scheduleOverridesExportTpl, data)
 }
 
+func buildTeacherBoardPDFHTML(data *teacherBoardExportData) (string, error) {
+	return pdf.RenderTemplate(teacherBoardExportTpl, data)
+}
+
 func buildTwoWeekScheduleXLSX(data *twoWeekScheduleExportData) ([]byte, error) {
 	f := excelize.NewFile()
 	defer func() { _ = f.Close() }()
@@ -189,7 +263,7 @@ func buildTwoWeekScheduleXLSX(data *twoWeekScheduleExportData) ([]byte, error) {
 	if err := f.SetSheetName("Sheet1", sheet); err != nil {
 		return nil, err
 	}
-	if err := configureReportPrintLayout(f, sheet); err != nil {
+	if err := configureSchedulePrintLayout(f, sheet); err != nil {
 		return nil, err
 	}
 	if err := writeScheduleWorkbookHeader(f, styles, sheet, data); err != nil {
@@ -282,6 +356,71 @@ func buildScheduleOverridesXLSX(data *overridesExportData) ([]byte, error) {
 		if err := f.SetCellStyle(sheet, "A5", fmt.Sprintf("G%d", end), styles.body); err != nil {
 			return nil, err
 		}
+	}
+
+	var buf bytes.Buffer
+	if err := f.Write(&buf); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func buildTeacherBoardXLSX(data *teacherBoardExportData) ([]byte, error) {
+	f := excelize.NewFile()
+	defer func() { _ = f.Close() }()
+
+	styles, err := newExportWorkbookStyles(f)
+	if err != nil {
+		return nil, err
+	}
+	sheet := "Преподаватели"
+	if err := f.SetSheetName("Sheet1", sheet); err != nil {
+		return nil, err
+	}
+	if err := configureTeacherBoardPrintLayout(f, sheet); err != nil {
+		return nil, err
+	}
+	for col := 1; col <= 8; col++ {
+		name, _ := excelize.ColumnNumberToName(col)
+		width := 12.0
+		if col%2 == 0 {
+			width = 28
+		}
+		if err := f.SetColWidth(sheet, name, name, width); err != nil {
+			return nil, err
+		}
+	}
+	if err := f.MergeCell(sheet, "A1", "H1"); err != nil {
+		return nil, err
+	}
+	if err := f.SetCellValue(sheet, "A1", data.Title); err != nil {
+		return nil, err
+	}
+	if err := f.SetCellStyle(sheet, "A1", "H1", styles.title); err != nil {
+		return nil, err
+	}
+	if err := f.MergeCell(sheet, "A2", "H2"); err != nil {
+		return nil, err
+	}
+	if err := f.SetCellValue(sheet, "A2", data.Subtitle+" | 3 преподавателя на лист | "+data.GeneratedAt); err != nil {
+		return nil, err
+	}
+	if err := f.SetCellStyle(sheet, "A2", "H2", styles.subtitle); err != nil {
+		return nil, err
+	}
+	row := 4
+	for pageIdx, page := range data.Pages {
+		if pageIdx > 0 {
+			row += 2
+		}
+		pageStart := row
+		for idx, teacher := range page.Teachers {
+			startCol := idx*2 + 1
+			if err := writeTeacherBoardXLSXBlock(f, styles, sheet, teacher, startCol, pageStart); err != nil {
+				return nil, err
+			}
+		}
+		row = pageStart + 31
 	}
 
 	var buf bytes.Buffer
@@ -414,56 +553,138 @@ func configureReportPrintLayout(f *excelize.File, sheet string) error {
 	return f.SetSheetProps(sheet, &excelize.SheetPropsOptions{FitToPage: &fitToPage})
 }
 
+func configureTeacherBoardPrintLayout(f *excelize.File, sheet string) error {
+	orientation := "portrait"
+	paperSize := 9
+	fitToWidth := 1
+	fitToHeight := 0
+	blackAndWhite := true
+	fitToPage := true
+	if err := f.SetPageLayout(sheet, &excelize.PageLayoutOptions{
+		Orientation:   &orientation,
+		Size:          &paperSize,
+		FitToWidth:    &fitToWidth,
+		FitToHeight:   &fitToHeight,
+		BlackAndWhite: &blackAndWhite,
+	}); err != nil {
+		return err
+	}
+	return f.SetSheetProps(sheet, &excelize.SheetPropsOptions{FitToPage: &fitToPage})
+}
+
+func writeTeacherBoardXLSXBlock(f *excelize.File, styles exportWorkbookStyles, sheet string, teacher teacherBoardTeacher, startCol, startRow int) error {
+	leftCol, _ := excelize.ColumnNumberToName(startCol)
+	rightCol, _ := excelize.ColumnNumberToName(startCol + 1)
+	if err := f.MergeCell(sheet, fmt.Sprintf("%s%d", leftCol, startRow), fmt.Sprintf("%s%d", rightCol, startRow)); err != nil {
+		return err
+	}
+	if err := f.SetCellValue(sheet, fmt.Sprintf("%s%d", leftCol, startRow), teacher.Name); err != nil {
+		return err
+	}
+	if err := f.SetCellStyle(sheet, fmt.Sprintf("%s%d", leftCol, startRow), fmt.Sprintf("%s%d", rightCol, startRow), styles.subtitle); err != nil {
+		return err
+	}
+	row := startRow + 1
+	for _, week := range teacher.Weeks {
+		if err := f.MergeCell(sheet, fmt.Sprintf("%s%d", leftCol, row), fmt.Sprintf("%s%d", rightCol, row)); err != nil {
+			return err
+		}
+		if err := f.SetCellValue(sheet, fmt.Sprintf("%s%d", leftCol, row), week.Title+" | "+week.RangeLabel); err != nil {
+			return err
+		}
+		if err := f.SetCellStyle(sheet, fmt.Sprintf("%s%d", leftCol, row), fmt.Sprintf("%s%d", rightCol, row), styles.header); err != nil {
+			return err
+		}
+		row++
+		for _, day := range week.Days {
+			dateCell := fmt.Sprintf("%s%d", leftCol, row)
+			lessonCell := fmt.Sprintf("%s%d", rightCol, row)
+			if err := f.SetCellValue(sheet, dateCell, day.DayName+"\n"+day.DateLabel); err != nil {
+				return err
+			}
+			text := scheduleDayLessonsText(day)
+			if text == "" {
+				text = "-"
+			}
+			if err := f.SetCellValue(sheet, lessonCell, text); err != nil {
+				return err
+			}
+			if err := f.SetCellStyle(sheet, dateCell, dateCell, styles.day); err != nil {
+				return err
+			}
+			style := styles.lesson
+			if text == "-" {
+				style = styles.empty
+			}
+			if err := f.SetCellStyle(sheet, lessonCell, lessonCell, style); err != nil {
+				return err
+			}
+			if err := f.SetRowHeight(sheet, row, 34); err != nil {
+				return err
+			}
+			row++
+		}
+		row++
+	}
+	return nil
+}
+
 func writeScheduleWorkbookHeader(f *excelize.File, styles exportWorkbookStyles, sheet string, data *twoWeekScheduleExportData) error {
-	if err := f.MergeCell(sheet, "A1", "I1"); err != nil {
+	lastCol := scheduleExportLastColumn()
+	if err := f.MergeCell(sheet, "A1", lastCol+"1"); err != nil {
 		return err
 	}
 	if err := f.SetCellValue(sheet, "A1", data.Title); err != nil {
 		return err
 	}
-	if err := f.SetCellStyle(sheet, "A1", "I1", styles.title); err != nil {
+	if err := f.SetCellStyle(sheet, "A1", lastCol+"1", styles.title); err != nil {
 		return err
 	}
-	if err := f.MergeCell(sheet, "A2", "I2"); err != nil {
+	if err := f.MergeCell(sheet, "A2", lastCol+"2"); err != nil {
 		return err
 	}
 	if err := f.SetCellValue(sheet, "A2", data.Subtitle+" | 2 недели на одном листе | "+data.GeneratedAt); err != nil {
 		return err
 	}
-	if err := f.SetCellStyle(sheet, "A2", "I2", styles.subtitle); err != nil {
+	if err := f.SetCellStyle(sheet, "A2", lastCol+"2", styles.subtitle); err != nil {
 		return err
 	}
 	if err := f.SetColWidth(sheet, "A", "A", 13); err != nil {
 		return err
 	}
-	return f.SetColWidth(sheet, "B", "I", 16)
+	return f.SetColWidth(sheet, "B", lastCol, 23)
 }
 
 func writeScheduleWeekBlock(f *excelize.File, styles exportWorkbookStyles, sheet string, week scheduleExportWeek, startRow int) (int, error) {
-	if err := f.MergeCell(sheet, fmt.Sprintf("A%d", startRow), fmt.Sprintf("I%d", startRow)); err != nil {
+	pairs := exportPairs()
+	lastCol := scheduleExportLastColumn()
+	if err := f.MergeCell(sheet, fmt.Sprintf("A%d", startRow), fmt.Sprintf("%s%d", lastCol, startRow)); err != nil {
 		return startRow, err
 	}
 	if err := f.SetCellValue(sheet, fmt.Sprintf("A%d", startRow), week.Title+" | "+week.RangeLabel); err != nil {
 		return startRow, err
 	}
-	if err := f.SetCellStyle(sheet, fmt.Sprintf("A%d", startRow), fmt.Sprintf("I%d", startRow), styles.subtitle); err != nil {
+	if err := f.SetCellStyle(sheet, fmt.Sprintf("A%d", startRow), fmt.Sprintf("%s%d", lastCol, startRow), styles.subtitle); err != nil {
 		return startRow, err
 	}
 
 	headerRow := startRow + 1
-	headers := []string{"День", "1 пара", "2 пара", "3 пара", "4 пара", "5 пара", "6 пара", "7 пара", "8 пара"}
-	for i, h := range headers {
-		cell, _ := excelize.CoordinatesToCellName(i+1, headerRow)
+	if err := f.SetCellValue(sheet, fmt.Sprintf("A%d", headerRow), "День"); err != nil {
+		return startRow, err
+	}
+	for i, pair := range pairs {
+		cell, _ := excelize.CoordinatesToCellName(i+2, headerRow)
+		h := fmt.Sprintf("%d пара", pair)
 		if err := f.SetCellValue(sheet, cell, h); err != nil {
 			return startRow, err
 		}
 	}
-	if err := f.SetCellStyle(sheet, fmt.Sprintf("A%d", headerRow), fmt.Sprintf("I%d", headerRow), styles.header); err != nil {
+	if err := f.SetCellStyle(sheet, fmt.Sprintf("A%d", headerRow), fmt.Sprintf("%s%d", lastCol, headerRow), styles.header); err != nil {
 		return startRow, err
 	}
 	for i, day := range week.Days {
 		row := headerRow + 1 + i
-		if err := f.SetRowHeight(sheet, row, 42); err != nil {
+		if err := f.SetRowHeight(sheet, row, 54); err != nil {
 			return startRow, err
 		}
 		dayText := day.DayName + "\n" + day.DateLabel
@@ -595,7 +816,7 @@ func scheduleExportDayFromTeacherDay(d schedule.ScheduleViewDay) scheduleExportD
 }
 
 func emptyExportCells() []scheduleExportCell {
-	cells := make([]scheduleExportCell, 0, 8)
+	cells := make([]scheduleExportCell, 0, len(exportPairs()))
 	for _, pair := range exportPairs() {
 		cells = append(cells, scheduleExportCell{PairNumber: pair})
 	}
@@ -603,7 +824,12 @@ func emptyExportCells() []scheduleExportCell {
 }
 
 func exportPairs() []int {
-	return []int{1, 2, 3, 4, 5, 6, 7, 8}
+	return []int{1, 2, 3, 4, 5}
+}
+
+func scheduleExportLastColumn() string {
+	col, _ := excelize.ColumnNumberToName(len(exportPairs()) + 1)
+	return col
 }
 
 func twoWeekExportBounds(ref time.Time) (time.Time, time.Time, time.Time) {
@@ -665,6 +891,22 @@ func scheduleCellText(lessons []scheduleExportLesson) string {
 		parts = append(parts, strings.Join(lines, "\n"))
 	}
 	return strings.Join(parts, "\n\n")
+}
+
+func scheduleDayLessonsText(day scheduleExportDay) string {
+	parts := []string{}
+	for _, cell := range day.Cells {
+		for _, lesson := range cell.Lessons {
+			lines := []string{fmt.Sprintf("%d. %s", cell.PairNumber, lesson.Subject)}
+			for _, v := range []string{lesson.Primary, lesson.Secondary, lesson.Location, lesson.Badge, lesson.Comment} {
+				if strings.TrimSpace(v) != "" {
+					lines = append(lines, strings.TrimSpace(v))
+				}
+			}
+			parts = append(parts, strings.Join(lines, "; "))
+		}
+	}
+	return strings.Join(parts, "\n")
 }
 
 func hasChangedLesson(lessons []scheduleExportLesson) bool {

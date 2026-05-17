@@ -117,11 +117,19 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	engelsCampusID, err := getOrCreateCampus(db, schedule.Campus{Name: "Энгельса", Address: ptrString("Площадка на Энгельса")})
+	if err != nil {
+		return nil, err
+	}
 	classroomTypeID, err := getOrCreateLocationType(db, schedule.LocationType{Code: "classroom", Name: "Обычная аудитория"})
 	if err != nil {
 		return nil, err
 	}
 	computerTypeID, err := getOrCreateLocationType(db, schedule.LocationType{Code: "computer_class", Name: "ВЦ / компьютерный класс"})
+	if err != nil {
+		return nil, err
+	}
+	labTypeID, err := getOrCreateLocationType(db, schedule.LocationType{Code: "lab", Name: "Лаборатория"})
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +178,27 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	locComputer2ID, err := getOrCreateLocation(db, schedule.Location{Name: "ВЦ-2", CampusID: &campusID, Kind: "physical", IsActive: true, Capacity: ptrI16(30)})
+	if err != nil {
+		return nil, err
+	}
 	locPoolID, err := getOrCreateLocation(db, schedule.Location{Name: "Бассейн", CampusID: &campusID, Kind: "physical", IsActive: true, Capacity: ptrI16(45)})
+	if err != nil {
+		return nil, err
+	}
+	locEngels201ID, err := getOrCreateLocation(db, schedule.Location{Name: "201 Э", CampusID: &engelsCampusID, Kind: "physical", IsActive: true, Capacity: ptrI16(30)})
+	if err != nil {
+		return nil, err
+	}
+	locEngels202ID, err := getOrCreateLocation(db, schedule.Location{Name: "202 Э", CampusID: &engelsCampusID, Kind: "physical", IsActive: true, Capacity: ptrI16(30)})
+	if err != nil {
+		return nil, err
+	}
+	locEngelsVCID, err := getOrCreateLocation(db, schedule.Location{Name: "ВЦ-Э", CampusID: &engelsCampusID, Kind: "physical", IsActive: true, Capacity: ptrI16(28)})
+	if err != nil {
+		return nil, err
+	}
+	locEngelsLabID, err := getOrCreateLocation(db, schedule.Location{Name: "Лаб. Э-1", CampusID: &engelsCampusID, Kind: "physical", IsActive: true, Capacity: ptrI16(24)})
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +215,13 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		{locModelingID, classroomTypeID},
 		{locTRPOID, classroomTypeID},
 		{locComputerID, computerTypeID},
+		{locComputer2ID, computerTypeID},
 		{locPoolID, poolTypeID},
+		{locEngels201ID, classroomTypeID},
+		{locEngels202ID, classroomTypeID},
+		{locEngelsVCID, computerTypeID},
+		{locEngelsLabID, classroomTypeID},
+		{locEngelsLabID, labTypeID},
 		{locOnlineID, onlineTypeID},
 	} {
 		if err := ensureLocationTypeLink(db, link.locationID, link.typeID); err != nil {
@@ -291,19 +325,7 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	academicWeeks := make([]schedule.AcademicCalendarWeek, 0, 52)
-	for i := int16(1); i <= 52; i++ {
-		start := acYearStart.AddDate(0, 0, int((i-1)*7))
-		academicWeeks = append(academicWeeks, schedule.AcademicCalendarWeek{
-			CourseNumber:  1,
-			WeekNumber:    i,
-			WeekStartDate: start,
-			ActivityCode:  "TEACHING",
-			ActivityName:  ptrString("Учебная неделя"),
-			IsTeaching:    true,
-		})
-	}
-	if _, err := repo.UpsertAcademicCalendarWeeks(calID, academicWeeks); err != nil {
+	if err := seedAcademicCalendarWeeks(repo, calID, acYearStart); err != nil {
 		return nil, err
 	}
 	if err := upsertAcademicCalendarDayOverride(db, schedule.AcademicCalendarDayOverride{
@@ -316,6 +338,59 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		IsTeaching:   true,
 		Comment:      ptrString("Seed day override inside academic calendar week"),
 	}); err != nil {
+		return nil, err
+	}
+	curriculumByAdmission := map[int16]int64{admissionYear: currID}
+	calendarByCurriculum := map[int64]int64{currID: calID}
+	for _, year := range []int16{2023, 2024, 2025} {
+		id, err := getOrCreateCurriculum(db, schedule.Curriculum{
+			SpecialtyID:   specID,
+			AdmissionYear: year,
+			Variant:       "Базовый",
+			Title:         fmt.Sprintf("Учебный план %d (seed)", year),
+			IsActive:      true,
+		})
+		if err != nil {
+			return nil, err
+		}
+		curriculumByAdmission[year] = id
+		cid, err := getOrCreateAcademicCalendar(db, schedule.AcademicCalendar{
+			CurriculumID:      id,
+			AcademicYearStart: acYearStart,
+			WeeksTotal:        52,
+			Notes:             ptrString("Seed calendar"),
+		})
+		if err != nil {
+			return nil, err
+		}
+		calendarByCurriculum[id] = cid
+		if err := seedAcademicCalendarWeeks(repo, cid, acYearStart); err != nil {
+			return nil, err
+		}
+	}
+	incompleteAdmissionYear := int16(2024)
+	incompleteCurrID, err := getOrCreateCurriculum(db, schedule.Curriculum{
+		SpecialtyID:   specID,
+		AdmissionYear: incompleteAdmissionYear,
+		Variant:       "Неполный",
+		Title:         "Неполный учебный план (seed)",
+		IsActive:      true,
+		Notes:         ptrString("Для проверки: заполнен 3 семестр, 4 семестр отсутствует"),
+	})
+	if err != nil {
+		return nil, err
+	}
+	incompleteCalID, err := getOrCreateAcademicCalendar(db, schedule.AcademicCalendar{
+		CurriculumID:      incompleteCurrID,
+		AcademicYearStart: acYearStart,
+		WeeksTotal:        52,
+		Notes:             ptrString("Seed incomplete calendar"),
+	})
+	if err != nil {
+		return nil, err
+	}
+	calendarByCurriculum[incompleteCurrID] = incompleteCalID
+	if err := seedAcademicCalendarWeeks(repo, incompleteCalID, acYearStart); err != nil {
 		return nil, err
 	}
 
@@ -339,8 +414,75 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	group3ID, err := getOrCreateGroup(db, schedule.Group{
+		Name:          "22290907/1097",
+		Course:        4,
+		CurriculumID:  &currID,
+		AdmissionYear: &admissionYear,
+		SpecialtyID:   &specID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	groupHalfID, err := getOrCreateGroup(db, schedule.Group{
+		Name:          "22290907/1098",
+		Course:        4,
+		CurriculumID:  &currID,
+		AdmissionYear: &admissionYear,
+		SpecialtyID:   &specID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	admission2023 := int16(2023)
+	curr2023 := curriculumByAdmission[admission2023]
+	groupCourse3ID, err := getOrCreateGroup(db, schedule.Group{
+		Name:          "23290907/1093",
+		Course:        3,
+		CurriculumID:  &curr2023,
+		AdmissionYear: &admission2023,
+		SpecialtyID:   &specID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	admission2024 := int16(2024)
+	curr2024 := curriculumByAdmission[admission2024]
+	groupCourse2ID, err := getOrCreateGroup(db, schedule.Group{
+		Name:          "24290907/1092",
+		Course:        2,
+		CurriculumID:  &curr2024,
+		AdmissionYear: &admission2024,
+		SpecialtyID:   &specID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	groupIncompleteID, err := getOrCreateGroup(db, schedule.Group{
+		Name:          "24290907/1099",
+		Course:        2,
+		CurriculumID:  &incompleteCurrID,
+		AdmissionYear: &incompleteAdmissionYear,
+		SpecialtyID:   &specID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	admission2025 := int16(2025)
+	curr2025 := curriculumByAdmission[admission2025]
+	groupCourse1ID, err := getOrCreateGroup(db, schedule.Group{
+		Name:          "25290907/1091",
+		Course:        1,
+		CurriculumID:  &curr2025,
+		AdmissionYear: &admission2025,
+		SpecialtyID:   &specID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	seedGroupIDs := []int{group1ID, group2ID, group3ID, groupHalfID, groupCourse1ID, groupCourse2ID, groupCourse3ID, groupIncompleteID}
 
-	if err := resetSeedGroupPlanning(db, []int{group1ID, group2ID}); err != nil {
+	if err := resetSeedGroupPlanning(db, seedGroupIDs); err != nil {
 		return nil, err
 	}
 
@@ -386,23 +528,51 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 			return nil, err
 		}
 		curriculumItemIDs[seed.subjectID] = itemID
-		if _, err := repo.UpsertCurriculumItemAllocations(itemID, []schedule.CurriculumItemAllocation{{
-			Semester:       8,
-			Weeks:          ptrI16(16),
-			HoursTotal:     ptrInt(seed.hours),
-			HoursLectures:  ptrInt(seed.hours / 2),
-			HoursPractice:  ptrInt(seed.hours / 2),
-			AssessmentType: ptrString(seed.assessment),
-		}}); err != nil {
+		if _, err := repo.UpsertCurriculumItemAllocations(itemID, fullSeedAllocations(seed.hours, seed.assessment)); err != nil {
 			return nil, err
 		}
 	}
+	curriculumPlans := map[int64]map[int]int64{currID: curriculumItemIDs}
+	for _, id := range []int64{curriculumByAdmission[2023], curriculumByAdmission[2024], curriculumByAdmission[2025]} {
+		items, err := seedCurriculumPlan(repo, db, id, []seedCurriculumSubject{
+			{index: "МДК.02.02", name: "МДК.02.02 Инстр. средства разр. ПО", subjectID: instrToolsID, hours: 144, assessment: "GRADED_CREDIT"},
+			{index: "ОГСЭ.03", name: "Ин. яз.в ПД", subjectID: englishPDID, hours: 72, assessment: "CREDIT"},
+			{index: "ОГСЭ.04", name: "Физ. культура", subjectID: peID, hours: 72, assessment: "CREDIT"},
+			{index: "ОП.09", name: "Экономика отрасли", subjectID: economicsID, hours: 64, assessment: "CREDIT"},
+			{index: "ОП.10", name: "Менеджмент в проф. деятельности", subjectID: managementID, hours: 54, assessment: "CREDIT"},
+			{index: "МДК.02.03", name: "МДК.02.03 Матем. моделирование", subjectID: mathModelID, hours: 108, assessment: "EXAM"},
+			{index: "ОП.11", name: "Стандарт., сертиф. и техн. докумен.", subjectID: standardsID, hours: 72, assessment: "CREDIT"},
+			{index: "МДК.02.01", name: "МДК.02.01 ТРПО", subjectID: trpoID, hours: 144, assessment: "GRADED_CREDIT"},
+			{index: "УП.02", name: "Учебная практика", subjectID: practiceID, hours: 36, assessment: "CREDIT"},
+		}, false)
+		if err != nil {
+			return nil, err
+		}
+		curriculumPlans[id] = items
+	}
+	incompleteItems, err := seedCurriculumPlan(repo, db, incompleteCurrID, []seedCurriculumSubject{
+		{index: "МДК.02.02", name: "МДК.02.02 Инстр. средства разр. ПО", subjectID: instrToolsID, hours: 72, assessment: "GRADED_CREDIT"},
+		{index: "ОГСЭ.03", name: "Ин. яз.в ПД", subjectID: englishPDID, hours: 36, assessment: "CREDIT"},
+		{index: "ОП.09", name: "Экономика отрасли", subjectID: economicsID, hours: 36, assessment: "CREDIT"},
+	}, true)
+	if err != nil {
+		return nil, err
+	}
+	curriculumPlans[incompleteCurrID] = incompleteItems
 
 	teachingID, err := repo.GetOrCreateStudyActivity("TEACHING", "Учебные занятия", "TEACHING", true)
 	if err != nil {
 		return nil, err
 	}
-	practiceActivityID, err := repo.GetOrCreateStudyActivity("PRACTICE", "Практика", "PRACTICE", false)
+	practiceEduActivityID, err := repo.GetOrCreateStudyActivity("PRACTICE_EDU", "Учебная практика", "PRACTICE", false)
+	if err != nil {
+		return nil, err
+	}
+	practiceProdActivityID, err := repo.GetOrCreateStudyActivity("PRACTICE_PROD", "Производственная практика", "PRACTICE", false)
+	if err != nil {
+		return nil, err
+	}
+	practicePregradActivityID, err := repo.GetOrCreateStudyActivity("PRACTICE_PREGRAD", "Преддипломная практика", "PRACTICE", false)
 	if err != nil {
 		return nil, err
 	}
@@ -410,14 +580,16 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, groupID := range []int{group1ID, group2ID} {
-		weeks := []schedule.StudyCalendarWeek{
-			{WeekNumber: 30, WeekStartDate: ptrTime(time.Date(2026, 3, 23, 0, 0, 0, 0, time.UTC)), ActivityID: &teachingID, AllowsLessons: true},
-			{WeekNumber: 31, WeekStartDate: ptrTime(time.Date(2026, 3, 30, 0, 0, 0, 0, time.UTC)), ActivityID: &teachingID, AllowsLessons: true},
-			{WeekNumber: 32, WeekStartDate: ptrTime(time.Date(2026, 4, 6, 0, 0, 0, 0, time.UTC)), ActivityID: &practiceActivityID, AllowsLessons: false, Comment: ptrString("Производственная практика")},
-			{WeekNumber: 33, WeekStartDate: ptrTime(time.Date(2026, 4, 13, 0, 0, 0, 0, time.UTC)), ActivityID: &examActivityID, AllowsLessons: true, Comment: ptrString("Экзаменационная неделя")},
-		}
-		if _, err := repo.UpsertStudyCalendarWeeks(groupID, weeks); err != nil {
+	giaActivityID, err := repo.GetOrCreateStudyActivity("GIA", "Государственная итоговая аттестация", "GIA", false)
+	if err != nil {
+		return nil, err
+	}
+	vacationActivityID, err := repo.GetOrCreateStudyActivity("VACATION", "Каникулы", "VACATION", false)
+	if err != nil {
+		return nil, err
+	}
+	for _, groupID := range seedGroupIDs {
+		if err := seedFullStudyCalendar(repo, groupID, acYearStart, teachingID, practiceEduActivityID, practiceProdActivityID, practicePregradActivityID, examActivityID, giaActivityID, vacationActivityID); err != nil {
 			return nil, err
 		}
 	}
@@ -445,6 +617,38 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		if _, err := getOrCreateCourseAssignment(db, a); err != nil {
 			return nil, err
 		}
+	}
+	teacherBySubject := map[int]*int{
+		instrToolsID: &tuzovaID,
+		englishPDID:  &kuznetsovaID,
+		peID:         &smirnovID,
+		economicsID:  &vimbergID,
+		managementID: &vimbergID,
+		mathModelID:  &zernovaID,
+		standardsID:  &zernovaID,
+		trpoID:       &chelishchevaID,
+		practiceID:   &tuzovaID,
+	}
+	for _, cfg := range []struct {
+		groupID  int
+		currID   int64
+		semester int16
+	}{
+		{groupID: group2ID, currID: currID, semester: 8},
+		{groupID: group3ID, currID: currID, semester: 8},
+		{groupID: groupCourse3ID, currID: curr2023, semester: 6},
+		{groupID: groupCourse2ID, currID: curr2024, semester: 4},
+		{groupID: groupCourse1ID, currID: curr2025, semester: 2},
+	} {
+		if err := seedCourseAssignments(db, cfg.groupID, cfg.semester, curriculumPlans[cfg.currID], teacherBySubject, false); err != nil {
+			return nil, err
+		}
+	}
+	if err := seedCourseAssignments(db, groupHalfID, 8, curriculumPlans[currID], teacherBySubject, true); err != nil {
+		return nil, err
+	}
+	if err := seedCourseAssignments(db, groupIncompleteID, 3, curriculumPlans[incompleteCurrID], teacherBySubject, false); err != nil {
+		return nil, err
 	}
 
 	online := "online"
@@ -504,6 +708,33 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		{GroupID: group2ID, DayOfWeek: 4, WeekParity: schedule.WeekParityNumerator, PairNumber: 2, SubjectID: englishPDID, LessonFormat: online, Status: schedule.StatusPublished, TeacherID: &onlineTeacherIDs[2]},
 		{GroupID: group2ID, DayOfWeek: 5, WeekParity: schedule.WeekParityNumerator, PairNumber: 1, SubjectID: economicsID, LocationID: &locEconomicsID, Status: schedule.StatusPublished, TeacherID: &vimbergID},
 	}
+	for _, extra := range []struct {
+		groupID  int
+		baseRoom int
+		half     bool
+	}{
+		{groupID: group3ID, baseRoom: locComputer2ID},
+		{groupID: groupCourse1ID, baseRoom: locEngels201ID},
+		{groupID: groupCourse2ID, baseRoom: locEngels202ID},
+		{groupID: groupCourse3ID, baseRoom: locEngelsVCID},
+		{groupID: groupHalfID, baseRoom: locEngelsLabID, half: true},
+		{groupID: groupIncompleteID, baseRoom: locEngels201ID, half: true},
+	} {
+		var maybeZernova *int = &zernovaID
+		var maybeChelishcheva *int = &chelishchevaID
+		if extra.half {
+			maybeZernova = nil
+			maybeChelishcheva = nil
+		}
+		baseRoom := extra.baseRoom
+		templateSeeds = append(templateSeeds,
+			lessonSeed{GroupID: extra.groupID, DayOfWeek: 0, WeekParity: schedule.WeekParityDenominator, PairNumber: 1, SubjectID: instrToolsID, LocationID: &baseRoom, Status: schedule.StatusPublished, TeacherID: &tuzovaID},
+			lessonSeed{GroupID: extra.groupID, DayOfWeek: 0, WeekParity: schedule.WeekParityDenominator, PairNumber: 2, SubjectID: englishPDID, LocationID: &baseRoom, Status: schedule.StatusPublished, TeacherID: &kuznetsovaID},
+			lessonSeed{GroupID: extra.groupID, DayOfWeek: 1, WeekParity: schedule.WeekParityDenominator, PairNumber: 1, SubjectID: peID, LocationID: &locSK5ID, Status: schedule.StatusPublished, TeacherID: &smirnovID},
+			lessonSeed{GroupID: extra.groupID, DayOfWeek: 2, WeekParity: schedule.WeekParityNumerator, PairNumber: 1, SubjectID: mathModelID, LocationID: &baseRoom, Status: schedule.StatusPublished, TeacherID: maybeZernova},
+			lessonSeed{GroupID: extra.groupID, DayOfWeek: 3, WeekParity: schedule.WeekParityNumerator, PairNumber: 2, SubjectID: trpoID, LocationID: &baseRoom, Status: schedule.StatusPublished, TeacherID: maybeChelishcheva},
+		)
+	}
 	var requestLessonID int64
 	for _, tpl := range templateSeeds {
 		lessonDate, ok := seedLessonDate(tpl.WeekParity, tpl.DayOfWeek)
@@ -542,7 +773,12 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		{LocationID: locModelingID, IsAvailable: true},
 		{LocationID: locTRPOID, IsAvailable: true},
 		{LocationID: locComputerID, IsAvailable: true, Comment: ptrString("ВЦ на неделю")},
+		{LocationID: locComputer2ID, IsAvailable: true},
 		{LocationID: locPoolID, IsAvailable: true},
+		{LocationID: locEngels201ID, IsAvailable: true},
+		{LocationID: locEngels202ID, IsAvailable: true},
+		{LocationID: locEngelsVCID, IsAvailable: true},
+		{LocationID: locEngelsLabID, IsAvailable: true},
 	} {
 		if _, err := repo.UpsertLocationWeekAvailability(weekStart, []schedule.LocationWeekAvailability{availability}); err != nil {
 			return nil, err
@@ -705,7 +941,7 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		SpecialtyID:  specID,
 		CurriculumID: currID,
 		CalendarID:   calID,
-		GroupIDs:     []int{group1ID, group2ID},
+		GroupIDs:     seedGroupIDs,
 		Users:        users,
 	}, nil
 }
@@ -1260,6 +1496,197 @@ func applySeedOverrideOnce(db *gorm.DB, svc *schedule.Service, reason string, re
 	req.Reason = &reason
 	_, err := svc.ApplyScheduleOverride(req)
 	return err
+}
+
+type seedCurriculumSubject struct {
+	index      string
+	name       string
+	subjectID  int
+	hours      int
+	assessment string
+}
+
+func seedCurriculumPlan(repo *schedule.Repository, db *gorm.DB, currID int64, subjects []seedCurriculumSubject, incomplete bool) (map[int]int64, error) {
+	rootID, err := getOrCreateCurriculumItem(db, schedule.CurriculumItem{
+		CurriculumID: currID,
+		ParentID:     nil,
+		IndexCode:    ptrString("1"),
+		ItemType:     "OTHER",
+		Name:         "Обязательная часть",
+		SubjectID:    nil,
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := map[int]int64{}
+	for _, seed := range subjects {
+		subjectID := seed.subjectID
+		itemID, err := getOrCreateCurriculumItem(db, schedule.CurriculumItem{
+			CurriculumID: currID,
+			ParentID:     &rootID,
+			IndexCode:    ptrString(seed.index),
+			ItemType:     "DISCIPLINE",
+			Name:         seed.name,
+			SubjectID:    &subjectID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		out[seed.subjectID] = itemID
+		allocations := fullSeedAllocations(seed.hours, seed.assessment)
+		if incomplete {
+			allocations = []schedule.CurriculumItemAllocation{{
+				Semester:       3,
+				Weeks:          ptrI16(16),
+				HoursTotal:     ptrInt(seed.hours),
+				HoursLectures:  ptrInt(seed.hours / 2),
+				HoursPractice:  ptrInt(seed.hours / 2),
+				AssessmentType: ptrString(seed.assessment),
+			}}
+		}
+		if _, err := repo.UpsertCurriculumItemAllocations(itemID, allocations); err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
+func fullSeedAllocations(hours int, assessment string) []schedule.CurriculumItemAllocation {
+	if hours <= 0 {
+		hours = 36
+	}
+	perSemester := hours / 4
+	if perSemester < 18 {
+		perSemester = 18
+	}
+	out := make([]schedule.CurriculumItemAllocation, 0, 8)
+	for semester := int16(1); semester <= 8; semester++ {
+		a := schedule.CurriculumItemAllocation{
+			Semester:       semester,
+			Weeks:          ptrI16(16),
+			HoursTotal:     ptrInt(perSemester),
+			HoursLectures:  ptrInt(perSemester / 2),
+			HoursPractice:  ptrInt(perSemester / 2),
+			AssessmentType: ptrString("CREDIT"),
+		}
+		if semester == 8 {
+			a.HoursTotal = ptrInt(hours)
+			a.HoursLectures = ptrInt(hours / 2)
+			a.HoursPractice = ptrInt(hours / 2)
+			a.AssessmentType = ptrString(assessment)
+		}
+		out = append(out, a)
+	}
+	return out
+}
+
+func seedAcademicCalendarWeeks(repo *schedule.Repository, calendarID int64, academicYearStart time.Time) error {
+	weeks := make([]schedule.AcademicCalendarWeek, 0, 52*6)
+	for course := int16(1); course <= 6; course++ {
+		courseStart := academicYearStart.AddDate(int(course-1), 0, 0)
+		for week := int16(1); week <= 52; week++ {
+			start := courseStart.AddDate(0, 0, int((week-1)*7))
+			code, name, teaching := seedAcademicWeekActivity(week)
+			weeks = append(weeks, schedule.AcademicCalendarWeek{
+				CourseNumber:  course,
+				WeekNumber:    week,
+				WeekStartDate: start,
+				ActivityCode:  code,
+				ActivityName:  ptrString(name),
+				IsTeaching:    teaching,
+			})
+		}
+	}
+	_, err := repo.UpsertAcademicCalendarWeeks(calendarID, weeks)
+	return err
+}
+
+func seedAcademicWeekActivity(week int16) (string, string, bool) {
+	switch week {
+	case 32:
+		return "PRACTICE_PROD", "Производственная практика", false
+	case 33:
+		return "EXAM", "Экзаменационная сессия", true
+	case 45:
+		return "PRACTICE_EDU", "Учебная практика", false
+	case 48:
+		return "PRACTICE_PREGRAD", "Преддипломная практика", false
+	case 50:
+		return "GIA", "Государственная итоговая аттестация", false
+	case 52:
+		return "VACATION", "Каникулы", false
+	default:
+		return "TEACHING", "Учебные занятия", true
+	}
+}
+
+func seedFullStudyCalendar(repo *schedule.Repository, groupID int, academicYearStart time.Time, teachingID, practiceEduID, practiceProdID, practicePregradID, examID, giaID, vacationID int) error {
+	weeks := make([]schedule.StudyCalendarWeek, 0, 52)
+	for week := int16(1); week <= 52; week++ {
+		activityID := teachingID
+		allowsLessons := true
+		comment := ""
+		switch week {
+		case 32:
+			activityID = practiceProdID
+			allowsLessons = false
+			comment = "Производственная практика"
+		case 33:
+			activityID = examID
+			allowsLessons = true
+			comment = "Экзаменационная неделя"
+		case 45:
+			activityID = practiceEduID
+			allowsLessons = false
+			comment = "Учебная практика"
+		case 48:
+			activityID = practicePregradID
+			allowsLessons = false
+			comment = "Преддипломная практика"
+		case 50:
+			activityID = giaID
+			allowsLessons = false
+			comment = "ГИА"
+		case 52:
+			activityID = vacationID
+			allowsLessons = false
+			comment = "Каникулы"
+		}
+		row := schedule.StudyCalendarWeek{
+			WeekNumber:    week,
+			WeekStartDate: ptrTime(academicYearStart.AddDate(0, 0, int((week-1)*7))),
+			ActivityID:    &activityID,
+			AllowsLessons: allowsLessons,
+		}
+		if comment != "" {
+			row.Comment = ptrString(comment)
+		}
+		weeks = append(weeks, row)
+	}
+	_, err := repo.UpsertStudyCalendarWeeks(groupID, weeks)
+	return err
+}
+
+func seedCourseAssignments(db *gorm.DB, groupID int, semester int16, itemIDs map[int]int64, teacherBySubject map[int]*int, halfAssigned bool) error {
+	i := 0
+	for subjectID, itemID := range itemIDs {
+		teacherID := teacherBySubject[subjectID]
+		if halfAssigned && i%2 == 1 {
+			teacherID = nil
+		}
+		if _, err := getOrCreateCourseAssignment(db, schedule.CourseAssignment{
+			GroupID:          groupID,
+			Semester:         semester,
+			SubjectID:        subjectID,
+			Status:           schedule.StatusPublished,
+			TeacherID:        teacherID,
+			CurriculumItemID: ptrInt64(itemID),
+		}); err != nil {
+			return err
+		}
+		i++
+	}
+	return nil
 }
 
 func seedLessonDate(parity schedule.WeekParity, dayOfWeek int16) (time.Time, bool) {

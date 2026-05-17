@@ -155,3 +155,82 @@ const scheduleOverridesExportHTMLTemplate = `<!doctype html>
   </table>
 </body>
 </html>`
+
+const teacherBoardExportHTMLTemplate = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    @page { size: A4 portrait; margin: 7mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #111; font-family: Arial, sans-serif; font-size: 6.6pt; }
+    .page { page-break-after: always; min-height: 282mm; }
+    .page:last-child { page-break-after: auto; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 4mm; border-bottom: 1px solid #111; padding-bottom: 2mm; margin-bottom: 3mm; }
+    .title { font-size: 12pt; font-weight: 700; }
+    .subtitle { margin-top: 1mm; font-size: 7.4pt; color: #333; }
+    .meta { text-align: right; white-space: nowrap; font-size: 6.4pt; color: #333; }
+    .teachers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; align-items: start; }
+    .teacher { min-height: 260mm; border-left: 1px solid #111; padding-left: 1.8mm; }
+    .teacher-name { font-size: 8.2pt; font-weight: 700; border-bottom: 1px solid #555; padding-bottom: 1mm; margin-bottom: 1.5mm; min-height: 8mm; }
+    .week-title { font-weight: 700; margin: 1.5mm 0 1mm; border-bottom: 1px dotted #777; padding-bottom: .7mm; }
+    .day { break-inside: avoid; border-bottom: 1px solid #bbb; padding: 1mm 0; min-height: 9mm; }
+    .day-head { font-weight: 700; color: #111; margin-bottom: .7mm; }
+    .lesson { margin: .7mm 0 0; line-height: 1.14; }
+    .pair { font-weight: 700; }
+    .subject { font-weight: 700; }
+    .details { color: #222; }
+    .empty { color: #888; }
+  </style>
+</head>
+<body>
+  {{ range $pageIndex, $page := .Pages }}
+  <section class="page">
+    <div class="header">
+      <div>
+        <div class="title">{{ $.Title }}</div>
+        <div class="subtitle">{{ $.Subtitle }}</div>
+      </div>
+      <div class="meta">
+        <div>3 преподавателя на лист</div>
+        <div>{{ $.GeneratedAt }}</div>
+      </div>
+    </div>
+    <div class="teachers">
+      {{ range $page.Teachers }}
+      <div class="teacher">
+        <div class="teacher-name">{{ .Name }}</div>
+        {{ range .Weeks }}
+          <div class="week-title">{{ .Title }} | {{ .RangeLabel }}</div>
+          {{ range .Days }}
+          <div class="day">
+            <div class="day-head">{{ .DayName }} {{ .DateLabel }}</div>
+            {{ $has := false }}
+            {{ range .Cells }}
+              {{ $pair := .PairNumber }}
+              {{ range .Lessons }}
+                {{ $has = true }}
+                <div class="lesson">
+                  <span class="pair">{{ $pair }}.</span>
+                  <span class="subject">{{ .Subject }}</span>
+                  <div class="details">
+                    {{ if .Primary }}{{ .Primary }}{{ end }}
+                    {{ if .Secondary }}; {{ .Secondary }}{{ end }}
+                    {{ if .Location }}; {{ .Location }}{{ end }}
+                    {{ if .Badge }}; {{ .Badge }}{{ end }}
+                    {{ if .Comment }}; {{ .Comment }}{{ end }}
+                  </div>
+                </div>
+              {{ end }}
+            {{ end }}
+            {{ if not $has }}<div class="empty">-</div>{{ end }}
+          </div>
+          {{ end }}
+        {{ end }}
+      </div>
+      {{ end }}
+    </div>
+  </section>
+  {{ end }}
+</body>
+</html>`

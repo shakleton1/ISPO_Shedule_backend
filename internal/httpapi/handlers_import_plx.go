@@ -774,16 +774,14 @@ func plxRomanCourse(course int) string {
 func mapPLXGraphActivity(symbol string) (string, string, bool) {
 	switch strings.ToLower(strings.TrimSpace(symbol)) {
 	case "у", "уп":
-		return "PRACTICE", "Учебная практика", false
+		return "PRACTICE_EDU", "Учебная практика", false
 	case "п":
-		return "PRACTICE", "Производственная практика", false
-	case "пп":
-		return "PRACTICE", "Преддипломная практика", false
-	case "пд":
-		return "PRACTICE", "Производственная практика (преддипломная)", false
+		return "PRACTICE_PROD", "Производственная практика", false
+	case "пп", "пд":
+		return "PRACTICE_PREGRAD", "Преддипломная практика", false
 	case "э":
-		return "EXAM", "Промежуточная аттестация", true
-	case "г":
+		return "EXAM", "Экзаменационная сессия", true
+	case "г", "гиа":
 		return "GIA", "Государственная итоговая аттестация", false
 	case "к":
 		return "VACATION", "Каникулы", false

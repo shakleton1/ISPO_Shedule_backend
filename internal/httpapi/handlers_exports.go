@@ -122,6 +122,51 @@ func handleAdminExportTeacherScheduleXLSX(svc *schedule.Service, repo *schedule.
 	}
 }
 
+func handleAdminExportTeacherSchedulesPDF(svc *schedule.Service, repo *schedule.Repository, engine schedulePDFEngine) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		teacherIDs, refDate, ok := bindTeacherBoardExportQuery(c)
+		if !ok {
+			return
+		}
+		data, err := buildTeacherBoardExportData(svc, repo, teacherIDs, refDate)
+		if err != nil {
+			writeError(c, http.StatusBadRequest, "bad_request", "", err.Error())
+			return
+		}
+		html, err := buildTeacherBoardPDFHTML(data)
+		if err != nil {
+			writeError(c, http.StatusInternalServerError, "internal", "", err.Error())
+			return
+		}
+		body, err := engine.RenderHTMLToPDF(c.Request.Context(), html)
+		if err != nil {
+			writeError(c, http.StatusInternalServerError, "internal", "", err.Error())
+			return
+		}
+		writeBinaryExport(c, http.StatusOK, "application/pdf", exportFileName(data.Title, refDate, "pdf"), body)
+	}
+}
+
+func handleAdminExportTeacherSchedulesXLSX(svc *schedule.Service, repo *schedule.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		teacherIDs, refDate, ok := bindTeacherBoardExportQuery(c)
+		if !ok {
+			return
+		}
+		data, err := buildTeacherBoardExportData(svc, repo, teacherIDs, refDate)
+		if err != nil {
+			writeError(c, http.StatusBadRequest, "bad_request", "", err.Error())
+			return
+		}
+		body, err := buildTeacherBoardXLSX(data)
+		if err != nil {
+			writeError(c, http.StatusInternalServerError, "internal", "", err.Error())
+			return
+		}
+		writeBinaryExport(c, http.StatusOK, xlsxContentType, exportFileName(data.Title, refDate, "xlsx"), body)
+	}
+}
+
 func handleAdminExportScheduleOverridesPDF(repo *schedule.Repository, engine schedulePDFEngine) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		filters, startDate, endDate, ok := bindScheduleOverrideExportQuery(c)
@@ -185,6 +230,43 @@ func bindTeacherTwoWeekExportQuery(c *gin.Context) (int, time.Time, bool) {
 	}
 	refDate, ok := parseRequiredExportDate(c)
 	return teacherID, refDate, ok
+}
+
+func bindTeacherBoardExportQuery(c *gin.Context) ([]int, time.Time, bool) {
+	refDate, ok := parseRequiredExportDate(c)
+	if !ok {
+		return nil, time.Time{}, false
+	}
+	ids, ok := parseTeacherIDsQuery(c)
+	if !ok {
+		return nil, time.Time{}, false
+	}
+	return ids, refDate, true
+}
+
+func parseTeacherIDsQuery(c *gin.Context) ([]int, bool) {
+	raw := strings.TrimSpace(c.Query("teacher_ids"))
+	if raw == "" {
+		raw = strings.TrimSpace(c.Query("teacher_id"))
+	}
+	if raw == "" {
+		return nil, true
+	}
+	parts := strings.Split(raw, ",")
+	out := make([]int, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		id, err := strconv.Atoi(part)
+		if err != nil || id <= 0 {
+			writeValidationError(c, "teacher_ids", "invalid teacher_ids")
+			return nil, false
+		}
+		out = append(out, id)
+	}
+	return out, true
 }
 
 func bindScheduleOverrideExportQuery(c *gin.Context) (schedule.ScheduleOverrideFilters, *time.Time, *time.Time, bool) {

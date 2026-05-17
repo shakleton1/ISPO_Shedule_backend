@@ -2207,6 +2207,62 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
 
+  /api/v1/admin/reports/teacher-schedules/pdf:
+    get:
+      tags: [Администрирование]
+      summary: PDF-экспорт общего расписания преподавателей на две недели
+      description: "Вертикальный печатный отчет: до 3 преподавателей на одном листе. Если teacher_ids не передан, экспортируются все активные преподаватели."
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: teacher_ids
+          required: false
+          description: Необязательный список ID преподавателей через запятую.
+          schema: { type: string, example: "1,2,3" }
+        - in: query
+          name: date_start
+          required: true
+          description: Любая дата первой недели (YYYY-MM-DD); экспорт начнется с понедельника этой недели.
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: PDF-файл общего расписания преподавателей
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/admin/reports/teacher-schedules/xlsx:
+    get:
+      tags: [Администрирование]
+      summary: Excel-экспорт общего расписания преподавателей на две недели
+      description: "Печатный отчет: до 3 преподавателей в одной строке листа. Если teacher_ids не передан, экспортируются все активные преподаватели."
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: teacher_ids
+          required: false
+          description: Необязательный список ID преподавателей через запятую.
+          schema: { type: string, example: "1,2,3" }
+        - in: query
+          name: date_start
+          required: true
+          description: Любая дата первой недели (YYYY-MM-DD); экспорт начнется с понедельника этой недели.
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: XLSX-файл общего расписания преподавателей
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
   /api/v1/admin/schedule-overrides/apply:
     post:
       tags: [Администрирование]
@@ -3336,7 +3392,7 @@ components:
         name: { type: string }
         activity_kind:
           type: string
-          enum: [TEACHING, PRACTICE, EXAM, VACATION, EVENT, OTHER]
+          enum: [TEACHING, PRACTICE, EXAM, GIA, VACATION, EVENT, OTHER]
         allows_lessons: { type: boolean }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }

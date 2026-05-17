@@ -81,6 +81,38 @@ func TestBuildScheduleOverridesXLSX(t *testing.T) {
 	require.True(t, strings.Contains(replacement, "Физ. культура"))
 }
 
+func TestBuildTeacherBoardXLSX(t *testing.T) {
+	data := &teacherBoardExportData{
+		Title:       "Расписание преподавателей",
+		Subtitle:    "23.03.2026 - 04.04.2026",
+		GeneratedAt: "Сформировано: test",
+		Pages: []teacherBoardPage{{
+			Teachers: []teacherBoardTeacher{
+				{Name: "Зернова Е.Н.", Weeks: sampleTwoWeekExportData().Weeks},
+				{Name: "Тузова Д.А.", Weeks: sampleTwoWeekExportData().Weeks},
+				{Name: "Челищева Л.Н.", Weeks: sampleTwoWeekExportData().Weeks},
+			},
+		}},
+	}
+
+	html, err := buildTeacherBoardPDFHTML(data)
+	require.NoError(t, err)
+	require.Contains(t, html, "3 преподавателя на лист")
+	require.Contains(t, html, "Зернова Е.Н.")
+
+	body, err := buildTeacherBoardXLSX(data)
+	require.NoError(t, err)
+	require.NotEmpty(t, body)
+
+	f, err := excelize.OpenReader(bytes.NewReader(body))
+	require.NoError(t, err)
+	defer func() { _ = f.Close() }()
+
+	title, err := f.GetCellValue("Преподаватели", "A1")
+	require.NoError(t, err)
+	require.Equal(t, data.Title, title)
+}
+
 func sampleTwoWeekExportData() *twoWeekScheduleExportData {
 	return &twoWeekScheduleExportData{
 		Title:       "Расписание группы 22290907/1095",
@@ -110,9 +142,6 @@ func sampleTwoWeekExportData() *twoWeekScheduleExportData {
 							{PairNumber: 3},
 							{PairNumber: 4},
 							{PairNumber: 5},
-							{PairNumber: 6},
-							{PairNumber: 7},
-							{PairNumber: 8},
 						},
 					},
 				},

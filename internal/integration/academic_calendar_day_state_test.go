@@ -41,7 +41,7 @@ func TestServiceGetRange_StudyDayStateAcademicWeekAndDayOverride(t *testing.T) {
 		CourseNumber:  1,
 		WeekNumber:    1,
 		WeekStartDate: time.Date(2026, 8, 31, 0, 0, 0, 0, time.UTC),
-		ActivityCode:  "PRACTICE",
+		ActivityCode:  "PRACTICE_EDU",
 		ActivityName:  ptrString("Учебная практика"),
 		IsTeaching:    false,
 	}})
@@ -61,7 +61,7 @@ func TestServiceGetRange_StudyDayStateAcademicWeekAndDayOverride(t *testing.T) {
 	require.Len(t, resp.Days, 2)
 
 	require.NotNil(t, resp.Days[0].StudyDayState)
-	assert.Equal(t, "PRACTICE", resp.Days[0].StudyDayState.ActivityCode)
+	assert.Equal(t, "PRACTICE_EDU", resp.Days[0].StudyDayState.ActivityCode)
 	assert.False(t, resp.Days[0].StudyDayState.IsTeaching)
 	assert.Equal(t, "academic_week", resp.Days[0].StudyDayState.Source)
 

@@ -70,7 +70,7 @@ func TestHandleAdminImportPLXCurriculumXLSX_Success(t *testing.T) {
 
 	var practiceWeek schedule.AcademicCalendarWeek
 	require.NoError(t, db.Where("calendar_id = ? AND course_number = ? AND week_number = ?", calendars[0].ID, 1, 2).First(&practiceWeek).Error)
-	assert.Equal(t, "PRACTICE", practiceWeek.ActivityCode)
+	assert.Equal(t, "PRACTICE_EDU", practiceWeek.ActivityCode)
 	assert.False(t, practiceWeek.IsTeaching)
 
 	var vacationWeek schedule.AcademicCalendarWeek
@@ -80,7 +80,7 @@ func TestHandleAdminImportPLXCurriculumXLSX_Success(t *testing.T) {
 
 	var secondCourseWeek schedule.AcademicCalendarWeek
 	require.NoError(t, db.Where("calendar_id = ? AND course_number = ? AND week_number = ?", calendars[0].ID, 2, 2).First(&secondCourseWeek).Error)
-	assert.Equal(t, "PRACTICE", secondCourseWeek.ActivityCode)
+	assert.Equal(t, "PRACTICE_PREGRAD", secondCourseWeek.ActivityCode)
 	assert.False(t, secondCourseWeek.IsTeaching)
 }
 

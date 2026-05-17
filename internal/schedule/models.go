@@ -249,8 +249,8 @@ type AcademicCalendarWeek struct {
 	CourseNumber  int16     `gorm:"not null;default:1" json:"course_number"`
 	WeekNumber    int16     `gorm:"not null" json:"week_number"`
 	WeekStartDate time.Time `gorm:"type:date;not null" json:"week_start_date"`
-	ActivityCode  string    `gorm:"size:10;not null" json:"activity_code"`
-	ActivityName  *string   `gorm:"size:100" json:"activity_name"`
+	ActivityCode  string    `gorm:"size:50;not null" json:"activity_code"`
+	ActivityName  *string   `gorm:"size:200" json:"activity_name"`
 	IsTeaching    bool      `gorm:"not null;default:true" json:"is_teaching"`
 	Comment       *string   `json:"comment"`
 	CreatedAt     time.Time `json:"created_at"`

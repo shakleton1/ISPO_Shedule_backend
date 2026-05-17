@@ -242,9 +242,34 @@ func normalizeStudyActivity(a *StudyActivity) error {
 		return fmt.Errorf("code and name required")
 	}
 	if a.ActivityKind == "" {
-		a.ActivityKind = "OTHER"
+		a.ActivityKind = StudyActivityKindForCode(a.Code)
+	}
+	switch a.ActivityKind {
+	case "TEACHING", "PRACTICE", "EXAM", "GIA", "VACATION", "EVENT", "OTHER":
+	default:
+		return fmt.Errorf("invalid activity_kind: %s", a.ActivityKind)
 	}
 	return nil
+}
+
+func StudyActivityKindForCode(code string) string {
+	code = strings.ToUpper(strings.TrimSpace(code))
+	switch {
+	case code == "TEACHING":
+		return "TEACHING"
+	case strings.HasPrefix(code, "PRACTICE"):
+		return "PRACTICE"
+	case code == "EXAM":
+		return "EXAM"
+	case code == "GIA":
+		return "GIA"
+	case code == "VACATION":
+		return "VACATION"
+	case code == "EVENT":
+		return "EVENT"
+	default:
+		return "OTHER"
+	}
 }
 
 func (r *Repository) GetOrCreateStudyActivity(code, name, kind string, allowsLessons bool) (int, error) {
@@ -261,7 +286,7 @@ func (r *Repository) GetOrCreateStudyActivity(code, name, kind string, allowsLes
 		return 0, fmt.Errorf("activity code or name required")
 	}
 	if kind == "" {
-		kind = "OTHER"
+		kind = StudyActivityKindForCode(code)
 	}
 	var out struct {
 		ID int `gorm:"column:id"`

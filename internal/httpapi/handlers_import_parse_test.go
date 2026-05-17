@@ -326,7 +326,7 @@ func TestParsePLXCurriculumXLSX_Basic(t *testing.T) {
 	if parsed.CalendarWeeks[0].CourseNumber != 1 || parsed.CalendarWeeks[52].CourseNumber != 2 {
 		t.Fatalf("expected course 1 and 2 calendar rows, got week0=%+v week52=%+v", parsed.CalendarWeeks[0], parsed.CalendarWeeks[52])
 	}
-	if parsed.CalendarWeeks[1].ActivityCode != "PRACTICE" || parsed.CalendarWeeks[1].IsTeaching {
+	if parsed.CalendarWeeks[1].ActivityCode != "PRACTICE_EDU" || parsed.CalendarWeeks[1].IsTeaching {
 		t.Fatalf("unexpected week 2 calendar cell: %+v", parsed.CalendarWeeks[1])
 	}
 	if parsed.CalendarWeeks[2].ActivityCode != "EXAM" || !parsed.CalendarWeeks[2].IsTeaching {
@@ -343,9 +343,12 @@ func TestMapPLXGraphActivity_PracticeCodes(t *testing.T) {
 		code   string
 		teach  bool
 	}{
-		{symbol: "УП", code: "PRACTICE", teach: false},
-		{symbol: "ПП", code: "PRACTICE", teach: false},
+		{symbol: "УП", code: "PRACTICE_EDU", teach: false},
+		{symbol: "П", code: "PRACTICE_PROD", teach: false},
+		{symbol: "ПП", code: "PRACTICE_PREGRAD", teach: false},
+		{symbol: "ПД", code: "PRACTICE_PREGRAD", teach: false},
 		{symbol: "Э", code: "EXAM", teach: true},
+		{symbol: "Г", code: "GIA", teach: false},
 	}
 	for _, tt := range tests {
 		code, _, teaching := mapPLXGraphActivity(tt.symbol)
