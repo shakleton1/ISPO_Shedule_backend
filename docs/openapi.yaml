@@ -1777,6 +1777,31 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorResponse" }
+    put:
+      tags: [Администрирование]
+      summary: Обновить фактическое занятие расписания
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ScheduleLessonRequest" }
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScheduleLesson" }
+        "409":
+          description: Глобальное ограничение дня или конфликт версии
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
     delete:
       tags: [Администрирование]
       summary: Удалить фактическое занятие расписания
@@ -2253,6 +2278,39 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/StudyActivity" }
 
+  /api/v1/admin/study-activities/{id}:
+    put:
+      tags: [Администрирование]
+      summary: Обновить вид учебной активности
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudyActivity" }
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudyActivity" }
+    delete:
+      tags: [Администрирование]
+      summary: Удалить вид учебной активности
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "204": { description: Удалено }
+
   /api/v1/admin/study-calendar-weeks:
     get:
       tags: [Администрирование]
@@ -2300,6 +2358,19 @@ paths:
                 type: array
                 items: { $ref: "#/components/schemas/StudyCalendarWeek" }
 
+  /api/v1/admin/study-calendar-weeks/{id}:
+    delete:
+      tags: [Администрирование]
+      summary: Удалить неделю учебного календаря группы
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Удалено }
+
   /api/v1/admin/teacher-day-constraints:
     get:
       tags: [Администрирование]
@@ -2328,6 +2399,39 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TeacherDayConstraint" }
+
+  /api/v1/admin/teacher-day-constraints/{id}:
+    put:
+      tags: [Администрирование]
+      summary: Обновить дневное ограничение преподавателя
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TeacherDayConstraintRequest" }
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherDayConstraint" }
+    delete:
+      tags: [Администрирование]
+      summary: Удалить дневное ограничение преподавателя
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Удалено }
 
   /api/v1/admin/calendar-day-constraints:
     get:
@@ -2394,6 +2498,26 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CalendarDayConstraint" }
+    put:
+      tags: [Администрирование]
+      summary: Обновить глобальное ограничение календарного дня
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CalendarDayConstraintRequest" }
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CalendarDayConstraint" }
     delete:
       tags: [Администрирование]
       summary: Удалить глобальное ограничение календарного дня
@@ -2434,6 +2558,39 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScheduleReplacement" }
+
+  /api/v1/admin/replacements/{id}:
+    put:
+      tags: [Администрирование]
+      summary: Обновить запись журнала замен
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ScheduleReplacementRequest" }
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScheduleReplacement" }
+    delete:
+      tags: [Администрирование]
+      summary: Удалить запись журнала замен
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Удалено }
 
   /api/v1/admin/location-availability/weeks:
     get:
