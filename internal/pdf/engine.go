@@ -56,6 +56,7 @@ func (e *Engine) RenderHTMLToPDF(ctx context.Context, in RenderInput) ([]byte, e
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			buf, _, err := page.PrintToPDF().
 				WithPrintBackground(true).
+				WithPreferCSSPageSize(true).
 				WithPaperWidth(8.27).
 				WithPaperHeight(11.69).
 				WithMarginTop(0).
