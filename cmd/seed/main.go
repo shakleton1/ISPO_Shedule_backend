@@ -583,6 +583,9 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		{GroupID: group2ID, Semester: semester, SubjectID: mathModelID, Status: schedule.StatusPublished, TeacherID: &zernovaID, CurriculumItemID: ptrInt64(curriculumItemIDs[mathModelID])},
 		{GroupID: group2ID, Semester: semester, SubjectID: trpoID, Status: schedule.StatusPublished, TeacherID: &chelishchevaID, CurriculumItemID: ptrInt64(curriculumItemIDs[trpoID])},
 	} {
+		if a.CampusID == nil {
+			a.CampusID = &campusID
+		}
 		if _, err := getOrCreateCourseAssignment(db, a); err != nil {
 			return nil, err
 		}
@@ -609,14 +612,18 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		{groupID: groupCourse2ID, currID: curr2024, semester: 4},
 		{groupID: groupCourse1ID, currID: curr2025, semester: 2},
 	} {
-		if err := seedCourseAssignments(db, cfg.groupID, cfg.semester, curriculumPlans[cfg.currID], teacherBySubject, false); err != nil {
+		assignmentCampusID := &engelsCampusID
+		if cfg.groupID == group2ID || cfg.groupID == group3ID {
+			assignmentCampusID = &campusID
+		}
+		if err := seedCourseAssignments(db, cfg.groupID, cfg.semester, curriculumPlans[cfg.currID], teacherBySubject, false, assignmentCampusID); err != nil {
 			return nil, err
 		}
 	}
-	if err := seedCourseAssignments(db, groupHalfID, 8, curriculumPlans[currID], teacherBySubject, true); err != nil {
+	if err := seedCourseAssignments(db, groupHalfID, 8, curriculumPlans[currID], teacherBySubject, true, &engelsCampusID); err != nil {
 		return nil, err
 	}
-	if err := seedCourseAssignments(db, groupIncompleteID, 3, curriculumPlans[incompleteCurrID], teacherBySubject, false); err != nil {
+	if err := seedCourseAssignments(db, groupIncompleteID, 3, curriculumPlans[incompleteCurrID], teacherBySubject, false, &engelsCampusID); err != nil {
 		return nil, err
 	}
 
@@ -1319,6 +1326,7 @@ func getOrCreateCourseAssignment(db *gorm.DB, a schedule.CourseAssignment) (int6
 	var row schedule.CourseAssignment
 	if err := q.First(&row).Error; err == nil {
 		row.TeacherID = a.TeacherID
+		row.CampusID = a.CampusID
 		row.CurriculumItemID = a.CurriculumItemID
 		row.Notes = a.Notes
 		if err := db.Save(&row).Error; err != nil {
@@ -1696,7 +1704,7 @@ func seedFullStudyCalendar(repo *schedule.Repository, groupID int, academicYearS
 	return err
 }
 
-func seedCourseAssignments(db *gorm.DB, groupID int, semester int16, itemIDs map[int]int64, teacherBySubject map[int]*int, halfAssigned bool) error {
+func seedCourseAssignments(db *gorm.DB, groupID int, semester int16, itemIDs map[int]int64, teacherBySubject map[int]*int, halfAssigned bool, campusID *int) error {
 	i := 0
 	for subjectID, itemID := range itemIDs {
 		teacherID := teacherBySubject[subjectID]
@@ -1709,6 +1717,7 @@ func seedCourseAssignments(db *gorm.DB, groupID int, semester int16, itemIDs map
 			SubjectID:        subjectID,
 			Status:           schedule.StatusPublished,
 			TeacherID:        teacherID,
+			CampusID:         campusID,
 			CurriculumItemID: ptrInt64(itemID),
 		}); err != nil {
 			return err

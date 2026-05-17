@@ -132,6 +132,7 @@ type CourseAssignmentFilters struct {
 	Semester  *int16
 	SubjectID *int
 	TeacherID *int
+	CampusID  *int
 	Status    *EntityStatus
 }
 
@@ -157,6 +158,9 @@ func (r *Repository) ListCourseAssignments(filters CourseAssignmentFilters) ([]C
 	if filters.TeacherID != nil {
 		q = q.Where("teacher_id = ?", *filters.TeacherID)
 	}
+	if filters.CampusID != nil {
+		q = q.Where("campus_id = ?", *filters.CampusID)
+	}
 	if filters.Status != nil {
 		q = q.Where("status = ?", *filters.Status)
 	} else {
@@ -180,6 +184,9 @@ func (r *Repository) ListCourseAssignmentsPaged(filters CourseAssignmentFilters,
 	}
 	if filters.TeacherID != nil {
 		q = q.Where("teacher_id = ?", *filters.TeacherID)
+	}
+	if filters.CampusID != nil {
+		q = q.Where("campus_id = ?", *filters.CampusID)
 	}
 	if filters.Status != nil {
 		q = q.Where("status = ?", *filters.Status)
@@ -221,6 +228,7 @@ func (r *Repository) UpdateCourseAssignment(id int64, patch *CourseAssignment) (
 	row.SubjectID = patch.SubjectID
 	row.Status = patch.Status
 	row.TeacherID = patch.TeacherID
+	row.CampusID = patch.CampusID
 	row.CurriculumItemID = patch.CurriculumItemID
 	row.Subgroup = patch.Subgroup
 	row.Notes = patch.Notes
@@ -284,8 +292,8 @@ func (r *Repository) PublishDraftCourseAssignments(groupID int, semester *int16)
 		}
 
 		res := tx.Exec(`
-			INSERT INTO course_assignments (group_id, semester, subject_id, status, teacher_id, curriculum_item_id, subgroup, notes, created_at, updated_at)
-			SELECT group_id, semester, subject_id, 'published', teacher_id, curriculum_item_id, subgroup, notes, now(), now()
+			INSERT INTO course_assignments (group_id, semester, subject_id, status, teacher_id, campus_id, curriculum_item_id, subgroup, notes, created_at, updated_at)
+			SELECT group_id, semester, subject_id, 'published', teacher_id, campus_id, curriculum_item_id, subgroup, notes, now(), now()
 			FROM course_assignments
 			WHERE group_id = ? AND status = 'draft'`+func() string {
 			if semester != nil {

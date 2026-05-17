@@ -231,6 +231,14 @@ func handleAdminListCourseAssignments(repo *schedule.Repository) gin.HandlerFunc
 			}
 			filters.TeacherID = &id
 		}
+		if v := c.Query("campus_id"); v != "" {
+			id, err := strconv.Atoi(v)
+			if err != nil {
+				writeValidationError(c, "campus_id", "invalid campus_id")
+				return
+			}
+			filters.CampusID = &id
+		}
 		if v := c.Query("status"); v != "" {
 			s := schedule.EntityStatus(v)
 			filters.Status = &s

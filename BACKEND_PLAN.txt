@@ -1183,3 +1183,8 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
 [x] Добавить аудитории на Приморской и Энгельса: Энгельса заполнен номерами с планов этажей, Приморская - номерами 100-500; ВЦ/лабы задаются типами кабинетов, старые символьные seed-кабинеты деактивируются.
 [x] Экспорт расписания группы/одного преподавателя показывает только 1-5 пары, чтобы двухнедельный лист помещался и не тратил место на несуществующие 6-8 пары.
 [x] Добавить общий отчет преподавателей: /api/v1/admin/reports/teacher-schedules/{pdf,xlsx}, A4 portrait, до 3 преподавателей на лист.
+
+20) Корпус в назначениях преподавателей
+[x] Добавить campus_id в course_assignments, чтобы назначение "группа + семестр + дисциплина -> преподаватель" могло указывать корпус/площадку из campuses без возврата кабинета в course_assignments.
+    Где: db/migrations/20260517130000_course_assignment_campus.sql, internal/schedule/models.go, repository_teachers.go, handlers_teachers.go, dto.go, docs/openapi.yaml.
+[x] Добавить фильтр campus_id в GET /admin/course-assignments и заполнить campus_id в seed для Приморской/Энгельса.

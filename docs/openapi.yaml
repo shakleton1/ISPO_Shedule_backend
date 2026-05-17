@@ -899,6 +899,10 @@ paths:
           required: false
           schema: { type: integer, minimum: 1 }
         - in: query
+          name: campus_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
           name: status
           required: false
           schema: { type: string, enum: [draft, published] }
@@ -3332,6 +3336,7 @@ components:
         subject_id: { type: integer }
         status: { type: string, enum: [draft, published] }
         teacher_id: { type: integer, nullable: true }
+        campus_id: { type: integer, nullable: true, description: "Корпус/площадка, где преподаватель ведёт дисциплину у группы. Кабинет хранится отдельно в room_assignments." }
         curriculum_item_id: { type: integer, format: int64, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
         notes: { type: string, nullable: true }

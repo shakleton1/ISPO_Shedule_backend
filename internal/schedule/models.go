@@ -88,6 +88,7 @@ type CourseAssignment struct {
 	SubjectID        int          `gorm:"not null" json:"subject_id"`
 	Status           EntityStatus `gorm:"type:text;not null;default:'published'" json:"status"`
 	TeacherID        *int         `json:"teacher_id"`
+	CampusID         *int         `json:"campus_id"`
 	CurriculumItemID *int64       `json:"curriculum_item_id"`
 	Subgroup         *int16       `json:"subgroup"`
 	Notes            *string      `json:"notes"`
