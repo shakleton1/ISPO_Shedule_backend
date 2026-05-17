@@ -41,45 +41,17 @@ func handleGetCurrentSchedule(svc *schedule.Service, repo *schedule.Repository) 
 
 func handleGetSchedulePDF(svc *schedule.Service, repo *schedule.Repository, engine schedulePDFEngine) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		groupID, err := strconv.Atoi(c.Query("group_id"))
-		if err != nil || groupID <= 0 {
-			writeValidationError(c, "group_id", "group_id required")
+		groupID, start, ok := bindGroupTwoWeekExportQuery(c)
+		if !ok {
 			return
 		}
-		ds := c.Query("date_start")
-		if ds == "" {
-			writeValidationError(c, "date_start", "date_start required")
-			return
-		}
-		start, err := time.Parse("2006-01-02", ds)
-		if err != nil {
-			writeValidationError(c, "date_start", "invalid date_start (YYYY-MM-DD)")
-			return
-		}
-
-		week1Start := scheduleMonday(start)
-		week2Start := week1Start.AddDate(0, 0, 7)
-		week1End := week1Start.AddDate(0, 0, 5)
-		week2End := week2Start.AddDate(0, 0, 5)
-
-		week1, err := svc.GetRange(groupID, week1Start, week1End)
-		if err != nil {
-			writeError(c, http.StatusBadRequest, "bad_request", "", err.Error())
-			return
-		}
-		week2, err := svc.GetRange(groupID, week2Start, week2End)
+		data, err := buildGroupTwoWeekScheduleExportData(svc, repo, groupID, start)
 		if err != nil {
 			writeError(c, http.StatusBadRequest, "bad_request", "", err.Error())
 			return
 		}
 
-		group, err := repo.GetGroup(groupID)
-		if err != nil {
-			writeDBError(c, err)
-			return
-		}
-
-		html, err := buildSchedulePDFHTML(group.Name, week1.Days, week2.Days)
+		html, err := buildTwoWeekSchedulePDFHTML(data)
 		if err != nil {
 			writeError(c, http.StatusInternalServerError, "internal", "", err.Error())
 			return
@@ -91,10 +63,7 @@ func handleGetSchedulePDF(svc *schedule.Service, repo *schedule.Repository, engi
 			return
 		}
 
-		filename := "schedule_" + group.Name + "_" + week1Start.Format("2006-01-02") + ".pdf"
-		c.Header("Content-Type", "application/pdf")
-		c.Header("Content-Disposition", "attachment; filename=\""+filename+"\"")
-		c.Data(http.StatusOK, "application/pdf", pdfBytes)
+		writeBinaryExport(c, http.StatusOK, "application/pdf", exportFileName(data.Title, start, "pdf"), pdfBytes)
 	}
 }
 

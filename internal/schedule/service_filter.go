@@ -44,6 +44,7 @@ type ScheduleViewLesson struct {
 	SubjectName  string  `json:"subject_name"`
 	LocationID   *int    `json:"location_id"`
 	LocationName string  `json:"location_name"`
+	LessonFormat string  `json:"lesson_format"`
 	TeacherName  string  `json:"teacher_name"`
 	Subgroup     *int16  `json:"subgroup"`
 	IsChanged    bool    `json:"is_changed"`
@@ -222,6 +223,7 @@ func viewDaysFromWeek(week WeekScheduleResponse, group Group, matches func(Lesso
 				SubjectName:  lesson.SubjectName,
 				LocationID:   lesson.LocationID,
 				LocationName: lesson.LocationName,
+				LessonFormat: lesson.LessonFormat,
 				TeacherName:  lesson.TeacherName,
 				Subgroup:     lesson.Subgroup,
 				IsChanged:    lesson.IsChanged,

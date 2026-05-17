@@ -238,6 +238,32 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
 
+  /api/v1/schedule/xlsx:
+    get:
+      tags: [Расписание]
+      summary: Excel на две недели для конкретной группы
+      description: Возвращает структурированный XLSX-файл с расписанием группы на две учебные недели, начиная с понедельника недели date_start.
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: date_start
+          required: true
+          description: Любая дата первой недели (YYYY-MM-DD); экспорт начнется с понедельника этой недели.
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: XLSX-файл расписания
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
   /api/v1/push/register:
     post:
       tags: [Пуш-уведомления]
@@ -2005,6 +2031,181 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/ScheduleOverride" }
+
+  /api/v1/admin/reports/schedule-overrides/pdf:
+    get:
+      tags: [Администрирование]
+      summary: PDF-экспорт журнала замен расписания
+      description: Формирует строгий печатный отчет по примененным операциям добавления, замены, отмены и восстановления пар.
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: group_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: teacher_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: start_date
+          required: false
+          schema: { type: string, format: date }
+        - in: query
+          name: end_date
+          required: false
+          schema: { type: string, format: date }
+        - in: query
+          name: action_type
+          required: false
+          schema: { type: string, enum: [add, replace, cancel, restore] }
+      responses:
+        "200":
+          description: PDF-файл журнала замен
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /api/v1/admin/reports/schedule-overrides/xlsx:
+    get:
+      tags: [Администрирование]
+      summary: Excel-экспорт журнала замен расписания
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: group_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: teacher_id
+          required: false
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: start_date
+          required: false
+          schema: { type: string, format: date }
+        - in: query
+          name: end_date
+          required: false
+          schema: { type: string, format: date }
+        - in: query
+          name: action_type
+          required: false
+          schema: { type: string, enum: [add, replace, cancel, restore] }
+      responses:
+        "200":
+          description: XLSX-файл журнала замен
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+  /api/v1/admin/reports/group-schedule/pdf:
+    get:
+      tags: [Администрирование]
+      summary: PDF-экспорт расписания группы на две недели
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: date_start
+          required: true
+          description: Любая дата первой недели (YYYY-MM-DD); экспорт начнется с понедельника этой недели.
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: PDF-файл расписания группы
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/admin/reports/group-schedule/xlsx:
+    get:
+      tags: [Администрирование]
+      summary: Excel-экспорт расписания группы на две недели
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: date_start
+          required: true
+          description: Любая дата первой недели (YYYY-MM-DD); экспорт начнется с понедельника этой недели.
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: XLSX-файл расписания группы
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/admin/reports/teacher-schedule/pdf:
+    get:
+      tags: [Администрирование]
+      summary: PDF-экспорт расписания преподавателя на две недели
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: teacher_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: date_start
+          required: true
+          description: Любая дата первой недели (YYYY-MM-DD); экспорт начнется с понедельника этой недели.
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: PDF-файл расписания преподавателя
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/admin/reports/teacher-schedule/xlsx:
+    get:
+      tags: [Администрирование]
+      summary: Excel-экспорт расписания преподавателя на две недели
+      security: [{ bearerAuth: [] }, { adminKey: [] }]
+      parameters:
+        - in: query
+          name: teacher_id
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: date_start
+          required: true
+          description: Любая дата первой недели (YYYY-MM-DD); экспорт начнется с понедельника этой недели.
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: XLSX-файл расписания преподавателя
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   /api/v1/admin/schedule-overrides/apply:
     post:

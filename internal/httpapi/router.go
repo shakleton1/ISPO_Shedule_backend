@@ -173,6 +173,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 				rateLimitMiddleware(rlStore, deps.Config.Server.RateLimit.SchedulePDF, "schedule_pdf"),
 				handleGetSchedulePDF(deps.ScheduleSvc, deps.Repo, pdfEngineAdapter{e: deps.PDF}),
 			)
+			client.GET("/xlsx", handleGetScheduleXLSX(deps.ScheduleSvc, deps.Repo))
 		}
 
 		pushGroup := v1.Group("/push")
@@ -233,6 +234,12 @@ func NewRouter(deps RouterDeps) http.Handler {
 				adminRead.GET("/schedule/explain", handleAdminExplainScheduleSlot(deps.ScheduleSvc, deps.Repo))
 				adminRead.GET("/overrides", handleAdminListAppliedScheduleOverrides(deps.Repo))
 				adminRead.GET("/reports/schedule-overrides", handleAdminListAppliedScheduleOverrides(deps.Repo))
+				adminRead.GET("/reports/schedule-overrides/pdf", handleAdminExportScheduleOverridesPDF(deps.Repo, pdfEngineAdapter{e: deps.PDF}))
+				adminRead.GET("/reports/schedule-overrides/xlsx", handleAdminExportScheduleOverridesXLSX(deps.Repo))
+				adminRead.GET("/reports/group-schedule/pdf", handleAdminExportGroupSchedulePDF(deps.ScheduleSvc, deps.Repo, pdfEngineAdapter{e: deps.PDF}))
+				adminRead.GET("/reports/group-schedule/xlsx", handleAdminExportGroupScheduleXLSX(deps.ScheduleSvc, deps.Repo))
+				adminRead.GET("/reports/teacher-schedule/pdf", handleAdminExportTeacherSchedulePDF(deps.ScheduleSvc, deps.Repo, pdfEngineAdapter{e: deps.PDF}))
+				adminRead.GET("/reports/teacher-schedule/xlsx", handleAdminExportTeacherScheduleXLSX(deps.ScheduleSvc, deps.Repo))
 				adminRead.GET("/day-events", handleAdminListDayEvents(deps.Repo))
 			}
 

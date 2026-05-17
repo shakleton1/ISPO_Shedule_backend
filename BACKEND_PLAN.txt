@@ -1163,3 +1163,13 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
 [x] Добавить validation warning study_calendar_non_teaching_day, если фактическая пара стоит на неучебный день учебного календаря.
 [x] Обновить cmd/seed: academic_calendar_weeks заполняются с course_number, добавлен пример academic_calendar_day_overrides.
 [x] Тесты: PLX парсит несколько курсов, repository/handler для academic_calendar_day_overrides, schedule response показывает study_day_state.
+
+18) Экспорт расписаний и замен
+[x] Добавить PDF/XLSX экспорт расписания группы на две недели.
+    Где: /api/v1/schedule/pdf, /api/v1/schedule/xlsx, /api/v1/admin/reports/group-schedule/{pdf,xlsx}.
+[x] Добавить PDF/XLSX экспорт расписания преподавателя на две недели.
+    Где: /api/v1/admin/reports/teacher-schedule/{pdf,xlsx}, источник данных schedule view scope=teacher.
+[x] Добавить PDF/XLSX экспорт журнала замен.
+    Где: /api/v1/admin/reports/schedule-overrides/{pdf,xlsx}, источник данных schedule_overrides со snapshot source_* и replacement_*.
+[x] Сделать строгий читаемый формат: A4 landscape для PDF, XLSX с листами по неделям, цветными заголовками, переносами строк и кабинетами/преподавателями/группами в ячейках.
+[x] Обновить OpenAPI и тесты генерации PDF HTML/XLSX.
