@@ -23,6 +23,7 @@ RUN CGO_ENABLED=0 go install github.com/pressly/goose/v3/cmd/goose@v3.26.0
 FROM debian:bookworm-slim AS runtime
 
 RUN apt-get update \
+  && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends \
      ca-certificates \
      tzdata \
