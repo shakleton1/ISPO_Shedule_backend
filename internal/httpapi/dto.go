@@ -141,6 +141,7 @@ type courseAssignmentDTO struct {
 	Status           schedule.EntityStatus `json:"status"`
 	TeacherID        *int                  `json:"teacher_id"`
 	CampusID         *int                  `json:"campus_id"`
+	IsFlow           bool                  `json:"is_flow"`
 	CurriculumItemID *int64                `json:"curriculum_item_id"`
 	Subgroup         *int16                `json:"subgroup"`
 	Notes            *string               `json:"notes"`
@@ -157,6 +158,7 @@ func toCourseAssignmentDTO(a schedule.CourseAssignment) courseAssignmentDTO {
 		Status:           a.Status,
 		TeacherID:        a.TeacherID,
 		CampusID:         a.CampusID,
+		IsFlow:           a.IsFlow,
 		CurriculumItemID: a.CurriculumItemID,
 		Subgroup:         a.Subgroup,
 		Notes:            a.Notes,

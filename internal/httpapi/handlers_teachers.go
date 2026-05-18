@@ -239,6 +239,11 @@ func handleAdminListCourseAssignments(repo *schedule.Repository) gin.HandlerFunc
 			}
 			filters.CampusID = &id
 		}
+		isFlow, ok := parseOptionalQueryBool(c, "is_flow")
+		if !ok {
+			return
+		}
+		filters.IsFlow = isFlow
 		if v := c.Query("status"); v != "" {
 			s := schedule.EntityStatus(v)
 			filters.Status = &s

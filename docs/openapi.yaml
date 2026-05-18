@@ -903,6 +903,11 @@ paths:
           required: false
           schema: { type: integer, minimum: 1 }
         - in: query
+          name: is_flow
+          required: false
+          schema: { type: boolean }
+          description: "Фильтр потоковых назначений: true — только поток, false — только не поток."
+        - in: query
           name: status
           required: false
           schema: { type: string, enum: [draft, published] }
@@ -3337,6 +3342,7 @@ components:
         status: { type: string, enum: [draft, published] }
         teacher_id: { type: integer, nullable: true }
         campus_id: { type: integer, nullable: true, description: "Корпус/площадка, где преподаватель ведёт дисциплину у группы. Кабинет хранится отдельно в room_assignments." }
+        is_flow: { type: boolean, description: "Потоковое назначение: дисциплина может идти общей парой для нескольких групп у одного преподавателя." }
         curriculum_item_id: { type: integer, format: int64, nullable: true }
         subgroup: { type: integer, nullable: true, enum: [1, 2] }
         notes: { type: string, nullable: true }

@@ -567,7 +567,7 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	subgroup1 := int16(1)
 	subgroup2 := int16(2)
 	for _, a := range []schedule.CourseAssignment{
-		{GroupID: group1ID, Semester: semester, SubjectID: instrToolsID, Status: schedule.StatusPublished, TeacherID: &tuzovaID, CurriculumItemID: ptrInt64(curriculumItemIDs[instrToolsID])},
+		{GroupID: group1ID, Semester: semester, SubjectID: instrToolsID, Status: schedule.StatusPublished, TeacherID: &tuzovaID, IsFlow: true, CurriculumItemID: ptrInt64(curriculumItemIDs[instrToolsID])},
 		{GroupID: group1ID, Semester: semester, SubjectID: englishPDID, Status: schedule.StatusPublished, TeacherID: &kuznetsovaID, CurriculumItemID: ptrInt64(curriculumItemIDs[englishPDID]), Subgroup: &subgroup1},
 		{GroupID: group1ID, Semester: semester, SubjectID: englishPDID, Status: schedule.StatusPublished, TeacherID: &pshenitsynaID, CurriculumItemID: ptrInt64(curriculumItemIDs[englishPDID]), Subgroup: &subgroup2},
 		{GroupID: group1ID, Semester: semester, SubjectID: peID, Status: schedule.StatusPublished, TeacherID: &smirnovID, CurriculumItemID: ptrInt64(curriculumItemIDs[peID])},
@@ -576,7 +576,7 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 		{GroupID: group1ID, Semester: semester, SubjectID: mathModelID, Status: schedule.StatusPublished, TeacherID: &zernovaID, CurriculumItemID: ptrInt64(curriculumItemIDs[mathModelID])},
 		{GroupID: group1ID, Semester: semester, SubjectID: standardsID, Status: schedule.StatusPublished, TeacherID: &zernovaID, CurriculumItemID: ptrInt64(curriculumItemIDs[standardsID])},
 		{GroupID: group1ID, Semester: semester, SubjectID: trpoID, Status: schedule.StatusPublished, TeacherID: &chelishchevaID, CurriculumItemID: ptrInt64(curriculumItemIDs[trpoID])},
-		{GroupID: group2ID, Semester: semester, SubjectID: instrToolsID, Status: schedule.StatusPublished, TeacherID: &tuzovaID, CurriculumItemID: ptrInt64(curriculumItemIDs[instrToolsID])},
+		{GroupID: group2ID, Semester: semester, SubjectID: instrToolsID, Status: schedule.StatusPublished, TeacherID: &tuzovaID, IsFlow: true, CurriculumItemID: ptrInt64(curriculumItemIDs[instrToolsID])},
 		{GroupID: group2ID, Semester: semester, SubjectID: englishPDID, Status: schedule.StatusPublished, TeacherID: &onlineTeacherID, CurriculumItemID: ptrInt64(curriculumItemIDs[englishPDID])},
 		{GroupID: group2ID, Semester: semester, SubjectID: peID, Status: schedule.StatusPublished, TeacherID: &smirnovID, CurriculumItemID: ptrInt64(curriculumItemIDs[peID])},
 		{GroupID: group2ID, Semester: semester, SubjectID: economicsID, Status: schedule.StatusPublished, TeacherID: &vimbergID, CurriculumItemID: ptrInt64(curriculumItemIDs[economicsID])},
@@ -1327,6 +1327,7 @@ func getOrCreateCourseAssignment(db *gorm.DB, a schedule.CourseAssignment) (int6
 	if err := q.First(&row).Error; err == nil {
 		row.TeacherID = a.TeacherID
 		row.CampusID = a.CampusID
+		row.IsFlow = a.IsFlow
 		row.CurriculumItemID = a.CurriculumItemID
 		row.Notes = a.Notes
 		if err := db.Save(&row).Error; err != nil {

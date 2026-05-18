@@ -244,7 +244,7 @@ func TestRepositoryAdmin_ListCourseAssignmentTeachersForGroup(t *testing.T) {
 		_ = db.Delete(&schedule.Campus{}, campus.ID).Error
 	})
 
-	assignment := &schedule.CourseAssignment{GroupID: group.ID, Semester: 1, SubjectID: subject.ID, Status: schedule.StatusPublished, TeacherID: &teacher.ID, CampusID: &campus.ID}
+	assignment := &schedule.CourseAssignment{GroupID: group.ID, Semester: 1, SubjectID: subject.ID, Status: schedule.StatusPublished, TeacherID: &teacher.ID, CampusID: &campus.ID, IsFlow: true}
 	require.NoError(t, repo.CreateCourseAssignment(assignment))
 
 	rows, err := repo.ListCourseAssignmentTeachersForGroup(group.ID)
@@ -253,11 +253,13 @@ func TestRepositoryAdmin_ListCourseAssignmentTeachersForGroup(t *testing.T) {
 	require.NotNil(t, rows[0].TeacherName)
 	assert.Equal(t, teacher.Name, *rows[0].TeacherName)
 
-	assignments, err := repo.ListCourseAssignments(schedule.CourseAssignmentFilters{CampusID: &campus.ID})
+	isFlow := true
+	assignments, err := repo.ListCourseAssignments(schedule.CourseAssignmentFilters{CampusID: &campus.ID, IsFlow: &isFlow})
 	require.NoError(t, err)
 	require.Len(t, assignments, 1)
 	require.NotNil(t, assignments[0].CampusID)
 	assert.Equal(t, campus.ID, *assignments[0].CampusID)
+	assert.True(t, assignments[0].IsFlow)
 }
 
 func TestRepositoryAdmin_GroupSubjectLocationTeacherCRUD(t *testing.T) {
