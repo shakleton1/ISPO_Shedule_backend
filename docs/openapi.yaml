@@ -17,6 +17,8 @@ tags:
   - name: Администрирование
   - name: Мониторинг
 
+  - name: Преподаватель
+
 paths:
   /metrics:
     get:
@@ -263,6 +265,58 @@ paths:
                 format: binary
         "400":
           $ref: "#/components/responses/BadRequest"
+
+  /api/v1/teacher/schedule:
+    get:
+      tags: [Преподаватель]
+      summary: Расписание текущего преподавателя
+      description: Возвращает расписание преподавателя, привязанного к JWT аккаунту с ролью teacher.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: date_start
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: date_end
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScheduleViewResponse" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/teacher/workload:
+    get:
+      tags: [Преподаватель]
+      summary: Нагрузка текущего преподавателя
+      description: Считает пары и академические часы по фактическому расписанию преподавателя за период.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: date_start
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: date_end
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherWorkloadResponse" }
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /api/v1/push/register:
     post:
@@ -3057,7 +3111,10 @@ components:
         refresh_expires_at: { type: string, format: date-time }
         role:
           type: string
-          enum: [student, dispatcher, admin, viewer]
+          enum: [student, dispatcher, admin, viewer, teacher]
+        group_id: { type: integer, nullable: true }
+        teacher_id: { type: integer, nullable: true }
+        subgroup: { type: integer, nullable: true }
 
     RefreshRequest:
       type: object
@@ -3082,8 +3139,9 @@ components:
         login: { type: string }
         role:
           type: string
-          enum: [student, dispatcher, admin, viewer]
+          enum: [student, dispatcher, admin, viewer, teacher]
         group_id: { type: integer, nullable: true }
+        teacher_id: { type: integer, nullable: true }
         subgroup: { type: integer, nullable: true }
 
     Group:
@@ -3793,6 +3851,58 @@ components:
         days:
           type: array
           items: { $ref: "#/components/schemas/ScheduleViewDay" }
+
+    TeacherWorkloadLesson:
+      type: object
+      required: [date, pair_number, group_id, group_name, subject_name, location_name]
+      properties:
+        date: { type: string, format: date }
+        pair_number: { type: integer }
+        group_id: { type: integer }
+        group_name: { type: string }
+        subject_id: { type: integer, nullable: true }
+        subject_name: { type: string }
+        location_id: { type: integer, nullable: true }
+        location_name: { type: string }
+        subgroup: { type: integer, nullable: true }
+
+    TeacherWorkloadSubject:
+      type: object
+      required: [subject_name, pairs, academic_hours]
+      properties:
+        subject_id: { type: integer, nullable: true }
+        subject_name: { type: string }
+        pairs: { type: integer }
+        academic_hours: { type: integer }
+
+    TeacherWorkloadGroup:
+      type: object
+      required: [group_id, group_name, pairs, academic_hours]
+      properties:
+        group_id: { type: integer }
+        group_name: { type: string }
+        pairs: { type: integer }
+        academic_hours: { type: integer }
+
+    TeacherWorkloadResponse:
+      type: object
+      required: [teacher_id, teacher_name, date_start, date_end, total_pairs, total_academic_hours, by_subject, by_group, lessons]
+      properties:
+        teacher_id: { type: integer }
+        teacher_name: { type: string }
+        date_start: { type: string, format: date }
+        date_end: { type: string, format: date }
+        total_pairs: { type: integer }
+        total_academic_hours: { type: integer }
+        by_subject:
+          type: array
+          items: { $ref: "#/components/schemas/TeacherWorkloadSubject" }
+        by_group:
+          type: array
+          items: { $ref: "#/components/schemas/TeacherWorkloadGroup" }
+        lessons:
+          type: array
+          items: { $ref: "#/components/schemas/TeacherWorkloadLesson" }
 
     PushRegisterRequest:
       type: object

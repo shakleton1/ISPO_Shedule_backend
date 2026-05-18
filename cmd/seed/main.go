@@ -922,7 +922,7 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	if _, err := repo.GetSystemState(); err != nil {
 		return nil, err
 	}
-	users, err := seedUsers(repo, group1ID)
+	users, err := seedUsers(repo, group1ID, tuzovaID)
 	if err != nil {
 		return nil, err
 	}
@@ -936,32 +936,37 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	}, nil
 }
 
-func seedUsers(repo *schedule.Repository, groupID int) ([]auth.User, error) {
+func seedUsers(repo *schedule.Repository, groupID int, teacherID int) ([]auth.User, error) {
 	adminLogin := firstNonEmpty(os.Getenv("ISPO_SEED_ADMIN_LOGIN"), "admin")
 	adminPass := firstNonEmpty(os.Getenv("ISPO_SEED_ADMIN_PASSWORD"), "admin")
 	dispatcherLogin := firstNonEmpty(os.Getenv("ISPO_SEED_DISPATCHER_LOGIN"), "dispatcher")
 	dispatcherPass := firstNonEmpty(os.Getenv("ISPO_SEED_DISPATCHER_PASSWORD"), "dispatcher")
+	teacherLogin := firstNonEmpty(os.Getenv("ISPO_SEED_TEACHER_LOGIN"), "teacher.tuzova")
+	teacherPass := firstNonEmpty(os.Getenv("ISPO_SEED_TEACHER_PASSWORD"), "teacher")
 	studentLogin := firstNonEmpty(os.Getenv("ISPO_SEED_STUDENT_LOGIN"), "student1")
 	studentPass := firstNonEmpty(os.Getenv("ISPO_SEED_STUDENT_PASSWORD"), "student1")
 	viewerLogin := firstNonEmpty(os.Getenv("ISPO_SEED_VIEWER_LOGIN"), "viewer")
 	viewerPass := firstNonEmpty(os.Getenv("ISPO_SEED_VIEWER_PASSWORD"), "viewer")
 
 	seed := []struct {
-		login    string
-		password string
-		role     auth.Role
-		groupID  *int
-		subgroup *int16
+		login         string
+		password      string
+		role          auth.Role
+		groupID       *int
+		teacherID     *int
+		subgroup      *int16
+		resetPassword bool
 	}{
 		{login: adminLogin, password: adminPass, role: auth.RoleAdmin},
-		{login: dispatcherLogin, password: dispatcherPass, role: auth.RoleDispatcher},
+		{login: dispatcherLogin, password: dispatcherPass, role: auth.RoleDispatcher, resetPassword: true},
+		{login: teacherLogin, password: teacherPass, role: auth.RoleTeacher, teacherID: &teacherID, resetPassword: true},
 		{login: viewerLogin, password: viewerPass, role: auth.RoleViewer},
 		{login: studentLogin, password: studentPass, role: auth.RoleStudent, groupID: &groupID, subgroup: ptrI16(1)},
 	}
 
 	out := make([]auth.User, 0, len(seed))
 	for _, s := range seed {
-		u, err := ensureUser(repo, s.login, s.password, s.role, s.groupID, s.subgroup)
+		u, err := ensureUser(repo, s.login, s.password, s.role, s.groupID, s.teacherID, s.subgroup, s.resetPassword)
 		if err != nil {
 			return nil, err
 		}
@@ -970,9 +975,23 @@ func seedUsers(repo *schedule.Repository, groupID int) ([]auth.User, error) {
 	return out, nil
 }
 
-func ensureUser(repo *schedule.Repository, login, password string, role auth.Role, groupID *int, subgroup *int16) (*auth.User, error) {
+func ensureUser(repo *schedule.Repository, login, password string, role auth.Role, groupID *int, teacherID *int, subgroup *int16, resetPassword bool) (*auth.User, error) {
 	u, err := repo.GetUserByLogin(login)
 	if err == nil {
+		u.Role = role
+		u.GroupID = groupID
+		u.TeacherID = teacherID
+		u.Subgroup = subgroup
+		if resetPassword {
+			h, err := auth.HashPassword(password)
+			if err != nil {
+				return nil, err
+			}
+			u.PasswordHash = h
+		}
+		if err := repo.UpdateUser(u); err != nil {
+			return nil, err
+		}
 		return u, nil
 	}
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -989,6 +1008,7 @@ func ensureUser(repo *schedule.Repository, login, password string, role auth.Rol
 		PasswordHash: h,
 		Role:         role,
 		GroupID:      groupID,
+		TeacherID:    teacherID,
 		Subgroup:     subgroup,
 	}
 	if err := repo.CreateUser(u); err != nil {

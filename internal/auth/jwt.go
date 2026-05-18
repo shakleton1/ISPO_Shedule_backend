@@ -14,9 +14,10 @@ type TokenManager struct {
 }
 
 type Claims struct {
-	Role     Role   `json:"role"`
-	GroupID  *int   `json:"group_id,omitempty"`
-	Subgroup *int16 `json:"subgroup,omitempty"`
+	Role      Role   `json:"role"`
+	GroupID   *int   `json:"group_id,omitempty"`
+	TeacherID *int   `json:"teacher_id,omitempty"`
+	Subgroup  *int16 `json:"subgroup,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -30,9 +31,10 @@ func NewTokenManager(secret string, ttl time.Duration) (*TokenManager, error) {
 func (m *TokenManager) IssueAccessToken(u *User, now time.Time) (string, time.Time, error) {
 	exp := now.Add(m.ttl)
 	claims := Claims{
-		Role:     u.Role,
-		GroupID:  u.GroupID,
-		Subgroup: u.Subgroup,
+		Role:      u.Role,
+		GroupID:   u.GroupID,
+		TeacherID: u.TeacherID,
+		Subgroup:  u.Subgroup,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   fmt.Sprintf("%d", u.ID),
 			IssuedAt:  jwt.NewNumericDate(now),

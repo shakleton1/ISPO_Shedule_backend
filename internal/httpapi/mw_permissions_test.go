@@ -31,7 +31,9 @@ func TestRolePermissions_AllKnownRoles(t *testing.T) {
 			role: auth.RoleDispatcher,
 			expected: map[Permission]struct{}{
 				PermAdminRead:     {},
+				PermDictWrite:     {},
 				PermScheduleWrite: {},
+				PermImport:        {},
 			},
 		},
 		{
@@ -44,6 +46,11 @@ func TestRolePermissions_AllKnownRoles(t *testing.T) {
 		{
 			name:     "student",
 			role:     auth.RoleStudent,
+			expected: map[Permission]struct{}{},
+		},
+		{
+			name:     "teacher",
+			role:     auth.RoleTeacher,
 			expected: map[Permission]struct{}{},
 		},
 	}

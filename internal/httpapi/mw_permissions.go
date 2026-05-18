@@ -29,11 +29,12 @@ func rolePermissions(role auth.Role) map[Permission]struct{} {
 		grant(PermImport)
 	case auth.RoleDispatcher:
 		grant(PermAdminRead)
+		grant(PermDictWrite)
 		grant(PermScheduleWrite)
-		// Import stays admin-only by default.
+		grant(PermImport)
 	case auth.RoleViewer:
 		grant(PermAdminRead)
-	case auth.RoleStudent:
+	case auth.RoleStudent, auth.RoleTeacher:
 		// no admin permissions
 	}
 	return perms

@@ -182,6 +182,13 @@ func NewRouter(deps RouterDeps) http.Handler {
 			pushGroup.POST("/unregister", handlePushUnregister(deps.Repo))
 		}
 
+		teacher := v1.Group("/teacher")
+		teacher.Use(authMiddleware(deps.Tokens, deps.Repo), requireAnyRole(auth.RoleTeacher))
+		{
+			teacher.GET("/schedule", handleTeacherSchedule(deps.ScheduleSvc))
+			teacher.GET("/workload", handleTeacherWorkload(deps.ScheduleSvc))
+		}
+
 		// Public dictionary endpoints for clients.
 		v1.GET("/groups", handlePublicListGroups(deps.Repo))
 		v1.GET("/subjects", handlePublicListSubjects(deps.Repo))

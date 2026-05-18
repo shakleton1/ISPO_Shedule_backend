@@ -50,7 +50,7 @@ func TestTokenManager_IssueAccessToken_DifferentRoles(t *testing.T) {
 	tm, err := NewTokenManager("test-secret", time.Hour)
 	require.NoError(t, err)
 
-	roles := []Role{RoleAdmin, RoleDispatcher, RoleViewer, RoleStudent}
+	roles := []Role{RoleAdmin, RoleDispatcher, RoleViewer, RoleStudent, RoleTeacher}
 
 	for _, role := range roles {
 		t.Run(string(role), func(t *testing.T) {
@@ -66,6 +66,30 @@ func TestTokenManager_IssueAccessToken_DifferentRoles(t *testing.T) {
 			assert.Equal(t, role, claims.Role)
 		})
 	}
+}
+
+func TestTokenManager_IssueAccessToken_WithTeacherID(t *testing.T) {
+	tm, err := NewTokenManager("test-secret", time.Hour)
+	require.NoError(t, err)
+
+	teacherID := 17
+	user := &User{
+		ID:        1,
+		Role:      RoleTeacher,
+		TeacherID: &teacherID,
+	}
+
+	token, exp, err := tm.IssueAccessToken(user, time.Now())
+
+	require.NoError(t, err)
+	assert.NotEmpty(t, token)
+	assert.WithinDuration(t, time.Now().Add(time.Hour), exp, time.Second)
+
+	claims, parseErr := tm.Parse(token)
+	require.NoError(t, parseErr)
+	assert.Equal(t, RoleTeacher, claims.Role)
+	require.NotNil(t, claims.TeacherID)
+	assert.Equal(t, teacherID, *claims.TeacherID)
 }
 
 func TestTokenManager_IssueAccessToken_WithGroupAndSubgroup(t *testing.T) {

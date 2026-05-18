@@ -1190,3 +1190,12 @@ func TestPostgresMigrationsSmoke(t *testing.T) {
 [x] Добавить фильтр campus_id в GET /admin/course-assignments и заполнить campus_id в seed для Приморской/Энгельса.
 [x] Добавить признак потока is_flow в course_assignments: поток да/нет для назначений, где несколько групп могут идти одной парой у одного преподавателя.
     Где: db/migrations/20260518100000_course_assignment_flow.sql, модель/DTO/OpenAPI, фильтр is_flow, seed-примеры.
+
+21) Роли диспетчера и преподавателя
+[x] Расширить права диспетчера: чтение админки, создание/изменение групп, преподавателей, дисциплин, корпусов, кабинетов, типов помещений, связей кабинетов и типов, специальностей, учебных планов, элементов учебного плана, календарного учебного графика и импорт CSV/XLSX/PLX.
+    Где: internal/httpapi/mw_permissions.go, tests.
+[x] Добавить роль teacher и привязку аккаунта к teachers.id через students.teacher_id.
+    Где: db/migrations/20260518103000_teacher_role_and_dispatcher_permissions.sql, internal/auth/user.go, JWT, /auth/me.
+[x] Добавить личные endpoints преподавателя: GET /api/v1/teacher/schedule и GET /api/v1/teacher/workload.
+    Правило: преподаватель видит расписание и нагрузку только по своему teacher_id из аккаунта.
+[x] Обновить seed: создать/обновить аккаунт диспетчера и тестовый аккаунт преподавателя.

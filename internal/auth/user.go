@@ -9,6 +9,7 @@ const (
 	RoleDispatcher Role = "dispatcher"
 	RoleAdmin      Role = "admin"
 	RoleViewer     Role = "viewer"
+	RoleTeacher    Role = "teacher"
 )
 
 // User is stored in the existing `students` table (historical naming from spec).
@@ -18,6 +19,7 @@ type User struct {
 	PasswordHash string    `gorm:"not null" json:"-"`
 	Role         Role      `gorm:"type:text;not null;default:student" json:"role"`
 	GroupID      *int      `json:"group_id"`
+	TeacherID    *int      `json:"teacher_id"`
 	Subgroup     *int16    `json:"subgroup"` // 1/2 or null
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`

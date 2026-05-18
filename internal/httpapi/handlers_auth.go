@@ -22,6 +22,9 @@ type loginResponse struct {
 	RefreshToken     string    `json:"refresh_token"`
 	RefreshExpiresAt time.Time `json:"refresh_expires_at"`
 	Role             auth.Role `json:"role"`
+	GroupID          *int      `json:"group_id,omitempty"`
+	TeacherID        *int      `json:"teacher_id,omitempty"`
+	Subgroup         *int16    `json:"subgroup,omitempty"`
 }
 
 func handleLogin(tokens *auth.TokenManager, repo *schedule.Repository, refreshTTL time.Duration) gin.HandlerFunc {
@@ -71,7 +74,16 @@ func handleLogin(tokens *auth.TokenManager, repo *schedule.Repository, refreshTT
 
 		// Minimal audit: do not log password.
 		writeAudit(c, repo, "login", "auth", u.Login, gin.H{"login": u.Login, "role": u.Role})
-		c.JSON(http.StatusOK, loginResponse{AccessToken: tok, ExpiresAt: exp, RefreshToken: refreshRaw, RefreshExpiresAt: refreshExp, Role: u.Role})
+		c.JSON(http.StatusOK, loginResponse{
+			AccessToken:      tok,
+			ExpiresAt:        exp,
+			RefreshToken:     refreshRaw,
+			RefreshExpiresAt: refreshExp,
+			Role:             u.Role,
+			GroupID:          u.GroupID,
+			TeacherID:        u.TeacherID,
+			Subgroup:         u.Subgroup,
+		})
 	}
 }
 
@@ -195,11 +207,12 @@ func handleMe(repo *schedule.Repository) gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{
-			"id":       fresh.ID,
-			"login":    fresh.Login,
-			"role":     fresh.Role,
-			"group_id": fresh.GroupID,
-			"subgroup": fresh.Subgroup,
+			"id":         fresh.ID,
+			"login":      fresh.Login,
+			"role":       fresh.Role,
+			"group_id":   fresh.GroupID,
+			"teacher_id": fresh.TeacherID,
+			"subgroup":   fresh.Subgroup,
 		})
 	}
 }

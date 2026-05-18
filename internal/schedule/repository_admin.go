@@ -264,6 +264,10 @@ func (r *Repository) CreateUser(u *auth.User) error {
 	return r.db.Create(u).Error
 }
 
+func (r *Repository) UpdateUser(u *auth.User) error {
+	return r.db.Save(u).Error
+}
+
 func (r *Repository) CountAdmins() (int64, error) {
 	var cnt int64
 	err := r.db.Model(&auth.User{}).Where("role = ?", auth.RoleAdmin).Count(&cnt).Error
