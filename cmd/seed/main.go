@@ -626,6 +626,20 @@ func seedMinimal(repo *schedule.Repository) (*seedResult, error) {
 	if err := seedCourseAssignments(db, groupIncompleteID, 3, curriculumPlans[incompleteCurrID], teacherBySubject, false, &engelsCampusID); err != nil {
 		return nil, err
 	}
+	for _, flowGroupID := range []int{group1ID, group2ID, group3ID} {
+		if _, err := getOrCreateCourseAssignment(db, schedule.CourseAssignment{
+			GroupID:          flowGroupID,
+			Semester:         semester,
+			SubjectID:        instrToolsID,
+			Status:           schedule.StatusPublished,
+			TeacherID:        &tuzovaID,
+			CampusID:         &campusID,
+			IsFlow:           true,
+			CurriculumItemID: ptrInt64(curriculumItemIDs[instrToolsID]),
+		}); err != nil {
+			return nil, err
+		}
+	}
 
 	online := "online"
 	type lessonSeed struct {
