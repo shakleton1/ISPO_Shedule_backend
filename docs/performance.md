@@ -1,78 +1,146 @@
 # Производительность
 
-Этот проект собирает ответы расписания из фактических занятий на конкретные даты:
+Расписание строится из фактических занятий на конкретные даты. Основной read-path:
 
-- занятий (`schedule_lessons`)
-- кабинетов занятий (`room_assignments`)
-- applied-журнала замен (`schedule_overrides`) для отчетов, не для merge рендера
-- дневных оверлеев/событий
+1. `schedule_lessons`
+2. `room_assignments`
+3. `subjects`, `teachers`, `locations`
+4. учебный календарь и дневные ограничения
+5. in-memory cache для канонических недель Пн-Сб
 
-## 1) Кэш недели (на стороне сервера)
+`schedule_overrides` не участвует в merge при отображении расписания: замена уже применена к `schedule_lessons`, а `schedule_overrides` используется для истории и отчетов.
 
-Backend держит in-memory кэш для **канонических недель Пн..Сб**, ключ:
+## Week cache
 
-- `group_id`
-- `week_start` (дата понедельника, `YYYY-MM-DD`)
-- `data_version` (из `system_state.schedule_version`)
+Сервис кеширует ответы для канонической недели:
 
-Если `data_version` не менялся, повторные запросы:
+- группа
+- понедельник недели
+- `system_state.schedule_version`
+
+Кеш используется для:
 
 - `GET /api/v1/schedule/current`
-- `GET /api/v1/schedule/range` (когда `date_start` = понедельник, а `date_end` = суббота)
-- `GET /api/v1/schedule/pdf` (внутри строит 2 недельных диапазона)
+- `GET /api/v1/schedule/range`, если диапазон ровно Пн-Сб
+- PDF/XLSX экспорта, когда внутри запрашиваются недельные диапазоны
 
-будут переиспользовать закэшированный ответ недели.
+Любое опубликованное изменение расписания bump-ает `system_state.schedule_version`, поэтому старый cache key перестает использоваться.
 
-## 2) Как ловить N+1 в dev
+## Индексы, важные для расписания
 
-Можно включить SQL-логи GORM через env:
+Критичные запросы опираются на:
+
+- `schedule_lessons(group_id, lesson_date)`
+- `schedule_lessons(teacher_id, lesson_date)`
+- unique active slot `(group_id, lesson_date, pair_number, COALESCE(subgroup, 0)) WHERE status <> 'cancelled'`
+- `room_assignments(schedule_lesson_id)`
+- `schedule_overrides(group_id, lesson_date)`
+- `teacher_day_constraints(teacher_id, target_date)`
+- `calendar_day_constraints(target_date)`
+- календарные индексы по `calendar_id`, `course_number`, `week_number`
+
+Новые индексы добавлять миграциями.
+
+## Как смотреть SQL в dev
 
 ```powershell
 $env:ISPO_DB_LOG_LEVEL = "info"
 go run .\cmd\api
 ```
 
-Это помогает увидеть повторяющиеся похожие запросы в рамках одного HTTP-запроса (типичный симптом N+1).
-
 Допустимые значения:
 
-- `silent`, `error`, `warn` (по умолчанию), `info`
+- `silent`
+- `error`
+- `warn`
+- `info`
 
-## 3) EXPLAIN / EXPLAIN ANALYZE (Postgres)
+`info` помогает найти повторяющиеся запросы в одном HTTP-request.
 
-Для критичных schedule-эндпоинтов самые “горячие” запросы обычно — `schedule_lessons` + `room_assignments`.
-
-### 3.1) Запрос фактических занятий
+## EXPLAIN для расписания группы
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS)
-SELECT sl.lesson_date, sl.pair_number, sl.subject_id, s.name AS subject_name,
-       ra.location_id, l.name AS location_name, COALESCE(t.name, '') AS teacher_name,
-       sl.subgroup, sl.lesson_format, sl.status, sl.version
+SELECT sl.id,
+       sl.group_id,
+       sl.lesson_date,
+       sl.pair_number,
+       sl.subgroup,
+       sl.subject_id,
+       s.name AS subject_name,
+       sl.teacher_id,
+       t.name AS teacher_name,
+       ra.location_id,
+       l.name AS location_name,
+       sl.lesson_format,
+       sl.status,
+       sl.source,
+       sl.flow_key,
+       sl.version
 FROM schedule_lessons sl
 LEFT JOIN subjects s ON s.id = sl.subject_id
-LEFT JOIN room_assignments ra ON ra.schedule_lesson_id = sl.id AND ra.status = 'published'
-LEFT JOIN locations l ON l.id = ra.location_id
 LEFT JOIN teachers t ON t.id = sl.teacher_id
+LEFT JOIN room_assignments ra
+  ON ra.schedule_lesson_id = sl.id
+ AND ra.status = 'published'
+LEFT JOIN locations l ON l.id = ra.location_id
 WHERE sl.group_id = 1
-  AND sl.lesson_date BETWEEN '2026-02-23' AND '2026-02-28'
+  AND sl.lesson_date BETWEEN DATE '2026-03-23' AND DATE '2026-04-05'
   AND sl.status <> 'cancelled'
-ORDER BY sl.lesson_date, sl.pair_number, COALESCE(sl.subgroup, 0), sl.id;
+ORDER BY sl.lesson_date,
+         sl.pair_number,
+         COALESCE(sl.subgroup, 0),
+         sl.id;
 ```
 
-### 3.2) Журнал замен
+## EXPLAIN для кабинета
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS)
-SELECT so.lesson_date, so.id, so.pair_number, so.action_type,
-       so.source_subject_id, so.replacement_subject_id,
-       so.source_location_id, so.replacement_location_id,
-       so.source_teacher_id, so.replacement_teacher_id,
-       so.reason, so.status, so.applied_at
-FROM schedule_overrides so
-WHERE so.group_id = 1
-  AND so.lesson_date BETWEEN '2026-02-23' AND '2026-02-28'
-ORDER BY so.lesson_date, so.pair_number, COALESCE(so.subgroup, 0), so.id;
+SELECT sl.lesson_date,
+       sl.pair_number,
+       sl.group_id,
+       sl.subject_id,
+       sl.teacher_id,
+       ra.location_id
+FROM schedule_lessons sl
+JOIN room_assignments ra ON ra.schedule_lesson_id = sl.id
+WHERE ra.location_id = 10
+  AND ra.status = 'published'
+  AND sl.status <> 'cancelled'
+  AND sl.lesson_date BETWEEN DATE '2026-03-23' AND DATE '2026-04-05'
+ORDER BY sl.lesson_date, sl.pair_number, sl.group_id;
 ```
 
-Если в этих EXPLAIN видно последовательное сканирование (seq scan) по большим таблицам — добавляйте/правьте индексы (лучше через миграции).
+## EXPLAIN для журнала замен
+
+```sql
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT so.lesson_date,
+       so.pair_number,
+       so.action_type,
+       so.source_subject_id,
+       so.replacement_subject_id,
+       so.source_teacher_id,
+       so.replacement_teacher_id,
+       so.source_location_id,
+       so.replacement_location_id,
+       so.status,
+       so.applied_at
+FROM schedule_overrides so
+WHERE so.group_id = 1
+  AND so.lesson_date BETWEEN DATE '2026-03-23' AND DATE '2026-04-05'
+ORDER BY so.lesson_date,
+         so.pair_number,
+         COALESCE(so.subgroup, 0),
+         so.id;
+```
+
+## Практические правила
+
+- Не читать `schedule_overrides` для построения текущего расписания.
+- Для массовых отчетов преподавателей использовать `scope=teacher` и ограничивать диапазон дат.
+- Для потоков использовать `flow_key`; кабинетный конфликт допустим только при общем потоке.
+- Не строить расписание через `course_assignments`: это справочник назначений, а не фактическая сетка занятий.
+- При проблемах с PDF сначала проверять HTML/XLSX-данные, затем Chromium/chromedp.
+- Для больших импортов держать `server.admin_import_max_body_bytes` и rate limit в конфиге согласованными с ожидаемым размером файлов.

@@ -1,54 +1,98 @@
-# Prod стратегия миграций (Goose + Postgres)
+# Миграции: production strategy
 
-Этот проект использует Goose миграции из `db/migrations`.
+Проект использует Goose и PostgreSQL. Миграции лежат в `db/migrations` и применяются в порядке timestamp-префиксов.
 
-## Цели
+## Где запускаются миграции
 
-- Применять миграции предсказуемо и безопасно
-- Избегать "ломающих" миграций без совместимого окна
-- Иметь понятный план отката
+В Docker-образ входит бинарь `goose` и каталог `/app/db/migrations`.
 
-## Принципы (backward compatible)
+В compose-flow миграции запускает entrypoint API перед стартом приложения:
 
-1. **Сначала schema → потом code**
-   - В проде сначала применяем миграции, затем выкатываем бинарь, который использует новые поля/таблицы.
+```text
+goose -dir /app/db/migrations up
+```
 
-2. **Добавления делаем мягко**
-   - `ADD COLUMN` сначала `NULL` + без `NOT NULL`, без тяжелых default.
-   - Индексы добавлять по возможности `CONCURRENTLY` (если потребуется в будущем — Goose по умолчанию в транзакции; для concurrently нужен `NO TRANSACTION` подход).
-
-3. **Удаления/переименования делаем в 2 шага**
-   - Шаг 1: добавить новое поле/таблицу, сделать dual-write/dual-read в коде.
-   - Шаг 2: после выката и проверки — удалить старое.
-
-4. **Триггеры/constraints — осторожно**
-   - Новые `CHECK/UNIQUE/FOREIGN KEY` могут начать отклонять данные. Внедряем после того, как код гарантирует корректность.
-
-## Рекомендованный порядок деплоя
-
-1. Снять бэкап (см. `docs/backup_restore.md`).
-2. Применить миграции:
+Локально:
 
 ```powershell
+go install github.com/pressly/goose/v3/cmd/goose@latest
 $env:GOOSE_DRIVER = "postgres"
-$env:GOOSE_DBSTRING = "host=... port=... user=... password=... dbname=... sslmode=..."
+$env:GOOSE_DBSTRING = "host=localhost port=5432 user=postgres password=postgres dbname=ispo_schedule sslmode=disable"
 goose -dir .\db\migrations status
 goose -dir .\db\migrations up
 ```
 
-3. Перезапустить сервис.
-4. Верифицировать:
-   - `GET /api/v1/health`
-   - `GET /api/v1/metrics/health`
-   - smoke: `GET /api/v1/schedule/version`
+## Правила для production
+
+1. Сначала backup, потом миграции.
+2. Не править уже примененные migration-файлы.
+3. Новое изменение схемы - новый файл миграции.
+4. Для рискованных изменений сначала добавлять новые поля/таблицы, потом переводить код, потом удалять старое.
+5. Удаление колонок и таблиц делать только после проверки, что код их больше не читает.
+6. Constraints и unique indexes добавлять после нормализации данных.
+7. Большие индексы на production планировать отдельно; для `CONCURRENTLY` нужен Goose `NO TRANSACTION`.
+
+## Рекомендуемый порядок деплоя
+
+1. Проверить CI.
+2. Сделать backup, см. `docs/backup_restore.md`.
+3. Собрать новую версию:
+
+```bash
+docker compose build api
+```
+
+4. Поднять сервис:
+
+```bash
+docker compose up -d
+```
+
+5. Проверить логи миграций:
+
+```bash
+docker compose logs --tail=200 api
+```
+
+6. Проверить smoke endpoints:
+
+```bash
+curl -fsS http://127.0.0.1:8080/api/v1/health
+curl -fsS http://127.0.0.1:8080/api/v1/metrics/health
+curl -fsS http://127.0.0.1:8080/api/v1/schedule/version
+```
+
+## Проверка миграций на чистой БД
+
+```bash
+docker compose down --volumes
+docker compose up -d postgres
+docker compose run --rm api goose -dir /app/db/migrations up
+docker compose run --rm api /app/seed
+```
+
+После этого можно поднять API и проверить Swagger/health.
 
 ## Откат
 
-- Goose поддерживает `down` миграции, но откат на prod **может быть опасным**, если миграция разрушает данные.
-- Практический откат чаще делается через **restore из бэкапа**.
+Goose поддерживает `down`, но на production откат миграции может быть опасен, если `Down` удаляет данные. Практический план отката:
 
-## Проверка миграций перед prod
+1. Остановить API.
+2. Восстановить БД из backup.
+3. Вернуть предыдущий Docker image/code revision.
+4. Поднять API.
+5. Проверить health и smoke endpoints.
 
-- Поднять чистую БД (docker) и прогнать `goose up`.
-- Прогнать `go test ./...`.
-- Прогнать минимальный seed (`go run .\cmd\seed`) и smoke-эндпоинты.
+`goose down` допустим только для проверенных миграций, где потеря данных исключена или явно принята.
+
+## Текущие важные таблицы
+
+- `schedule_lessons` - актуальные пары.
+- `schedule_overrides` - журнал примененных замен.
+- `room_assignments` - кабинет конкретной пары.
+- `course_assignments` - назначение преподавателя на дисциплину группы, включая `campus_id` и `is_flow`.
+- `calendar_day_constraints` - глобальные ограничения дней.
+- `teacher_day_constraints` - ограничения преподавателей.
+- `academic_calendar_weeks` и `academic_calendar_day_overrides` - календарь учебного плана.
+- `study_calendar_weeks` - календарь группы.
+- `students` - историческое имя таблицы пользователей; роли: `student`, `dispatcher`, `admin`, `viewer`, `teacher`.

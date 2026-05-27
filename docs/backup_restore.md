@@ -1,10 +1,12 @@
-# Playbook бэкап/восстановление (Postgres)
+# Backup и restore PostgreSQL
 
-Ниже — практический минимум для бэкапа и восстановления базы `ispo_schedule`.
+База проекта по умолчанию называется `ispo_schedule`. Перед production-миграциями и деплоем делайте отдельный backup.
 
-## Бэкап (pg_dump)
+## Backup через pg_dump
 
-Рекомендуемый формат — custom (`-Fc`), чтобы можно было выборочно восстанавливать.
+Рекомендуемый формат - custom (`-Fc`), потому что он удобен для `pg_restore`.
+
+PowerShell:
 
 ```powershell
 $ts = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -12,42 +14,92 @@ $env:PGPASSWORD = "<password>"
 pg_dump -h <host> -p 5432 -U <user> -d ispo_schedule -Fc -f "backup_ispo_schedule_$ts.dump"
 ```
 
-Проверка, что файл читается:
+Bash:
 
-```powershell
-pg_restore -l "backup_ispo_schedule_$ts.dump" | Select-Object -First 20
+```bash
+ts="$(date +%Y%m%d_%H%M%S)"
+export PGPASSWORD='<password>'
+pg_dump -h <host> -p 5432 -U <user> -d ispo_schedule -Fc -f "backup_ispo_schedule_${ts}.dump"
 ```
 
-## Восстановление (pg_restore)
+Проверить, что dump читается:
 
-Вариант A (полное восстановление в новую БД):
+```bash
+pg_restore -l backup_ispo_schedule_<timestamp>.dump | head -20
+```
+
+## Backup из docker-compose
+
+Если Postgres запущен сервисом `postgres`:
+
+```bash
+ts="$(date +%Y%m%d_%H%M%S)"
+docker compose exec -T postgres pg_dump -U postgres -d ispo_schedule -Fc > "backup_ispo_schedule_${ts}.dump"
+```
+
+На Windows PowerShell:
 
 ```powershell
-$env:PGPASSWORD = "<password>"
+$ts = Get-Date -Format "yyyyMMdd_HHmmss"
+docker compose exec -T postgres pg_dump -U postgres -d ispo_schedule -Fc | Set-Content -Encoding Byte "backup_ispo_schedule_$ts.dump"
+```
+
+Если PowerShell портит бинарный поток, используйте `cmd.exe`:
+
+```cmd
+docker compose exec -T postgres pg_dump -U postgres -d ispo_schedule -Fc > backup_ispo_schedule.dump
+```
+
+## Restore в новую БД
+
+Безопасный способ проверки backup:
+
+```bash
+export PGPASSWORD='<password>'
 createdb -h <host> -p 5432 -U <user> ispo_schedule_restore
-pg_restore -h <host> -p 5432 -U <user> -d ispo_schedule_restore -Fc "backup_ispo_schedule_$ts.dump"
+pg_restore -h <host> -p 5432 -U <user> -d ispo_schedule_restore -Fc backup_ispo_schedule.dump
 ```
 
-Вариант B (в существующую базу, перезаливка):
+После restore можно запустить приложение на копии БД и проверить health/smoke.
 
-1. Остановить сервис.
-2. Убедиться, что нет активных коннектов.
-3. Восстановить:
+## Restore поверх существующей БД
 
-```powershell
-$env:PGPASSWORD = "<password>"
-pg_restore -h <host> -p 5432 -U <user> -d ispo_schedule --clean --if-exists -Fc "backup_ispo_schedule_$ts.dump"
+Используйте только при осознанном откате.
+
+1. Остановить API.
+2. Убедиться, что нет активных подключений.
+3. Восстановить dump:
+
+```bash
+export PGPASSWORD='<password>'
+pg_restore -h <host> -p 5432 -U <user> -d ispo_schedule --clean --if-exists -Fc backup_ispo_schedule.dump
 ```
 
-## Частота и хранение
+Для docker-compose:
 
-- Минимум: ежедневный бэкап + хранение 7–14 дней.
-- Перед каждым деплоем миграций — отдельный бэкап.
+```bash
+docker compose stop api
+docker compose exec -T postgres pg_restore -U postgres -d ispo_schedule --clean --if-exists -Fc < backup_ispo_schedule.dump
+docker compose up -d api
+```
 
-## Smoke-проверка после восстановления
+## Smoke после restore
 
-- Прогнать миграции `goose up` (если restore старее схемы).
-- Проверить:
-  - `GET /api/v1/health`
-  - `GET /api/v1/metrics/health`
-  - `GET /api/v1/schedule/version`
+```bash
+curl -fsS http://127.0.0.1:8080/api/v1/health
+curl -fsS http://127.0.0.1:8080/api/v1/metrics/health
+curl -fsS http://127.0.0.1:8080/api/v1/schedule/version
+```
+
+Проверить миграции:
+
+```bash
+docker compose exec api goose -dir /app/db/migrations status
+```
+
+## Хранение backup
+
+- Минимум: ежедневный backup и хранение 7-14 дней.
+- Перед каждой миграцией: отдельный backup с пометкой версии.
+- Хранить хотя бы одну копию вне VDS.
+- Периодически проверять restore на отдельной базе.

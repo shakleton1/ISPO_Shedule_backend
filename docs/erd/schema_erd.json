@@ -1,0 +1,676 @@
+{
+  "fragments": {
+    "2_5a_schedule_replacements": {
+      "title": "Фрагмент 2.5а — расписание и замены",
+      "rankdir": "LR",
+      "tables": [
+        "groups",
+        "teachers",
+        "subjects",
+        "teacher_subjects",
+        "course_assignments",
+        "schedule_lessons",
+        "schedule_overrides",
+        "schedule_replacements"
+      ],
+      "ranks": [
+        ["teachers", "groups", "subjects"],
+        ["teacher_subjects", "course_assignments", "schedule_lessons"],
+        ["schedule_overrides", "schedule_replacements"]
+      ]
+    },
+    "2_5b_rooms_constraints": {
+      "title": "Фрагмент 2.5б — кабинеты, ограничения и события дней",
+      "rankdir": "TB",
+      "tables": [
+        "campuses",
+        "locations",
+        "location_types",
+        "location_type_links",
+        "room_assignments",
+        "room_requests",
+        "teacher_location_preferences",
+        "location_week_availability",
+        "teacher_day_constraints",
+        "calendar_day_constraints",
+        "schedule_day_events",
+        "schedule_day_overlays"
+      ],
+      "ranks": [
+        ["campuses", "location_types"],
+        ["locations", "location_type_links"],
+        ["teacher_location_preferences", "location_week_availability", "room_requests"],
+        ["room_assignments", "teacher_day_constraints", "calendar_day_constraints"],
+        ["schedule_day_events", "schedule_day_overlays"]
+      ]
+    },
+    "2_5c_curricula_users": {
+      "title": "Фрагмент 2.5в — учебные планы, пользователи и служебные таблицы",
+      "rankdir": "TB",
+      "tables": [
+        "specialties",
+        "curricula",
+        "academic_calendars",
+        "academic_calendar_weeks",
+        "academic_calendar_day_overrides",
+        "curriculum_items",
+        "curriculum_item_allocations",
+        "study_activities",
+        "study_calendar_weeks",
+        "students",
+        "refresh_tokens",
+        "device_tokens",
+        "system_state",
+        "audit_logs"
+      ],
+      "ranks": [
+        ["specialties", "study_activities", "students"],
+        ["curricula", "study_calendar_weeks", "refresh_tokens", "device_tokens"],
+        ["academic_calendars", "curriculum_items", "system_state", "audit_logs"],
+        ["academic_calendar_weeks", "academic_calendar_day_overrides", "curriculum_item_allocations"]
+      ]
+    }
+  },
+  "cross_connector_order": [
+    {"parent": "schedule_lessons", "child": "room_assignments"},
+    {"parent": "locations", "child": "schedule_overrides"},
+    {"parent": "locations", "child": "schedule_replacements"},
+    {"parent": "campuses", "child": "course_assignments"},
+    {"parent": "curriculum_items", "child": "course_assignments"},
+    {"parent": "curricula", "child": "groups"},
+    {"parent": "specialties", "child": "groups"},
+    {"parent": "teachers", "child": "room_requests"},
+    {"parent": "subjects", "child": "room_requests"},
+    {"parent": "groups", "child": "room_requests"},
+    {"parent": "teachers", "child": "teacher_location_preferences"},
+    {"parent": "teachers", "child": "teacher_day_constraints"},
+    {"parent": "groups", "child": "schedule_day_events"},
+    {"parent": "groups", "child": "schedule_day_overlays"},
+    {"parent": "subjects", "child": "curriculum_items"},
+    {"parent": "groups", "child": "study_calendar_weeks"},
+    {"parent": "groups", "child": "students"},
+    {"parent": "teachers", "child": "students"},
+    {"parent": "groups", "child": "device_tokens"}
+  ],
+  "tables": {
+    "groups": {
+      "block": "schedule_replacements",
+      "fields": [
+        {"name": "id", "type": "serial", "pk": true},
+        {"name": "name", "type": "varchar(50)"},
+        {"name": "course", "type": "int"},
+        {"name": "schedule_source_group_id", "type": "int null"},
+        {"name": "curriculum_id", "type": "bigint null"},
+        {"name": "admission_year", "type": "smallint null"},
+        {"name": "specialty_id", "type": "int null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["schedule_source_group_id"], "references": {"table": "groups", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["curriculum_id"], "references": {"table": "curricula", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["specialty_id"], "references": {"table": "specialties", "columns": ["id"]}, "on_delete": "SET NULL"}
+      ]
+    },
+    "teachers": {
+      "block": "schedule_replacements",
+      "fields": [
+        {"name": "id", "type": "serial", "pk": true},
+        {"name": "name", "type": "varchar(100)"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"},
+        {"name": "deleted_at", "type": "timestamptz null"}
+      ]
+    },
+    "subjects": {
+      "block": "schedule_replacements",
+      "fields": [
+        {"name": "id", "type": "serial", "pk": true},
+        {"name": "name", "type": "text"},
+        {"name": "short_name", "type": "varchar(30)"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"},
+        {"name": "deleted_at", "type": "timestamptz null"}
+      ]
+    },
+    "teacher_subjects": {
+      "block": "schedule_replacements",
+      "fields": [
+        {"name": "teacher_id", "type": "int", "pk": true},
+        {"name": "subject_id", "type": "int", "pk": true}
+      ],
+      "foreign_keys": [
+        {"columns": ["teacher_id"], "references": {"table": "teachers", "columns": ["id"]}, "on_delete": "CASCADE"},
+        {"columns": ["subject_id"], "references": {"table": "subjects", "columns": ["id"]}, "on_delete": "CASCADE"}
+      ]
+    },
+    "course_assignments": {
+      "block": "schedule_replacements",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "group_id", "type": "int"},
+        {"name": "semester", "type": "smallint"},
+        {"name": "subject_id", "type": "int"},
+        {"name": "status", "type": "text"},
+        {"name": "teacher_id", "type": "int null"},
+        {"name": "campus_id", "type": "int null"},
+        {"name": "is_flow", "type": "boolean"},
+        {"name": "curriculum_item_id", "type": "bigint null"},
+        {"name": "subgroup", "type": "smallint null"},
+        {"name": "notes", "type": "text null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["group_id"], "references": {"table": "groups", "columns": ["id"]}, "on_delete": "CASCADE"},
+        {"columns": ["subject_id"], "references": {"table": "subjects", "columns": ["id"]}, "on_delete": "RESTRICT"},
+        {"columns": ["teacher_id"], "references": {"table": "teachers", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["campus_id"], "references": {"table": "campuses", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["curriculum_item_id"], "references": {"table": "curriculum_items", "columns": ["id"]}, "on_delete": "SET NULL"}
+      ]
+    },
+    "schedule_lessons": {
+      "block": "schedule_replacements",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "group_id", "type": "int"},
+        {"name": "lesson_date", "type": "date"},
+        {"name": "pair_number", "type": "smallint"},
+        {"name": "subgroup", "type": "smallint null"},
+        {"name": "subject_id", "type": "int null"},
+        {"name": "teacher_id", "type": "int null"},
+        {"name": "lesson_format", "type": "text"},
+        {"name": "status", "type": "text"},
+        {"name": "source", "type": "text"},
+        {"name": "flow_key", "type": "varchar(80) null"},
+        {"name": "comment", "type": "text null"},
+        {"name": "version", "type": "int"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["group_id"], "references": {"table": "groups", "columns": ["id"]}, "on_delete": "CASCADE"},
+        {"columns": ["subject_id"], "references": {"table": "subjects", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["teacher_id"], "references": {"table": "teachers", "columns": ["id"]}, "on_delete": "SET NULL"}
+      ]
+    },
+    "schedule_overrides": {
+      "block": "schedule_replacements",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "schedule_lesson_id", "type": "bigint null"},
+        {"name": "group_id", "type": "int"},
+        {"name": "lesson_date", "type": "date"},
+        {"name": "pair_number", "type": "smallint"},
+        {"name": "subgroup", "type": "smallint null"},
+        {"name": "action_type", "type": "text"},
+        {"name": "source_subject_id", "type": "int null"},
+        {"name": "source_teacher_id", "type": "int null"},
+        {"name": "source_location_id", "type": "int null"},
+        {"name": "source_lesson_format", "type": "text null"},
+        {"name": "replacement_subject_id", "type": "int null"},
+        {"name": "replacement_teacher_id", "type": "int null"},
+        {"name": "replacement_location_id", "type": "int null"},
+        {"name": "replacement_lesson_format", "type": "text null"},
+        {"name": "reason", "type": "text null"},
+        {"name": "status", "type": "text"},
+        {"name": "expected_lesson_version", "type": "int null"},
+        {"name": "applied_lesson_version", "type": "int null"},
+        {"name": "created_by", "type": "int null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "applied_at", "type": "timestamptz null"}
+      ],
+      "foreign_keys": [
+        {"columns": ["schedule_lesson_id"], "references": {"table": "schedule_lessons", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["group_id"], "references": {"table": "groups", "columns": ["id"]}, "on_delete": "CASCADE"},
+        {"columns": ["source_subject_id"], "references": {"table": "subjects", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["source_teacher_id"], "references": {"table": "teachers", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["source_location_id"], "references": {"table": "locations", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["replacement_subject_id"], "references": {"table": "subjects", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["replacement_teacher_id"], "references": {"table": "teachers", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["replacement_location_id"], "references": {"table": "locations", "columns": ["id"]}, "on_delete": "SET NULL"}
+      ]
+    },
+    "schedule_replacements": {
+      "block": "schedule_replacements",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "target_date", "type": "date"},
+        {"name": "group_id", "type": "int"},
+        {"name": "pair_number", "type": "smallint"},
+        {"name": "subgroup", "type": "smallint null"},
+        {"name": "source_subject_id", "type": "int null"},
+        {"name": "source_location_id", "type": "int null"},
+        {"name": "source_teacher_id", "type": "int null"},
+        {"name": "replacement_subject_id", "type": "int null"},
+        {"name": "replacement_location_id", "type": "int null"},
+        {"name": "replacement_teacher_id", "type": "int null"},
+        {"name": "reason", "type": "text null"},
+        {"name": "schedule_override_id", "type": "bigint null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["group_id"], "references": {"table": "groups", "columns": ["id"]}, "on_delete": "CASCADE"},
+        {"columns": ["source_subject_id"], "references": {"table": "subjects", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["source_location_id"], "references": {"table": "locations", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["source_teacher_id"], "references": {"table": "teachers", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["replacement_subject_id"], "references": {"table": "subjects", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["replacement_location_id"], "references": {"table": "locations", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["replacement_teacher_id"], "references": {"table": "teachers", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["schedule_override_id"], "references": {"table": "schedule_overrides", "columns": ["id"]}, "on_delete": "SET NULL"}
+      ]
+    },
+    "campuses": {
+      "block": "rooms_constraints",
+      "fields": [
+        {"name": "id", "type": "serial", "pk": true},
+        {"name": "name", "type": "varchar(100)"},
+        {"name": "address", "type": "text null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ]
+    },
+    "locations": {
+      "block": "rooms_constraints",
+      "fields": [
+        {"name": "id", "type": "serial", "pk": true},
+        {"name": "campus_id", "type": "int null"},
+        {"name": "name", "type": "varchar(50)"},
+        {"name": "kind", "type": "text"},
+        {"name": "capacity", "type": "smallint null"},
+        {"name": "is_active", "type": "boolean"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["campus_id"], "references": {"table": "campuses", "columns": ["id"]}, "on_delete": "SET NULL"}
+      ]
+    },
+    "location_types": {
+      "block": "rooms_constraints",
+      "fields": [
+        {"name": "id", "type": "serial", "pk": true},
+        {"name": "code", "type": "varchar(50)"},
+        {"name": "name", "type": "varchar(100)"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ]
+    },
+    "location_type_links": {
+      "block": "rooms_constraints",
+      "fields": [
+        {"name": "location_id", "type": "int", "pk": true},
+        {"name": "type_id", "type": "int", "pk": true},
+        {"name": "created_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["location_id"], "references": {"table": "locations", "columns": ["id"]}, "on_delete": "CASCADE"},
+        {"columns": ["type_id"], "references": {"table": "location_types", "columns": ["id"]}, "on_delete": "CASCADE"}
+      ]
+    },
+    "room_assignments": {
+      "block": "rooms_constraints",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "schedule_lesson_id", "type": "bigint"},
+        {"name": "location_id", "type": "int"},
+        {"name": "source", "type": "text"},
+        {"name": "status", "type": "text"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["schedule_lesson_id"], "references": {"table": "schedule_lessons", "columns": ["id"]}, "on_delete": "CASCADE"},
+        {"columns": ["location_id"], "references": {"table": "locations", "columns": ["id"]}, "on_delete": "RESTRICT"}
+      ]
+    },
+    "room_requests": {
+      "block": "rooms_constraints",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "teacher_id", "type": "int null"},
+        {"name": "subject_id", "type": "int null"},
+        {"name": "group_id", "type": "int null"},
+        {"name": "semester", "type": "smallint null"},
+        {"name": "required_type_id", "type": "int null"},
+        {"name": "preferred_location_id", "type": "int null"},
+        {"name": "priority", "type": "int"},
+        {"name": "comment", "type": "text null"},
+        {"name": "status", "type": "text"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["teacher_id"], "references": {"table": "teachers", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["subject_id"], "references": {"table": "subjects", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["group_id"], "references": {"table": "groups", "columns": ["id"]}, "on_delete": "CASCADE"},
+        {"columns": ["required_type_id"], "references": {"table": "location_types", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["preferred_location_id"], "references": {"table": "locations", "columns": ["id"]}, "on_delete": "SET NULL"}
+      ]
+    },
+    "teacher_location_preferences": {
+      "block": "rooms_constraints",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "teacher_id", "type": "int"},
+        {"name": "location_id", "type": "int"},
+        {"name": "priority", "type": "int"},
+        {"name": "valid_from", "type": "date null"},
+        {"name": "valid_to", "type": "date null"},
+        {"name": "comment", "type": "text null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["teacher_id"], "references": {"table": "teachers", "columns": ["id"]}, "on_delete": "CASCADE"},
+        {"columns": ["location_id"], "references": {"table": "locations", "columns": ["id"]}, "on_delete": "CASCADE"}
+      ]
+    },
+    "location_week_availability": {
+      "block": "rooms_constraints",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "week_start_date", "type": "date"},
+        {"name": "location_id", "type": "int"},
+        {"name": "is_available", "type": "boolean"},
+        {"name": "comment", "type": "text null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["location_id"], "references": {"table": "locations", "columns": ["id"]}, "on_delete": "CASCADE"}
+      ]
+    },
+    "teacher_day_constraints": {
+      "block": "rooms_constraints",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "teacher_id", "type": "int"},
+        {"name": "target_date", "type": "date"},
+        {"name": "reason", "type": "varchar(255)"},
+        {"name": "constraint_level", "type": "text"},
+        {"name": "requires_confirmation", "type": "boolean"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["teacher_id"], "references": {"table": "teachers", "columns": ["id"]}, "on_delete": "CASCADE"}
+      ]
+    },
+    "calendar_day_constraints": {
+      "block": "rooms_constraints",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "target_date", "type": "date"},
+        {"name": "title", "type": "varchar(200)"},
+        {"name": "reason", "type": "text null"},
+        {"name": "constraint_type", "type": "text"},
+        {"name": "affects_lessons", "type": "boolean"},
+        {"name": "requires_confirmation", "type": "boolean"},
+        {"name": "style_preset", "type": "varchar(30)"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ]
+    },
+    "schedule_day_events": {
+      "block": "rooms_constraints",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "target_date", "type": "date"},
+        {"name": "group_id", "type": "int"},
+        {"name": "event_type", "type": "text"},
+        {"name": "title", "type": "varchar(200)"},
+        {"name": "details", "type": "text null"},
+        {"name": "location_id", "type": "int null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["group_id"], "references": {"table": "groups", "columns": ["id"]}, "on_delete": "CASCADE"},
+        {"columns": ["location_id"], "references": {"table": "locations", "columns": ["id"]}, "on_delete": "SET NULL"}
+      ]
+    },
+    "schedule_day_overlays": {
+      "block": "rooms_constraints",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "target_date", "type": "date"},
+        {"name": "group_id", "type": "int"},
+        {"name": "text", "type": "varchar(255)"},
+        {"name": "style_preset", "type": "varchar(30)"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["group_id"], "references": {"table": "groups", "columns": ["id"]}, "on_delete": "CASCADE"}
+      ]
+    },
+    "specialties": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "serial", "pk": true},
+        {"name": "code", "type": "varchar(20)"},
+        {"name": "name", "type": "varchar(200)"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ]
+    },
+    "curricula": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "specialty_id", "type": "int"},
+        {"name": "admission_year", "type": "smallint"},
+        {"name": "variant", "type": "varchar(50)"},
+        {"name": "title", "type": "varchar(200)"},
+        {"name": "notes", "type": "text null"},
+        {"name": "is_active", "type": "boolean"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"},
+        {"name": "deleted_at", "type": "timestamptz null"}
+      ],
+      "foreign_keys": [
+        {"columns": ["specialty_id"], "references": {"table": "specialties", "columns": ["id"]}, "on_delete": "RESTRICT"}
+      ]
+    },
+    "academic_calendars": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "curriculum_id", "type": "bigint"},
+        {"name": "academic_year_start", "type": "date"},
+        {"name": "weeks_total", "type": "smallint"},
+        {"name": "notes", "type": "text null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["curriculum_id"], "references": {"table": "curricula", "columns": ["id"]}, "on_delete": "CASCADE"}
+      ]
+    },
+    "academic_calendar_weeks": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "calendar_id", "type": "bigint"},
+        {"name": "course_number", "type": "smallint"},
+        {"name": "week_number", "type": "smallint"},
+        {"name": "week_start_date", "type": "date"},
+        {"name": "activity_code", "type": "varchar(50)"},
+        {"name": "activity_name", "type": "varchar(200) null"},
+        {"name": "is_teaching", "type": "boolean"},
+        {"name": "comment", "type": "text null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["calendar_id"], "references": {"table": "academic_calendars", "columns": ["id"]}, "on_delete": "CASCADE"}
+      ]
+    },
+    "academic_calendar_day_overrides": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "calendar_id", "type": "bigint"},
+        {"name": "course_number", "type": "smallint"},
+        {"name": "week_number", "type": "smallint"},
+        {"name": "day_of_week", "type": "smallint"},
+        {"name": "activity_code", "type": "varchar(50)"},
+        {"name": "activity_name", "type": "varchar(200) null"},
+        {"name": "is_teaching", "type": "boolean"},
+        {"name": "comment", "type": "text null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["calendar_id"], "references": {"table": "academic_calendars", "columns": ["id"]}, "on_delete": "CASCADE"}
+      ]
+    },
+    "curriculum_items": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "curriculum_id", "type": "bigint"},
+        {"name": "parent_id", "type": "bigint null"},
+        {"name": "index_code", "type": "varchar(30) null"},
+        {"name": "item_type", "type": "text"},
+        {"name": "name", "type": "text"},
+        {"name": "subject_id", "type": "int null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["curriculum_id"], "references": {"table": "curricula", "columns": ["id"]}, "on_delete": "CASCADE"},
+        {"columns": ["parent_id"], "references": {"table": "curriculum_items", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["subject_id"], "references": {"table": "subjects", "columns": ["id"]}, "on_delete": "SET NULL"}
+      ]
+    },
+    "curriculum_item_allocations": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "item_id", "type": "bigint"},
+        {"name": "semester", "type": "smallint"},
+        {"name": "weeks", "type": "smallint null"},
+        {"name": "hours_total", "type": "int null"},
+        {"name": "hours_lectures", "type": "int null"},
+        {"name": "hours_practice", "type": "int null"},
+        {"name": "hours_lab", "type": "int null"},
+        {"name": "hours_independent", "type": "int null"},
+        {"name": "hours_exam", "type": "int null"},
+        {"name": "assessment_type", "type": "text null"},
+        {"name": "comment", "type": "text null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["item_id"], "references": {"table": "curriculum_items", "columns": ["id"]}, "on_delete": "CASCADE"}
+      ]
+    },
+    "study_activities": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "serial", "pk": true},
+        {"name": "code", "type": "varchar(50)"},
+        {"name": "name", "type": "varchar(200)"},
+        {"name": "activity_kind", "type": "text"},
+        {"name": "allows_lessons", "type": "boolean"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ]
+    },
+    "study_calendar_weeks": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "group_id", "type": "int"},
+        {"name": "week_number", "type": "smallint"},
+        {"name": "week_start_date", "type": "date null"},
+        {"name": "activity_id", "type": "int null"},
+        {"name": "allows_lessons", "type": "boolean"},
+        {"name": "comment", "type": "text null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["group_id"], "references": {"table": "groups", "columns": ["id"]}, "on_delete": "CASCADE"},
+        {"columns": ["activity_id"], "references": {"table": "study_activities", "columns": ["id"]}, "on_delete": "SET NULL"}
+      ]
+    },
+    "students": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "login", "type": "varchar(50)"},
+        {"name": "password_hash", "type": "text"},
+        {"name": "role", "type": "text"},
+        {"name": "group_id", "type": "int null"},
+        {"name": "teacher_id", "type": "int null"},
+        {"name": "subgroup", "type": "smallint null"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["group_id"], "references": {"table": "groups", "columns": ["id"]}, "on_delete": "SET NULL"},
+        {"columns": ["teacher_id"], "references": {"table": "teachers", "columns": ["id"]}, "on_delete": "SET NULL"}
+      ]
+    },
+    "refresh_tokens": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "user_id", "type": "bigint"},
+        {"name": "token_hash", "type": "text"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "expires_at", "type": "timestamptz"},
+        {"name": "revoked_at", "type": "timestamptz null"},
+        {"name": "replaced_by_token_id", "type": "bigint null"}
+      ],
+      "foreign_keys": [
+        {"columns": ["user_id"], "references": {"table": "students", "columns": ["id"]}, "on_delete": "CASCADE"},
+        {"columns": ["replaced_by_token_id"], "references": {"table": "refresh_tokens", "columns": ["id"]}, "on_delete": "SET NULL"}
+      ]
+    },
+    "device_tokens": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "group_id", "type": "int"},
+        {"name": "token", "type": "text"},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "updated_at", "type": "timestamptz"}
+      ],
+      "foreign_keys": [
+        {"columns": ["group_id"], "references": {"table": "groups", "columns": ["id"]}, "on_delete": "CASCADE"}
+      ]
+    },
+    "system_state": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "smallint", "pk": true},
+        {"name": "schedule_version", "type": "timestamptz"}
+      ]
+    },
+    "audit_logs": {
+      "block": "curricula_users",
+      "fields": [
+        {"name": "id", "type": "bigserial", "pk": true},
+        {"name": "created_at", "type": "timestamptz"},
+        {"name": "actor_type", "type": "text"},
+        {"name": "actor_id", "type": "bigint null"},
+        {"name": "actor_login", "type": "varchar(50) null"},
+        {"name": "actor_role", "type": "text null"},
+        {"name": "method", "type": "varchar(10)"},
+        {"name": "path", "type": "varchar(200)"},
+        {"name": "request_id", "type": "text null"},
+        {"name": "ip", "type": "text null"},
+        {"name": "user_agent", "type": "text null"},
+        {"name": "action", "type": "text"},
+        {"name": "entity_type", "type": "text"},
+        {"name": "entity_id", "type": "text"},
+        {"name": "payload", "type": "jsonb null"}
+      ]
+    }
+  }
+}

@@ -1,0 +1,1608 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="690pt" height="870pt" viewBox="0.00 0.00 690.00 869.99">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(1.44 868.55)">
+<title>ERD</title>
+<polygon fill="white" stroke="none" points="-1.44,1.44 -1.44,-868.55 690.00,-868.55 690.00,1.44 -1.44,1.44" />
+<text text-anchor="middle" x="133.62" y="-849.81" font-family="Arial" font-size="14.00">Фрагмент 2.5а — расписание и замены</text>
+
+<g id="edge__groups__id__groups__schedule_source_group_id" class="edge">
+<title>groups:e-&gt;groups:e</title>
+<path fill="none" stroke="#000000" d="M211.56,-559.62L223.56,-559.62L223.56,-518.38L211.56,-518.38" />
+<polygon fill="#000000" stroke="#000000" points="216.06,-520.38 211.56,-518.38 216.06,-516.38" />
+</g>
+
+<g id="edge__groups__id__course_assignments__group_id" class="edge">
+<title>groups:e-&gt;course_assignments:w</title>
+<path fill="none" stroke="#000000" d="M211.56,-559.62L223.56,-559.62L223.56,-610.88L260.00,-610.88" />
+<polygon fill="#000000" stroke="#000000" points="255.50,-608.88 260.00,-610.88 255.50,-612.88" />
+</g>
+
+<g id="edge__groups__id__schedule_lessons__group_id" class="edge">
+<title>groups:e-&gt;schedule_lessons:w</title>
+<path fill="none" stroke="#000000" d="M211.56,-559.62L223.56,-559.62L223.56,-370.88L260.00,-370.88" />
+<polygon fill="#000000" stroke="#000000" points="255.50,-368.88 260.00,-370.88 255.50,-372.88" />
+</g>
+
+<g id="edge__groups__id__schedule_overrides__group_id" class="edge">
+<title>groups:e-&gt;schedule_overrides:w</title>
+<path fill="none" stroke="#000000" d="M211.56,-559.62L223.56,-559.62L223.56,-667.12L465.00,-667.12" />
+<polygon fill="#000000" stroke="#000000" points="460.50,-665.12 465.00,-667.12 460.50,-669.12" />
+</g>
+
+<g id="edge__groups__id__schedule_replacements__group_id" class="edge">
+<title>groups:e-&gt;schedule_replacements:w</title>
+<path fill="none" stroke="#000000" d="M211.56,-559.62L223.56,-559.62L223.56,-418.38L453.00,-418.38L453.00,-277.12L465.00,-277.12" />
+<polygon fill="#000000" stroke="#000000" points="460.50,-275.12 465.00,-277.12 460.50,-279.12" />
+</g>
+
+
+<g id="edge__groups__id__connector_12__node" class="edge">
+<title>groups:w-&gt;connector_12:e</title>
+<path fill="none" stroke="#000000" d="M45.00,-559.62L41.00,-559.62L41.00,-626.44L33.00,-626.44" />
+<polygon fill="#000000" stroke="#000000" points="37.50,-628.44 33.00,-626.44 37.50,-624.44" />
+</g>
+
+<g id="edge__groups__id__connector_15__node" class="edge">
+<title>groups:w-&gt;connector_15:e</title>
+<path fill="none" stroke="#000000" d="M45.00,-559.62L41.00,-559.62L41.00,-602.44L33.00,-602.44" />
+<polygon fill="#000000" stroke="#000000" points="37.50,-604.44 33.00,-602.44 37.50,-600.44" />
+</g>
+
+<g id="edge__groups__id__connector_16__node" class="edge">
+<title>groups:w-&gt;connector_16:e</title>
+<path fill="none" stroke="#000000" d="M45.00,-559.62L41.00,-559.62L41.00,-578.44L33.00,-578.44" />
+<polygon fill="#000000" stroke="#000000" points="37.50,-580.44 33.00,-578.44 37.50,-576.44" />
+</g>
+
+<g id="edge__groups__id__connector_18__node" class="edge">
+<title>groups:w-&gt;connector_18:e</title>
+<path fill="none" stroke="#000000" d="M45.00,-559.62L41.00,-559.62L41.00,-554.44L33.00,-554.44" />
+<polygon fill="#000000" stroke="#000000" points="37.50,-556.44 33.00,-554.44 37.50,-552.44" />
+</g>
+
+<g id="edge__groups__id__connector_19__node" class="edge">
+<title>groups:w-&gt;connector_19:e</title>
+<path fill="none" stroke="#000000" d="M45.00,-559.62L41.00,-559.62L41.00,-530.44L33.00,-530.44" />
+<polygon fill="#000000" stroke="#000000" points="37.50,-532.44 33.00,-530.44 37.50,-528.44" />
+</g>
+
+<g id="edge__groups__id__connector_21__node" class="edge">
+<title>groups:w-&gt;connector_21:e</title>
+<path fill="none" stroke="#000000" d="M45.00,-559.62L41.00,-559.62L41.00,-506.44L33.00,-506.44" />
+<polygon fill="#000000" stroke="#000000" points="37.50,-508.44 33.00,-506.44 37.50,-504.44" />
+</g>
+
+<g id="edge__teachers__id__teacher_subjects__teacher_id" class="edge">
+<title>teachers:e-&gt;teacher_subjects:w</title>
+<path fill="none" stroke="#000000" d="M168.80,-779.62L260.00,-779.62" />
+<polygon fill="#000000" stroke="#000000" points="255.50,-777.62 260.00,-779.62 255.50,-781.62" />
+</g>
+
+
+<g id="edge__teachers__id__course_assignments__teacher_id" class="edge">
+<title>teachers:e-&gt;course_assignments:w</title>
+<path fill="none" stroke="#000000" d="M168.80,-779.62L248.00,-779.62L248.00,-555.88L260.00,-555.88" />
+<polygon fill="#000000" stroke="#000000" points="255.50,-553.88 260.00,-555.88 255.50,-557.88" />
+</g>
+
+<g id="edge__teachers__id__schedule_lessons__teacher_id" class="edge">
+<title>teachers:e-&gt;schedule_lessons:w</title>
+<path fill="none" stroke="#000000" d="M168.80,-779.62L248.00,-779.62L248.00,-302.12L260.00,-302.12" />
+<polygon fill="#000000" stroke="#000000" points="255.50,-300.12 260.00,-302.12 255.50,-304.12" />
+</g>
+
+<g id="edge__teachers__id__schedule_overrides__replacement_teacher_id" class="edge">
+<title>teachers:e-&gt;schedule_overrides:w</title>
+<path fill="none" stroke="#000000" d="M168.80,-779.62L180.80,-779.62L180.80,-654.62L453.00,-654.62L453.00,-529.62L465.00,-529.62" />
+<polygon fill="#000000" stroke="#000000" points="460.50,-527.62 465.00,-529.62 460.50,-531.62" />
+</g>
+
+<g id="edge__teachers__id__schedule_overrides__source_teacher_id" class="edge">
+<title>teachers:e-&gt;schedule_overrides:w</title>
+<path fill="none" stroke="#000000" d="M168.80,-779.62L180.80,-779.62L180.80,-682.12L453.00,-682.12L453.00,-584.62L465.00,-584.62" />
+<polygon fill="#000000" stroke="#000000" points="460.50,-582.62 465.00,-584.62 460.50,-586.62" />
+</g>
+
+<g id="edge__teachers__id__schedule_replacements__replacement_teacher_id" class="edge">
+<title>teachers:e-&gt;schedule_replacements:w</title>
+<path fill="none" stroke="#000000" d="M168.80,-779.62L180.80,-779.62L180.80,-823.00L453.00,-823.00L453.00,-167.12L465.00,-167.12" />
+<polygon fill="#000000" stroke="#000000" points="460.50,-165.12 465.00,-167.12 460.50,-169.12" />
+</g>
+
+<g id="edge__teachers__id__schedule_replacements__source_teacher_id" class="edge">
+<title>teachers:e-&gt;schedule_replacements:w</title>
+<path fill="none" stroke="#000000" d="M168.80,-779.62L180.80,-779.62L180.80,-823.00L453.00,-823.00L453.00,-208.38L465.00,-208.38" />
+<polygon fill="#000000" stroke="#000000" points="460.50,-206.38 465.00,-208.38 460.50,-210.38" />
+</g>
+
+
+<g id="edge__teachers__id__connector_10__node" class="edge">
+<title>teachers:w-&gt;connector_10:e</title>
+<path fill="none" stroke="#000000" d="M45.00,-779.62L41.00,-779.62L41.00,-815.62L33.00,-815.62" />
+<polygon fill="#000000" stroke="#000000" points="37.50,-817.62 33.00,-815.62 37.50,-813.62" />
+</g>
+
+<g id="edge__teachers__id__connector_13__node" class="edge">
+<title>teachers:w-&gt;connector_13:e</title>
+<path fill="none" stroke="#000000" d="M45.00,-779.62L41.00,-779.62L41.00,-791.62L33.00,-791.62" />
+<polygon fill="#000000" stroke="#000000" points="37.50,-793.62 33.00,-791.62 37.50,-789.62" />
+</g>
+
+<g id="edge__teachers__id__connector_14__node" class="edge">
+<title>teachers:w-&gt;connector_14:e</title>
+<path fill="none" stroke="#000000" d="M45.00,-779.62L41.00,-779.62L41.00,-767.62L33.00,-767.62" />
+<polygon fill="#000000" stroke="#000000" points="37.50,-769.62 33.00,-767.62 37.50,-765.62" />
+</g>
+
+<g id="edge__teachers__id__connector_20__node" class="edge">
+<title>teachers:w-&gt;connector_20:e</title>
+<path fill="none" stroke="#000000" d="M45.00,-779.62L41.00,-779.62L41.00,-743.62L33.00,-743.62" />
+<polygon fill="#000000" stroke="#000000" points="37.50,-745.62 33.00,-743.62 37.50,-741.62" />
+</g>
+
+<g id="edge__subjects__id__teacher_subjects__subject_id" class="edge">
+<title>subjects:e-&gt;teacher_subjects:w</title>
+<path fill="none" stroke="#000000" d="M171.06,-164.62L248.00,-164.62L248.00,-765.88L260.00,-765.88" />
+<polygon fill="#000000" stroke="#000000" points="255.50,-763.88 260.00,-765.88 255.50,-767.88" />
+</g>
+
+<g id="edge__subjects__id__course_assignments__subject_id" class="edge">
+<title>subjects:e-&gt;course_assignments:w</title>
+<path fill="none" stroke="#000000" d="M171.06,-164.62L248.00,-164.62L248.00,-583.38L260.00,-583.38" />
+<polygon fill="#000000" stroke="#000000" points="255.50,-581.38 260.00,-583.38 255.50,-585.38" />
+</g>
+
+<g id="edge__subjects__id__schedule_lessons__subject_id" class="edge">
+<title>subjects:e-&gt;schedule_lessons:w</title>
+<path fill="none" stroke="#000000" d="M171.06,-164.62L183.06,-164.62L183.06,-315.88L260.00,-315.88" />
+<polygon fill="#000000" stroke="#000000" points="255.50,-313.88 260.00,-315.88 255.50,-317.88" />
+</g>
+
+<g id="edge__subjects__id__schedule_overrides__replacement_subject_id" class="edge">
+<title>subjects:e-&gt;schedule_overrides:w</title>
+<path fill="none" stroke="#000000" d="M171.06,-164.62L453.00,-164.62L453.00,-543.38L465.00,-543.38" />
+<polygon fill="#000000" stroke="#000000" points="460.50,-541.38 465.00,-543.38 460.50,-545.38" />
+</g>
+
+<g id="edge__subjects__id__schedule_overrides__source_subject_id" class="edge">
+<title>subjects:e-&gt;schedule_overrides:w</title>
+<path fill="none" stroke="#000000" d="M171.06,-164.62L453.00,-164.62L453.00,-598.38L465.00,-598.38" />
+<polygon fill="#000000" stroke="#000000" points="460.50,-596.38 465.00,-598.38 460.50,-600.38" />
+</g>
+
+<g id="edge__subjects__id__schedule_replacements__replacement_subject_id" class="edge">
+<title>subjects:e-&gt;schedule_replacements:w</title>
+<path fill="none" stroke="#000000" d="M171.06,-164.62L453.00,-164.62L453.00,-194.62L465.00,-194.62" />
+<polygon fill="#000000" stroke="#000000" points="460.50,-192.62 465.00,-194.62 460.50,-196.62" />
+</g>
+
+<g id="edge__subjects__id__schedule_replacements__source_subject_id" class="edge">
+<title>subjects:e-&gt;schedule_replacements:w</title>
+<path fill="none" stroke="#000000" d="M171.06,-164.62L453.00,-164.62L453.00,-235.88L465.00,-235.88" />
+<polygon fill="#000000" stroke="#000000" points="460.50,-233.88 465.00,-235.88 460.50,-237.88" />
+</g>
+
+
+<g id="edge__subjects__id__connector_11__node" class="edge">
+<title>subjects:w-&gt;connector_11:e</title>
+<path fill="none" stroke="#000000" d="M45.00,-164.62L41.00,-164.62L41.00,-176.62L33.00,-176.62" />
+<polygon fill="#000000" stroke="#000000" points="37.50,-178.62 33.00,-176.62 37.50,-174.62" />
+</g>
+
+<g id="edge__subjects__id__connector_17__node" class="edge">
+<title>subjects:w-&gt;connector_17:e</title>
+<path fill="none" stroke="#000000" d="M45.00,-164.62L41.00,-164.62L41.00,-152.62L33.00,-152.62" />
+<polygon fill="#000000" stroke="#000000" points="37.50,-154.62 33.00,-152.62 37.50,-150.62" />
+</g>
+
+
+
+
+<g id="edge__schedule_lessons__id__schedule_overrides__schedule_lesson_id" class="edge">
+<title>schedule_lessons:w-&gt;schedule_overrides:w</title>
+<path fill="none" stroke="#000000" d="M260.00,-384.62L248.00,-384.62L248.00,-680.88L465.00,-680.88" />
+<polygon fill="#000000" stroke="#000000" points="460.50,-678.88 465.00,-680.88 460.50,-682.88" />
+</g>
+
+
+<g id="edge__schedule_lessons__id__connector_01__node" class="edge">
+<title>schedule_lessons:e-&gt;connector_01:w</title>
+<path fill="none" stroke="#000000" d="M389.80,-384.62L401.80,-384.62" />
+<polygon fill="#000000" stroke="#000000" points="397.30,-382.62 401.80,-384.62 397.30,-386.62" />
+</g>
+
+<g id="edge__schedule_overrides__id__schedule_replacements__schedule_override_id" class="edge">
+<title>schedule_overrides:w-&gt;schedule_replacements:w</title>
+<path fill="none" stroke="#000000" d="M465.00,-694.62L453.00,-694.62L453.00,-139.62L465.00,-139.62" />
+<polygon fill="#000000" stroke="#000000" points="460.50,-137.62 465.00,-139.62 460.50,-141.62" />
+</g>
+
+
+<g id="edge__connector_02__node__schedule_overrides__replacement_location_id" class="edge">
+<title>connector_02:w-&gt;schedule_overrides:e</title>
+<path fill="none" stroke="#000000" d="M659.31,-515.88L647.31,-515.88" />
+<polygon fill="#000000" stroke="#000000" points="651.81,-517.88 647.31,-515.88 651.81,-513.88" />
+</g>
+
+
+
+<g id="edge__connector_03__node__schedule_overrides__source_location_id" class="edge">
+<title>connector_03:w-&gt;schedule_overrides:e</title>
+<path fill="none" stroke="#000000" d="M659.31,-570.88L647.31,-570.88" />
+<polygon fill="#000000" stroke="#000000" points="651.81,-572.88 647.31,-570.88 651.81,-568.88" />
+</g>
+
+<g id="edge__connector_04__node__schedule_replacements__replacement_location_id" class="edge">
+<title>connector_04:w-&gt;schedule_replacements:e</title>
+<path fill="none" stroke="#000000" d="M633.81,-180.88L621.81,-180.88" />
+<polygon fill="#000000" stroke="#000000" points="626.31,-182.88 621.81,-180.88 626.31,-178.88" />
+</g>
+
+
+
+<g id="edge__connector_05__node__schedule_replacements__source_location_id" class="edge">
+<title>connector_05:w-&gt;schedule_replacements:e</title>
+<path fill="none" stroke="#000000" d="M633.81,-222.12L621.81,-222.12" />
+<polygon fill="#000000" stroke="#000000" points="626.31,-224.12 621.81,-222.12 626.31,-220.12" />
+</g>
+
+<g id="edge__connector_06__node__course_assignments__campus_id" class="edge">
+<title>connector_06:w-&gt;course_assignments:e</title>
+<path fill="none" stroke="#000000" d="M409.30,-542.12L397.30,-542.12" />
+<polygon fill="#000000" stroke="#000000" points="401.80,-544.12 397.30,-542.12 401.80,-540.12" />
+</g>
+
+
+
+<g id="edge__connector_07__node__course_assignments__curriculum_item_id" class="edge">
+<title>connector_07:w-&gt;course_assignments:e</title>
+<path fill="none" stroke="#000000" d="M409.30,-514.62L397.30,-514.62" />
+<polygon fill="#000000" stroke="#000000" points="401.80,-516.62 397.30,-514.62 401.80,-512.62" />
+</g>
+
+<g id="edge__connector_08__node__groups__curriculum_id" class="edge">
+<title>connector_08:e-&gt;groups:w</title>
+<path fill="none" stroke="#000000" d="M33.00,-482.44L37.00,-482.44L37.00,-504.62L45.00,-504.62" />
+<polygon fill="#000000" stroke="#000000" points="40.50,-502.62 45.00,-504.62 40.50,-506.62" />
+</g>
+
+
+
+<g id="edge__connector_09__node__groups__specialty_id" class="edge">
+<title>connector_09:e-&gt;groups:w</title>
+<path fill="none" stroke="#000000" d="M33.00,-458.44L37.00,-458.44L37.00,-477.12L45.00,-477.12" />
+<polygon fill="#000000" stroke="#000000" points="40.50,-475.12 45.00,-477.12 40.50,-479.12" />
+</g>
+
+
+
+
+
+
+
+
+
+
+
+
+<g id="node1" class="node">
+<title>groups</title>
+<polygon fill="#000000" stroke="none" points="46.00,-566.50 46.00,-584.00 210.56,-584.00 210.56,-566.50 46.00,-566.50" />
+<polygon fill="none" stroke="#000000" points="46.00,-566.50 46.00,-584.00 210.56,-584.00 210.56,-566.50 46.00,-566.50" />
+<text text-anchor="start" x="109.53" y="-572.55" font-family="Arial" font-weight="bold" font-size="11.00" fill="#ffffff">groups</text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-552.75 46.00,-566.50 50.28,-566.50 50.28,-552.75 46.00,-552.75" />
+<polygon fill="none" stroke="#000000" points="46.00,-552.75 46.00,-566.50 50.28,-566.50 50.28,-552.75 46.00,-552.75" />
+<text text-anchor="start" x="48.00" y="-559.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-552.75 50.28,-566.50 63.28,-566.50 63.28,-552.75 50.28,-552.75" />
+<polygon fill="none" stroke="#000000" points="50.28,-552.75 50.28,-566.50 63.28,-566.50 63.28,-552.75 50.28,-552.75" />
+<text text-anchor="start" x="52.28" y="-557.10" font-family="Arial" font-size="7.00" fill="#000000">PK</text>
+<polygon fill="none" stroke="#000000" points="63.28,-552.75 63.28,-566.50 163.28,-566.50 163.28,-552.75 63.28,-552.75" />
+<text text-anchor="start" x="65.28" y="-557.89" font-family="Arial" font-weight="bold" font-size="8.00" fill="#000000">id</text>
+<polygon fill="none" stroke="#000000" points="163.28,-552.75 163.28,-566.50 206.28,-566.50 206.28,-552.75 163.28,-552.75" />
+<text text-anchor="start" x="165.28" y="-557.10" font-family="Arial" font-size="7.00" fill="#000000">serial</text>
+<polygon fill="#ffffff" stroke="none" points="206.28,-552.75 206.28,-566.50 210.56,-566.50 210.56,-552.75 206.28,-552.75" />
+<polygon fill="none" stroke="#000000" points="206.28,-552.75 206.28,-566.50 210.56,-566.50 210.56,-552.75 206.28,-552.75" />
+<text text-anchor="start" x="208.28" y="-559.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-539.00 46.00,-552.75 50.28,-552.75 50.28,-539.00 46.00,-539.00" />
+<polygon fill="none" stroke="#000000" points="46.00,-539.00 46.00,-552.75 50.28,-552.75 50.28,-539.00 46.00,-539.00" />
+<text text-anchor="start" x="48.00" y="-545.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-539.00 50.28,-552.75 63.28,-552.75 63.28,-539.00 50.28,-539.00" />
+<polygon fill="none" stroke="#000000" points="50.28,-539.00 50.28,-552.75 63.28,-552.75 63.28,-539.00 50.28,-539.00" />
+<text text-anchor="start" x="52.28" y="-543.35" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.28,-539.00 63.28,-552.75 163.28,-552.75 163.28,-539.00 63.28,-539.00" />
+<text text-anchor="start" x="65.28" y="-543.14" font-family="Arial" font-size="8.00" fill="#000000">name</text>
+<polygon fill="none" stroke="#000000" points="163.28,-539.00 163.28,-552.75 206.28,-552.75 206.28,-539.00 163.28,-539.00" />
+<text text-anchor="start" x="165.28" y="-543.35" font-family="Arial" font-size="7.00" fill="#000000">varchar(50)</text>
+<polygon fill="#ffffff" stroke="none" points="206.28,-539.00 206.28,-552.75 210.56,-552.75 210.56,-539.00 206.28,-539.00" />
+<polygon fill="none" stroke="#000000" points="206.28,-539.00 206.28,-552.75 210.56,-552.75 210.56,-539.00 206.28,-539.00" />
+<text text-anchor="start" x="208.28" y="-545.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-525.25 46.00,-539.00 50.28,-539.00 50.28,-525.25 46.00,-525.25" />
+<polygon fill="none" stroke="#000000" points="46.00,-525.25 46.00,-539.00 50.28,-539.00 50.28,-525.25 46.00,-525.25" />
+<text text-anchor="start" x="48.00" y="-531.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-525.25 50.28,-539.00 63.28,-539.00 63.28,-525.25 50.28,-525.25" />
+<polygon fill="none" stroke="#000000" points="50.28,-525.25 50.28,-539.00 63.28,-539.00 63.28,-525.25 50.28,-525.25" />
+<text text-anchor="start" x="52.28" y="-529.60" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.28,-525.25 63.28,-539.00 163.28,-539.00 163.28,-525.25 63.28,-525.25" />
+<text text-anchor="start" x="65.28" y="-529.39" font-family="Arial" font-size="8.00" fill="#000000">course</text>
+<polygon fill="none" stroke="#000000" points="163.28,-525.25 163.28,-539.00 206.28,-539.00 206.28,-525.25 163.28,-525.25" />
+<text text-anchor="start" x="165.28" y="-529.60" font-family="Arial" font-size="7.00" fill="#000000">int</text>
+<polygon fill="#ffffff" stroke="none" points="206.28,-525.25 206.28,-539.00 210.56,-539.00 210.56,-525.25 206.28,-525.25" />
+<polygon fill="none" stroke="#000000" points="206.28,-525.25 206.28,-539.00 210.56,-539.00 210.56,-525.25 206.28,-525.25" />
+<text text-anchor="start" x="208.28" y="-531.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-511.50 46.00,-525.25 50.28,-525.25 50.28,-511.50 46.00,-511.50" />
+<polygon fill="none" stroke="#000000" points="46.00,-511.50 46.00,-525.25 50.28,-525.25 50.28,-511.50 46.00,-511.50" />
+<text text-anchor="start" x="48.00" y="-518.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-511.50 50.28,-525.25 63.28,-525.25 63.28,-511.50 50.28,-511.50" />
+<polygon fill="none" stroke="#000000" points="50.28,-511.50 50.28,-525.25 63.28,-525.25 63.28,-511.50 50.28,-511.50" />
+<text text-anchor="start" x="52.28" y="-515.85" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="63.28,-511.50 63.28,-525.25 163.28,-525.25 163.28,-511.50 63.28,-511.50" />
+<text text-anchor="start" x="65.28" y="-515.64" font-family="Arial" font-size="8.00" fill="#000000">schedule_source_group_id</text>
+<polygon fill="none" stroke="#000000" points="163.28,-511.50 163.28,-525.25 206.28,-525.25 206.28,-511.50 163.28,-511.50" />
+<text text-anchor="start" x="165.28" y="-515.85" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="206.28,-511.50 206.28,-525.25 210.56,-525.25 210.56,-511.50 206.28,-511.50" />
+<polygon fill="none" stroke="#000000" points="206.28,-511.50 206.28,-525.25 210.56,-525.25 210.56,-511.50 206.28,-511.50" />
+<text text-anchor="start" x="208.28" y="-518.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-497.75 46.00,-511.50 50.28,-511.50 50.28,-497.75 46.00,-497.75" />
+<polygon fill="none" stroke="#000000" points="46.00,-497.75 46.00,-511.50 50.28,-511.50 50.28,-497.75 46.00,-497.75" />
+<text text-anchor="start" x="48.00" y="-504.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-497.75 50.28,-511.50 63.28,-511.50 63.28,-497.75 50.28,-497.75" />
+<polygon fill="none" stroke="#000000" points="50.28,-497.75 50.28,-511.50 63.28,-511.50 63.28,-497.75 50.28,-497.75" />
+<text text-anchor="start" x="52.28" y="-502.10" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="63.28,-497.75 63.28,-511.50 163.28,-511.50 163.28,-497.75 63.28,-497.75" />
+<text text-anchor="start" x="65.28" y="-501.89" font-family="Arial" font-size="8.00" fill="#000000">curriculum_id</text>
+<polygon fill="none" stroke="#000000" points="163.28,-497.75 163.28,-511.50 206.28,-511.50 206.28,-497.75 163.28,-497.75" />
+<text text-anchor="start" x="165.28" y="-502.10" font-family="Arial" font-size="7.00" fill="#000000">bigint null</text>
+<polygon fill="#ffffff" stroke="none" points="206.28,-497.75 206.28,-511.50 210.56,-511.50 210.56,-497.75 206.28,-497.75" />
+<polygon fill="none" stroke="#000000" points="206.28,-497.75 206.28,-511.50 210.56,-511.50 210.56,-497.75 206.28,-497.75" />
+<text text-anchor="start" x="208.28" y="-504.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-484.00 46.00,-497.75 50.28,-497.75 50.28,-484.00 46.00,-484.00" />
+<polygon fill="none" stroke="#000000" points="46.00,-484.00 46.00,-497.75 50.28,-497.75 50.28,-484.00 46.00,-484.00" />
+<text text-anchor="start" x="48.00" y="-490.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-484.00 50.28,-497.75 63.28,-497.75 63.28,-484.00 50.28,-484.00" />
+<polygon fill="none" stroke="#000000" points="50.28,-484.00 50.28,-497.75 63.28,-497.75 63.28,-484.00 50.28,-484.00" />
+<text text-anchor="start" x="52.28" y="-488.35" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.28,-484.00 63.28,-497.75 163.28,-497.75 163.28,-484.00 63.28,-484.00" />
+<text text-anchor="start" x="65.28" y="-488.14" font-family="Arial" font-size="8.00" fill="#000000">admission_year</text>
+<polygon fill="none" stroke="#000000" points="163.28,-484.00 163.28,-497.75 206.28,-497.75 206.28,-484.00 163.28,-484.00" />
+<text text-anchor="start" x="165.28" y="-488.35" font-family="Arial" font-size="7.00" fill="#000000">smallint null</text>
+<polygon fill="#ffffff" stroke="none" points="206.28,-484.00 206.28,-497.75 210.56,-497.75 210.56,-484.00 206.28,-484.00" />
+<polygon fill="none" stroke="#000000" points="206.28,-484.00 206.28,-497.75 210.56,-497.75 210.56,-484.00 206.28,-484.00" />
+<text text-anchor="start" x="208.28" y="-490.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-470.25 46.00,-484.00 50.28,-484.00 50.28,-470.25 46.00,-470.25" />
+<polygon fill="none" stroke="#000000" points="46.00,-470.25 46.00,-484.00 50.28,-484.00 50.28,-470.25 46.00,-470.25" />
+<text text-anchor="start" x="48.00" y="-476.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-470.25 50.28,-484.00 63.28,-484.00 63.28,-470.25 50.28,-470.25" />
+<polygon fill="none" stroke="#000000" points="50.28,-470.25 50.28,-484.00 63.28,-484.00 63.28,-470.25 50.28,-470.25" />
+<text text-anchor="start" x="52.28" y="-474.60" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="63.28,-470.25 63.28,-484.00 163.28,-484.00 163.28,-470.25 63.28,-470.25" />
+<text text-anchor="start" x="65.28" y="-474.39" font-family="Arial" font-size="8.00" fill="#000000">specialty_id</text>
+<polygon fill="none" stroke="#000000" points="163.28,-470.25 163.28,-484.00 206.28,-484.00 206.28,-470.25 163.28,-470.25" />
+<text text-anchor="start" x="165.28" y="-474.60" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="206.28,-470.25 206.28,-484.00 210.56,-484.00 210.56,-470.25 206.28,-470.25" />
+<polygon fill="none" stroke="#000000" points="206.28,-470.25 206.28,-484.00 210.56,-484.00 210.56,-470.25 206.28,-470.25" />
+<text text-anchor="start" x="208.28" y="-476.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-456.50 46.00,-470.25 50.28,-470.25 50.28,-456.50 46.00,-456.50" />
+<polygon fill="none" stroke="#000000" points="46.00,-456.50 46.00,-470.25 50.28,-470.25 50.28,-456.50 46.00,-456.50" />
+<text text-anchor="start" x="48.00" y="-463.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-456.50 50.28,-470.25 63.28,-470.25 63.28,-456.50 50.28,-456.50" />
+<polygon fill="none" stroke="#000000" points="50.28,-456.50 50.28,-470.25 63.28,-470.25 63.28,-456.50 50.28,-456.50" />
+<text text-anchor="start" x="52.28" y="-460.85" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.28,-456.50 63.28,-470.25 163.28,-470.25 163.28,-456.50 63.28,-456.50" />
+<text text-anchor="start" x="65.28" y="-460.64" font-family="Arial" font-size="8.00" fill="#000000">created_at</text>
+<polygon fill="none" stroke="#000000" points="163.28,-456.50 163.28,-470.25 206.28,-470.25 206.28,-456.50 163.28,-456.50" />
+<text text-anchor="start" x="165.28" y="-460.85" font-family="Arial" font-size="7.00" fill="#000000">timestamptz</text>
+<polygon fill="#ffffff" stroke="none" points="206.28,-456.50 206.28,-470.25 210.56,-470.25 210.56,-456.50 206.28,-456.50" />
+<polygon fill="none" stroke="#000000" points="206.28,-456.50 206.28,-470.25 210.56,-470.25 210.56,-456.50 206.28,-456.50" />
+<text text-anchor="start" x="208.28" y="-463.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-442.75 46.00,-456.50 50.28,-456.50 50.28,-442.75 46.00,-442.75" />
+<polygon fill="none" stroke="#000000" points="46.00,-442.75 46.00,-456.50 50.28,-456.50 50.28,-442.75 46.00,-442.75" />
+<text text-anchor="start" x="48.00" y="-449.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-442.75 50.28,-456.50 63.28,-456.50 63.28,-442.75 50.28,-442.75" />
+<polygon fill="none" stroke="#000000" points="50.28,-442.75 50.28,-456.50 63.28,-456.50 63.28,-442.75 50.28,-442.75" />
+<text text-anchor="start" x="52.28" y="-447.10" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.28,-442.75 63.28,-456.50 163.28,-456.50 163.28,-442.75 63.28,-442.75" />
+<text text-anchor="start" x="65.28" y="-446.89" font-family="Arial" font-size="8.00" fill="#000000">updated_at</text>
+<polygon fill="none" stroke="#000000" points="163.28,-442.75 163.28,-456.50 206.28,-456.50 206.28,-442.75 163.28,-442.75" />
+<text text-anchor="start" x="165.28" y="-447.10" font-family="Arial" font-size="7.00" fill="#000000">timestamptz</text>
+<polygon fill="#ffffff" stroke="none" points="206.28,-442.75 206.28,-456.50 210.56,-456.50 210.56,-442.75 206.28,-442.75" />
+<polygon fill="none" stroke="#000000" points="206.28,-442.75 206.28,-456.50 210.56,-456.50 210.56,-442.75 206.28,-442.75" />
+<text text-anchor="start" x="208.28" y="-449.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="none" stroke="#000000" points="45.00,-441.75 45.00,-585.00 211.56,-585.00 211.56,-441.75 45.00,-441.75" />
+</g>
+
+<g id="node2" class="node">
+<title>teachers</title>
+<polygon fill="#000000" stroke="none" points="46.00,-786.50 46.00,-804.00 167.80,-804.00 167.80,-786.50 46.00,-786.50" />
+<polygon fill="none" stroke="#000000" points="46.00,-786.50 46.00,-804.00 167.80,-804.00 167.80,-786.50 46.00,-786.50" />
+<text text-anchor="start" x="84.40" y="-792.54" font-family="Arial" font-weight="bold" font-size="11.00" fill="#ffffff">teachers</text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-772.75 46.00,-786.50 50.27,-786.50 50.27,-772.75 46.00,-772.75" />
+<polygon fill="none" stroke="#000000" points="46.00,-772.75 46.00,-786.50 50.27,-786.50 50.27,-772.75 46.00,-772.75" />
+<text text-anchor="start" x="48.00" y="-779.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.27,-772.75 50.27,-786.50 63.27,-786.50 63.27,-772.75 50.27,-772.75" />
+<polygon fill="none" stroke="#000000" points="50.27,-772.75 50.27,-786.50 63.27,-786.50 63.27,-772.75 50.27,-772.75" />
+<text text-anchor="start" x="52.27" y="-777.10" font-family="Arial" font-size="7.00" fill="#000000">PK</text>
+<polygon fill="none" stroke="#000000" points="63.27,-772.75 63.27,-786.50 107.77,-786.50 107.77,-772.75 63.27,-772.75" />
+<text text-anchor="start" x="65.27" y="-777.89" font-family="Arial" font-weight="bold" font-size="8.00" fill="#000000">id</text>
+<polygon fill="none" stroke="#000000" points="107.77,-772.75 107.77,-786.50 163.52,-786.50 163.52,-772.75 107.77,-772.75" />
+<text text-anchor="start" x="109.77" y="-777.10" font-family="Arial" font-size="7.00" fill="#000000">serial</text>
+<polygon fill="#ffffff" stroke="none" points="163.52,-772.75 163.52,-786.50 167.80,-786.50 167.80,-772.75 163.52,-772.75" />
+<polygon fill="none" stroke="#000000" points="163.52,-772.75 163.52,-786.50 167.80,-786.50 167.80,-772.75 163.52,-772.75" />
+<text text-anchor="start" x="165.52" y="-779.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-759.00 46.00,-772.75 50.27,-772.75 50.27,-759.00 46.00,-759.00" />
+<polygon fill="none" stroke="#000000" points="46.00,-759.00 46.00,-772.75 50.27,-772.75 50.27,-759.00 46.00,-759.00" />
+<text text-anchor="start" x="48.00" y="-765.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.27,-759.00 50.27,-772.75 63.27,-772.75 63.27,-759.00 50.27,-759.00" />
+<polygon fill="none" stroke="#000000" points="50.27,-759.00 50.27,-772.75 63.27,-772.75 63.27,-759.00 50.27,-759.00" />
+<text text-anchor="start" x="52.27" y="-763.35" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.27,-759.00 63.27,-772.75 107.77,-772.75 107.77,-759.00 63.27,-759.00" />
+<text text-anchor="start" x="65.27" y="-763.14" font-family="Arial" font-size="8.00" fill="#000000">name</text>
+<polygon fill="none" stroke="#000000" points="107.77,-759.00 107.77,-772.75 163.52,-772.75 163.52,-759.00 107.77,-759.00" />
+<text text-anchor="start" x="109.77" y="-763.35" font-family="Arial" font-size="7.00" fill="#000000">varchar(100)</text>
+<polygon fill="#ffffff" stroke="none" points="163.52,-759.00 163.52,-772.75 167.80,-772.75 167.80,-759.00 163.52,-759.00" />
+<polygon fill="none" stroke="#000000" points="163.52,-759.00 163.52,-772.75 167.80,-772.75 167.80,-759.00 163.52,-759.00" />
+<text text-anchor="start" x="165.52" y="-765.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-745.25 46.00,-759.00 50.27,-759.00 50.27,-745.25 46.00,-745.25" />
+<polygon fill="none" stroke="#000000" points="46.00,-745.25 46.00,-759.00 50.27,-759.00 50.27,-745.25 46.00,-745.25" />
+<text text-anchor="start" x="48.00" y="-751.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.27,-745.25 50.27,-759.00 63.27,-759.00 63.27,-745.25 50.27,-745.25" />
+<polygon fill="none" stroke="#000000" points="50.27,-745.25 50.27,-759.00 63.27,-759.00 63.27,-745.25 50.27,-745.25" />
+<text text-anchor="start" x="52.27" y="-749.60" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.27,-745.25 63.27,-759.00 107.77,-759.00 107.77,-745.25 63.27,-745.25" />
+<text text-anchor="start" x="65.27" y="-749.39" font-family="Arial" font-size="8.00" fill="#000000">created_at</text>
+<polygon fill="none" stroke="#000000" points="107.77,-745.25 107.77,-759.00 163.52,-759.00 163.52,-745.25 107.77,-745.25" />
+<text text-anchor="start" x="109.77" y="-749.60" font-family="Arial" font-size="7.00" fill="#000000">timestamptz</text>
+<polygon fill="#ffffff" stroke="none" points="163.52,-745.25 163.52,-759.00 167.80,-759.00 167.80,-745.25 163.52,-745.25" />
+<polygon fill="none" stroke="#000000" points="163.52,-745.25 163.52,-759.00 167.80,-759.00 167.80,-745.25 163.52,-745.25" />
+<text text-anchor="start" x="165.52" y="-751.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-731.50 46.00,-745.25 50.27,-745.25 50.27,-731.50 46.00,-731.50" />
+<polygon fill="none" stroke="#000000" points="46.00,-731.50 46.00,-745.25 50.27,-745.25 50.27,-731.50 46.00,-731.50" />
+<text text-anchor="start" x="48.00" y="-738.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.27,-731.50 50.27,-745.25 63.27,-745.25 63.27,-731.50 50.27,-731.50" />
+<polygon fill="none" stroke="#000000" points="50.27,-731.50 50.27,-745.25 63.27,-745.25 63.27,-731.50 50.27,-731.50" />
+<text text-anchor="start" x="52.27" y="-735.85" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.27,-731.50 63.27,-745.25 107.77,-745.25 107.77,-731.50 63.27,-731.50" />
+<text text-anchor="start" x="65.27" y="-735.64" font-family="Arial" font-size="8.00" fill="#000000">updated_at</text>
+<polygon fill="none" stroke="#000000" points="107.77,-731.50 107.77,-745.25 163.52,-745.25 163.52,-731.50 107.77,-731.50" />
+<text text-anchor="start" x="109.77" y="-735.85" font-family="Arial" font-size="7.00" fill="#000000">timestamptz</text>
+<polygon fill="#ffffff" stroke="none" points="163.52,-731.50 163.52,-745.25 167.80,-745.25 167.80,-731.50 163.52,-731.50" />
+<polygon fill="none" stroke="#000000" points="163.52,-731.50 163.52,-745.25 167.80,-745.25 167.80,-731.50 163.52,-731.50" />
+<text text-anchor="start" x="165.52" y="-738.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-717.75 46.00,-731.50 50.27,-731.50 50.27,-717.75 46.00,-717.75" />
+<polygon fill="none" stroke="#000000" points="46.00,-717.75 46.00,-731.50 50.27,-731.50 50.27,-717.75 46.00,-717.75" />
+<text text-anchor="start" x="48.00" y="-724.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.27,-717.75 50.27,-731.50 63.27,-731.50 63.27,-717.75 50.27,-717.75" />
+<polygon fill="none" stroke="#000000" points="50.27,-717.75 50.27,-731.50 63.27,-731.50 63.27,-717.75 50.27,-717.75" />
+<text text-anchor="start" x="52.27" y="-722.10" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.27,-717.75 63.27,-731.50 107.77,-731.50 107.77,-717.75 63.27,-717.75" />
+<text text-anchor="start" x="65.27" y="-721.89" font-family="Arial" font-size="8.00" fill="#000000">deleted_at</text>
+<polygon fill="none" stroke="#000000" points="107.77,-717.75 107.77,-731.50 163.52,-731.50 163.52,-717.75 107.77,-717.75" />
+<text text-anchor="start" x="109.77" y="-722.10" font-family="Arial" font-size="7.00" fill="#000000">timestamptz null</text>
+<polygon fill="#ffffff" stroke="none" points="163.52,-717.75 163.52,-731.50 167.80,-731.50 167.80,-717.75 163.52,-717.75" />
+<polygon fill="none" stroke="#000000" points="163.52,-717.75 163.52,-731.50 167.80,-731.50 167.80,-717.75 163.52,-717.75" />
+<text text-anchor="start" x="165.52" y="-724.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="none" stroke="#000000" points="45.00,-716.75 45.00,-805.00 168.80,-805.00 168.80,-716.75 45.00,-716.75" />
+</g>
+
+<g id="node3" class="node">
+<title>subjects</title>
+<polygon fill="#000000" stroke="none" points="46.00,-171.50 46.00,-189.00 170.06,-189.00 170.06,-171.50 46.00,-171.50" />
+<polygon fill="none" stroke="#000000" points="46.00,-171.50 46.00,-189.00 170.06,-189.00 170.06,-171.50 46.00,-171.50" />
+<text text-anchor="start" x="85.90" y="-177.55" font-family="Arial" font-weight="bold" font-size="11.00" fill="#ffffff">subjects</text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-157.75 46.00,-171.50 50.28,-171.50 50.28,-157.75 46.00,-157.75" />
+<polygon fill="none" stroke="#000000" points="46.00,-157.75 46.00,-171.50 50.28,-171.50 50.28,-157.75 46.00,-157.75" />
+<text text-anchor="start" x="48.00" y="-164.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-157.75 50.28,-171.50 63.28,-171.50 63.28,-157.75 50.28,-157.75" />
+<polygon fill="none" stroke="#000000" points="50.28,-157.75 50.28,-171.50 63.28,-171.50 63.28,-157.75 50.28,-157.75" />
+<text text-anchor="start" x="52.28" y="-162.10" font-family="Arial" font-size="7.00" fill="#000000">PK</text>
+<polygon fill="none" stroke="#000000" points="63.28,-157.75 63.28,-171.50 110.03,-171.50 110.03,-157.75 63.28,-157.75" />
+<text text-anchor="start" x="65.28" y="-162.90" font-family="Arial" font-weight="bold" font-size="8.00" fill="#000000">id</text>
+<polygon fill="none" stroke="#000000" points="110.03,-157.75 110.03,-171.50 165.78,-171.50 165.78,-157.75 110.03,-157.75" />
+<text text-anchor="start" x="112.03" y="-162.10" font-family="Arial" font-size="7.00" fill="#000000">serial</text>
+<polygon fill="#ffffff" stroke="none" points="165.78,-157.75 165.78,-171.50 170.06,-171.50 170.06,-157.75 165.78,-157.75" />
+<polygon fill="none" stroke="#000000" points="165.78,-157.75 165.78,-171.50 170.06,-171.50 170.06,-157.75 165.78,-157.75" />
+<text text-anchor="start" x="167.78" y="-164.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-144.00 46.00,-157.75 50.28,-157.75 50.28,-144.00 46.00,-144.00" />
+<polygon fill="none" stroke="#000000" points="46.00,-144.00 46.00,-157.75 50.28,-157.75 50.28,-144.00 46.00,-144.00" />
+<text text-anchor="start" x="48.00" y="-150.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-144.00 50.28,-157.75 63.28,-157.75 63.28,-144.00 50.28,-144.00" />
+<polygon fill="none" stroke="#000000" points="50.28,-144.00 50.28,-157.75 63.28,-157.75 63.28,-144.00 50.28,-144.00" />
+<text text-anchor="start" x="52.28" y="-148.35" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.28,-144.00 63.28,-157.75 110.03,-157.75 110.03,-144.00 63.28,-144.00" />
+<text text-anchor="start" x="65.28" y="-148.15" font-family="Arial" font-size="8.00" fill="#000000">name</text>
+<polygon fill="none" stroke="#000000" points="110.03,-144.00 110.03,-157.75 165.78,-157.75 165.78,-144.00 110.03,-144.00" />
+<text text-anchor="start" x="112.03" y="-148.35" font-family="Arial" font-size="7.00" fill="#000000">text</text>
+<polygon fill="#ffffff" stroke="none" points="165.78,-144.00 165.78,-157.75 170.06,-157.75 170.06,-144.00 165.78,-144.00" />
+<polygon fill="none" stroke="#000000" points="165.78,-144.00 165.78,-157.75 170.06,-157.75 170.06,-144.00 165.78,-144.00" />
+<text text-anchor="start" x="167.78" y="-150.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-130.25 46.00,-144.00 50.28,-144.00 50.28,-130.25 46.00,-130.25" />
+<polygon fill="none" stroke="#000000" points="46.00,-130.25 46.00,-144.00 50.28,-144.00 50.28,-130.25 46.00,-130.25" />
+<text text-anchor="start" x="48.00" y="-136.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-130.25 50.28,-144.00 63.28,-144.00 63.28,-130.25 50.28,-130.25" />
+<polygon fill="none" stroke="#000000" points="50.28,-130.25 50.28,-144.00 63.28,-144.00 63.28,-130.25 50.28,-130.25" />
+<text text-anchor="start" x="52.28" y="-134.60" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.28,-130.25 63.28,-144.00 110.03,-144.00 110.03,-130.25 63.28,-130.25" />
+<text text-anchor="start" x="65.28" y="-134.40" font-family="Arial" font-size="8.00" fill="#000000">short_name</text>
+<polygon fill="none" stroke="#000000" points="110.03,-130.25 110.03,-144.00 165.78,-144.00 165.78,-130.25 110.03,-130.25" />
+<text text-anchor="start" x="112.03" y="-134.60" font-family="Arial" font-size="7.00" fill="#000000">varchar(30)</text>
+<polygon fill="#ffffff" stroke="none" points="165.78,-130.25 165.78,-144.00 170.06,-144.00 170.06,-130.25 165.78,-130.25" />
+<polygon fill="none" stroke="#000000" points="165.78,-130.25 165.78,-144.00 170.06,-144.00 170.06,-130.25 165.78,-130.25" />
+<text text-anchor="start" x="167.78" y="-136.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-116.50 46.00,-130.25 50.28,-130.25 50.28,-116.50 46.00,-116.50" />
+<polygon fill="none" stroke="#000000" points="46.00,-116.50 46.00,-130.25 50.28,-130.25 50.28,-116.50 46.00,-116.50" />
+<text text-anchor="start" x="48.00" y="-123.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-116.50 50.28,-130.25 63.28,-130.25 63.28,-116.50 50.28,-116.50" />
+<polygon fill="none" stroke="#000000" points="50.28,-116.50 50.28,-130.25 63.28,-130.25 63.28,-116.50 50.28,-116.50" />
+<text text-anchor="start" x="52.28" y="-120.85" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.28,-116.50 63.28,-130.25 110.03,-130.25 110.03,-116.50 63.28,-116.50" />
+<text text-anchor="start" x="65.28" y="-120.65" font-family="Arial" font-size="8.00" fill="#000000">created_at</text>
+<polygon fill="none" stroke="#000000" points="110.03,-116.50 110.03,-130.25 165.78,-130.25 165.78,-116.50 110.03,-116.50" />
+<text text-anchor="start" x="112.03" y="-120.85" font-family="Arial" font-size="7.00" fill="#000000">timestamptz</text>
+<polygon fill="#ffffff" stroke="none" points="165.78,-116.50 165.78,-130.25 170.06,-130.25 170.06,-116.50 165.78,-116.50" />
+<polygon fill="none" stroke="#000000" points="165.78,-116.50 165.78,-130.25 170.06,-130.25 170.06,-116.50 165.78,-116.50" />
+<text text-anchor="start" x="167.78" y="-123.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-102.75 46.00,-116.50 50.28,-116.50 50.28,-102.75 46.00,-102.75" />
+<polygon fill="none" stroke="#000000" points="46.00,-102.75 46.00,-116.50 50.28,-116.50 50.28,-102.75 46.00,-102.75" />
+<text text-anchor="start" x="48.00" y="-109.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-102.75 50.28,-116.50 63.28,-116.50 63.28,-102.75 50.28,-102.75" />
+<polygon fill="none" stroke="#000000" points="50.28,-102.75 50.28,-116.50 63.28,-116.50 63.28,-102.75 50.28,-102.75" />
+<text text-anchor="start" x="52.28" y="-107.10" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.28,-102.75 63.28,-116.50 110.03,-116.50 110.03,-102.75 63.28,-102.75" />
+<text text-anchor="start" x="65.28" y="-106.90" font-family="Arial" font-size="8.00" fill="#000000">updated_at</text>
+<polygon fill="none" stroke="#000000" points="110.03,-102.75 110.03,-116.50 165.78,-116.50 165.78,-102.75 110.03,-102.75" />
+<text text-anchor="start" x="112.03" y="-107.10" font-family="Arial" font-size="7.00" fill="#000000">timestamptz</text>
+<polygon fill="#ffffff" stroke="none" points="165.78,-102.75 165.78,-116.50 170.06,-116.50 170.06,-102.75 165.78,-102.75" />
+<polygon fill="none" stroke="#000000" points="165.78,-102.75 165.78,-116.50 170.06,-116.50 170.06,-102.75 165.78,-102.75" />
+<text text-anchor="start" x="167.78" y="-109.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="46.00,-89.00 46.00,-102.75 50.28,-102.75 50.28,-89.00 46.00,-89.00" />
+<polygon fill="none" stroke="#000000" points="46.00,-89.00 46.00,-102.75 50.28,-102.75 50.28,-89.00 46.00,-89.00" />
+<text text-anchor="start" x="48.00" y="-95.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="50.28,-89.00 50.28,-102.75 63.28,-102.75 63.28,-89.00 50.28,-89.00" />
+<polygon fill="none" stroke="#000000" points="50.28,-89.00 50.28,-102.75 63.28,-102.75 63.28,-89.00 50.28,-89.00" />
+<text text-anchor="start" x="52.28" y="-93.35" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="63.28,-89.00 63.28,-102.75 110.03,-102.75 110.03,-89.00 63.28,-89.00" />
+<text text-anchor="start" x="65.28" y="-93.15" font-family="Arial" font-size="8.00" fill="#000000">deleted_at</text>
+<polygon fill="none" stroke="#000000" points="110.03,-89.00 110.03,-102.75 165.78,-102.75 165.78,-89.00 110.03,-89.00" />
+<text text-anchor="start" x="112.03" y="-93.35" font-family="Arial" font-size="7.00" fill="#000000">timestamptz null</text>
+<polygon fill="#ffffff" stroke="none" points="165.78,-89.00 165.78,-102.75 170.06,-102.75 170.06,-89.00 165.78,-89.00" />
+<polygon fill="none" stroke="#000000" points="165.78,-89.00 165.78,-102.75 170.06,-102.75 170.06,-89.00 165.78,-89.00" />
+<text text-anchor="start" x="167.78" y="-95.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="none" stroke="#000000" points="45.00,-88.00 45.00,-190.00 171.06,-190.00 171.06,-88.00 45.00,-88.00" />
+</g>
+
+<g id="node4" class="node">
+<title>teacher_subjects</title>
+<polygon fill="#000000" stroke="none" points="261.00,-786.50 261.00,-804.00 354.25,-804.00 354.25,-786.50 261.00,-786.50" />
+<polygon fill="none" stroke="#000000" points="261.00,-786.50 261.00,-804.00 354.25,-804.00 354.25,-786.50 261.00,-786.50" />
+<text text-anchor="start" x="263.00" y="-792.55" font-family="Arial" font-weight="bold" font-size="11.00" fill="#ffffff">teacher_subjects</text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-772.75 261.00,-786.50 266.02,-786.50 266.02,-772.75 261.00,-772.75" />
+<polygon fill="none" stroke="#000000" points="261.00,-772.75 261.00,-786.50 266.02,-786.50 266.02,-772.75 261.00,-772.75" />
+<text text-anchor="start" x="263.37" y="-779.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="266.02,-772.75 266.02,-786.50 291.01,-786.50 291.01,-772.75 266.02,-772.75" />
+<polygon fill="none" stroke="#000000" points="266.02,-772.75 266.02,-786.50 291.01,-786.50 291.01,-772.75 266.02,-772.75" />
+<text text-anchor="start" x="268.02" y="-777.10" font-family="Arial" font-size="7.00" fill="#000000">PK/FK</text>
+<polygon fill="none" stroke="#000000" points="291.01,-772.75 291.01,-786.50 337.00,-786.50 337.00,-772.75 291.01,-772.75" />
+<text text-anchor="start" x="293.01" y="-777.90" font-family="Arial" font-weight="bold" font-size="8.00" fill="#000000">teacher_id</text>
+<polygon fill="none" stroke="#000000" points="337.00,-772.75 337.00,-786.50 349.24,-786.50 349.24,-772.75 337.00,-772.75" />
+<text text-anchor="start" x="339.00" y="-777.10" font-family="Arial" font-size="7.00" fill="#000000">int</text>
+<polygon fill="#ffffff" stroke="none" points="349.24,-772.75 349.24,-786.50 354.25,-786.50 354.25,-772.75 349.24,-772.75" />
+<polygon fill="none" stroke="#000000" points="349.24,-772.75 349.24,-786.50 354.25,-786.50 354.25,-772.75 349.24,-772.75" />
+<text text-anchor="start" x="351.61" y="-779.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-759.00 261.00,-772.75 266.02,-772.75 266.02,-759.00 261.00,-759.00" />
+<polygon fill="none" stroke="#000000" points="261.00,-759.00 261.00,-772.75 266.02,-772.75 266.02,-759.00 261.00,-759.00" />
+<text text-anchor="start" x="263.37" y="-765.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="266.02,-759.00 266.02,-772.75 291.01,-772.75 291.01,-759.00 266.02,-759.00" />
+<polygon fill="none" stroke="#000000" points="266.02,-759.00 266.02,-772.75 291.01,-772.75 291.01,-759.00 266.02,-759.00" />
+<text text-anchor="start" x="268.02" y="-763.35" font-family="Arial" font-size="7.00" fill="#000000">PK/FK</text>
+<polygon fill="none" stroke="#000000" points="291.01,-759.00 291.01,-772.75 337.00,-772.75 337.00,-759.00 291.01,-759.00" />
+<text text-anchor="start" x="293.01" y="-764.15" font-family="Arial" font-weight="bold" font-size="8.00" fill="#000000">subject_id</text>
+<polygon fill="none" stroke="#000000" points="337.00,-759.00 337.00,-772.75 349.24,-772.75 349.24,-759.00 337.00,-759.00" />
+<text text-anchor="start" x="339.00" y="-763.35" font-family="Arial" font-size="7.00" fill="#000000">int</text>
+<polygon fill="#ffffff" stroke="none" points="349.24,-759.00 349.24,-772.75 354.25,-772.75 354.25,-759.00 349.24,-759.00" />
+<polygon fill="none" stroke="#000000" points="349.24,-759.00 349.24,-772.75 354.25,-772.75 354.25,-759.00 349.24,-759.00" />
+<text text-anchor="start" x="351.61" y="-765.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="none" stroke="#000000" points="260.00,-758.00 260.00,-805.00 355.25,-805.00 355.25,-758.00 260.00,-758.00" />
+</g>
+
+<g id="node5" class="node">
+<title>course_assignments</title>
+<polygon fill="#000000" stroke="none" points="261.00,-631.50 261.00,-649.00 396.30,-649.00 396.30,-631.50 261.00,-631.50" />
+<polygon fill="none" stroke="#000000" points="261.00,-631.50 261.00,-649.00 396.30,-649.00 396.30,-631.50 261.00,-631.50" />
+<text text-anchor="start" x="274.27" y="-637.54" font-family="Arial" font-weight="bold" font-size="11.00" fill="#ffffff">course_assignments</text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-617.75 261.00,-631.50 265.27,-631.50 265.27,-617.75 261.00,-617.75" />
+<polygon fill="none" stroke="#000000" points="261.00,-617.75 261.00,-631.50 265.27,-631.50 265.27,-617.75 261.00,-617.75" />
+<text text-anchor="start" x="263.00" y="-624.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-617.75 265.27,-631.50 278.27,-631.50 278.27,-617.75 265.27,-617.75" />
+<polygon fill="none" stroke="#000000" points="265.27,-617.75 265.27,-631.50 278.27,-631.50 278.27,-617.75 265.27,-617.75" />
+<text text-anchor="start" x="267.27" y="-622.10" font-family="Arial" font-size="7.00" fill="#000000">PK</text>
+<polygon fill="none" stroke="#000000" points="278.27,-617.75 278.27,-631.50 349.02,-631.50 349.02,-617.75 278.27,-617.75" />
+<text text-anchor="start" x="280.27" y="-622.89" font-family="Arial" font-weight="bold" font-size="8.00" fill="#000000">id</text>
+<polygon fill="none" stroke="#000000" points="349.02,-617.75 349.02,-631.50 392.02,-631.50 392.02,-617.75 349.02,-617.75" />
+<text text-anchor="start" x="351.02" y="-622.10" font-family="Arial" font-size="7.00" fill="#000000">bigserial</text>
+<polygon fill="#ffffff" stroke="none" points="392.02,-617.75 392.02,-631.50 396.30,-631.50 396.30,-617.75 392.02,-617.75" />
+<polygon fill="none" stroke="#000000" points="392.02,-617.75 392.02,-631.50 396.30,-631.50 396.30,-617.75 392.02,-617.75" />
+<text text-anchor="start" x="394.02" y="-624.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-604.00 261.00,-617.75 265.27,-617.75 265.27,-604.00 261.00,-604.00" />
+<polygon fill="none" stroke="#000000" points="261.00,-604.00 261.00,-617.75 265.27,-617.75 265.27,-604.00 261.00,-604.00" />
+<text text-anchor="start" x="263.00" y="-610.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-604.00 265.27,-617.75 278.27,-617.75 278.27,-604.00 265.27,-604.00" />
+<polygon fill="none" stroke="#000000" points="265.27,-604.00 265.27,-617.75 278.27,-617.75 278.27,-604.00 265.27,-604.00" />
+<text text-anchor="start" x="267.27" y="-608.35" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="278.27,-604.00 278.27,-617.75 349.02,-617.75 349.02,-604.00 278.27,-604.00" />
+<text text-anchor="start" x="280.27" y="-608.14" font-family="Arial" font-size="8.00" fill="#000000">group_id</text>
+<polygon fill="none" stroke="#000000" points="349.02,-604.00 349.02,-617.75 392.02,-617.75 392.02,-604.00 349.02,-604.00" />
+<text text-anchor="start" x="351.02" y="-608.35" font-family="Arial" font-size="7.00" fill="#000000">int</text>
+<polygon fill="#ffffff" stroke="none" points="392.02,-604.00 392.02,-617.75 396.30,-617.75 396.30,-604.00 392.02,-604.00" />
+<polygon fill="none" stroke="#000000" points="392.02,-604.00 392.02,-617.75 396.30,-617.75 396.30,-604.00 392.02,-604.00" />
+<text text-anchor="start" x="394.02" y="-610.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-590.25 261.00,-604.00 265.27,-604.00 265.27,-590.25 261.00,-590.25" />
+<polygon fill="none" stroke="#000000" points="261.00,-590.25 261.00,-604.00 265.27,-604.00 265.27,-590.25 261.00,-590.25" />
+<text text-anchor="start" x="263.00" y="-596.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-590.25 265.27,-604.00 278.27,-604.00 278.27,-590.25 265.27,-590.25" />
+<polygon fill="none" stroke="#000000" points="265.27,-590.25 265.27,-604.00 278.27,-604.00 278.27,-590.25 265.27,-590.25" />
+<text text-anchor="start" x="267.27" y="-594.60" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-590.25 278.27,-604.00 349.02,-604.00 349.02,-590.25 278.27,-590.25" />
+<text text-anchor="start" x="280.27" y="-594.39" font-family="Arial" font-size="8.00" fill="#000000">semester</text>
+<polygon fill="none" stroke="#000000" points="349.02,-590.25 349.02,-604.00 392.02,-604.00 392.02,-590.25 349.02,-590.25" />
+<text text-anchor="start" x="351.02" y="-594.60" font-family="Arial" font-size="7.00" fill="#000000">smallint</text>
+<polygon fill="#ffffff" stroke="none" points="392.02,-590.25 392.02,-604.00 396.30,-604.00 396.30,-590.25 392.02,-590.25" />
+<polygon fill="none" stroke="#000000" points="392.02,-590.25 392.02,-604.00 396.30,-604.00 396.30,-590.25 392.02,-590.25" />
+<text text-anchor="start" x="394.02" y="-596.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-576.50 261.00,-590.25 265.27,-590.25 265.27,-576.50 261.00,-576.50" />
+<polygon fill="none" stroke="#000000" points="261.00,-576.50 261.00,-590.25 265.27,-590.25 265.27,-576.50 261.00,-576.50" />
+<text text-anchor="start" x="263.00" y="-583.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-576.50 265.27,-590.25 278.27,-590.25 278.27,-576.50 265.27,-576.50" />
+<polygon fill="none" stroke="#000000" points="265.27,-576.50 265.27,-590.25 278.27,-590.25 278.27,-576.50 265.27,-576.50" />
+<text text-anchor="start" x="267.27" y="-580.85" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="278.27,-576.50 278.27,-590.25 349.02,-590.25 349.02,-576.50 278.27,-576.50" />
+<text text-anchor="start" x="280.27" y="-580.64" font-family="Arial" font-size="8.00" fill="#000000">subject_id</text>
+<polygon fill="none" stroke="#000000" points="349.02,-576.50 349.02,-590.25 392.02,-590.25 392.02,-576.50 349.02,-576.50" />
+<text text-anchor="start" x="351.02" y="-580.85" font-family="Arial" font-size="7.00" fill="#000000">int</text>
+<polygon fill="#ffffff" stroke="none" points="392.02,-576.50 392.02,-590.25 396.30,-590.25 396.30,-576.50 392.02,-576.50" />
+<polygon fill="none" stroke="#000000" points="392.02,-576.50 392.02,-590.25 396.30,-590.25 396.30,-576.50 392.02,-576.50" />
+<text text-anchor="start" x="394.02" y="-583.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-562.75 261.00,-576.50 265.27,-576.50 265.27,-562.75 261.00,-562.75" />
+<polygon fill="none" stroke="#000000" points="261.00,-562.75 261.00,-576.50 265.27,-576.50 265.27,-562.75 261.00,-562.75" />
+<text text-anchor="start" x="263.00" y="-569.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-562.75 265.27,-576.50 278.27,-576.50 278.27,-562.75 265.27,-562.75" />
+<polygon fill="none" stroke="#000000" points="265.27,-562.75 265.27,-576.50 278.27,-576.50 278.27,-562.75 265.27,-562.75" />
+<text text-anchor="start" x="267.27" y="-567.10" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-562.75 278.27,-576.50 349.02,-576.50 349.02,-562.75 278.27,-562.75" />
+<text text-anchor="start" x="280.27" y="-566.89" font-family="Arial" font-size="8.00" fill="#000000">status</text>
+<polygon fill="none" stroke="#000000" points="349.02,-562.75 349.02,-576.50 392.02,-576.50 392.02,-562.75 349.02,-562.75" />
+<text text-anchor="start" x="351.02" y="-567.10" font-family="Arial" font-size="7.00" fill="#000000">text</text>
+<polygon fill="#ffffff" stroke="none" points="392.02,-562.75 392.02,-576.50 396.30,-576.50 396.30,-562.75 392.02,-562.75" />
+<polygon fill="none" stroke="#000000" points="392.02,-562.75 392.02,-576.50 396.30,-576.50 396.30,-562.75 392.02,-562.75" />
+<text text-anchor="start" x="394.02" y="-569.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-549.00 261.00,-562.75 265.27,-562.75 265.27,-549.00 261.00,-549.00" />
+<polygon fill="none" stroke="#000000" points="261.00,-549.00 261.00,-562.75 265.27,-562.75 265.27,-549.00 261.00,-549.00" />
+<text text-anchor="start" x="263.00" y="-555.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-549.00 265.27,-562.75 278.27,-562.75 278.27,-549.00 265.27,-549.00" />
+<polygon fill="none" stroke="#000000" points="265.27,-549.00 265.27,-562.75 278.27,-562.75 278.27,-549.00 265.27,-549.00" />
+<text text-anchor="start" x="267.27" y="-553.35" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="278.27,-549.00 278.27,-562.75 349.02,-562.75 349.02,-549.00 278.27,-549.00" />
+<text text-anchor="start" x="280.27" y="-553.14" font-family="Arial" font-size="8.00" fill="#000000">teacher_id</text>
+<polygon fill="none" stroke="#000000" points="349.02,-549.00 349.02,-562.75 392.02,-562.75 392.02,-549.00 349.02,-549.00" />
+<text text-anchor="start" x="351.02" y="-553.35" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="392.02,-549.00 392.02,-562.75 396.30,-562.75 396.30,-549.00 392.02,-549.00" />
+<polygon fill="none" stroke="#000000" points="392.02,-549.00 392.02,-562.75 396.30,-562.75 396.30,-549.00 392.02,-549.00" />
+<text text-anchor="start" x="394.02" y="-555.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-535.25 261.00,-549.00 265.27,-549.00 265.27,-535.25 261.00,-535.25" />
+<polygon fill="none" stroke="#000000" points="261.00,-535.25 261.00,-549.00 265.27,-549.00 265.27,-535.25 261.00,-535.25" />
+<text text-anchor="start" x="263.00" y="-541.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-535.25 265.27,-549.00 278.27,-549.00 278.27,-535.25 265.27,-535.25" />
+<polygon fill="none" stroke="#000000" points="265.27,-535.25 265.27,-549.00 278.27,-549.00 278.27,-535.25 265.27,-535.25" />
+<text text-anchor="start" x="267.27" y="-539.60" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="278.27,-535.25 278.27,-549.00 349.02,-549.00 349.02,-535.25 278.27,-535.25" />
+<text text-anchor="start" x="280.27" y="-539.39" font-family="Arial" font-size="8.00" fill="#000000">campus_id</text>
+<polygon fill="none" stroke="#000000" points="349.02,-535.25 349.02,-549.00 392.02,-549.00 392.02,-535.25 349.02,-535.25" />
+<text text-anchor="start" x="351.02" y="-539.60" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="392.02,-535.25 392.02,-549.00 396.30,-549.00 396.30,-535.25 392.02,-535.25" />
+<polygon fill="none" stroke="#000000" points="392.02,-535.25 392.02,-549.00 396.30,-549.00 396.30,-535.25 392.02,-535.25" />
+<text text-anchor="start" x="394.02" y="-541.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-521.50 261.00,-535.25 265.27,-535.25 265.27,-521.50 261.00,-521.50" />
+<polygon fill="none" stroke="#000000" points="261.00,-521.50 261.00,-535.25 265.27,-535.25 265.27,-521.50 261.00,-521.50" />
+<text text-anchor="start" x="263.00" y="-528.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-521.50 265.27,-535.25 278.27,-535.25 278.27,-521.50 265.27,-521.50" />
+<polygon fill="none" stroke="#000000" points="265.27,-521.50 265.27,-535.25 278.27,-535.25 278.27,-521.50 265.27,-521.50" />
+<text text-anchor="start" x="267.27" y="-525.85" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-521.50 278.27,-535.25 349.02,-535.25 349.02,-521.50 278.27,-521.50" />
+<text text-anchor="start" x="280.27" y="-525.64" font-family="Arial" font-size="8.00" fill="#000000">is_flow</text>
+<polygon fill="none" stroke="#000000" points="349.02,-521.50 349.02,-535.25 392.02,-535.25 392.02,-521.50 349.02,-521.50" />
+<text text-anchor="start" x="351.02" y="-525.85" font-family="Arial" font-size="7.00" fill="#000000">boolean</text>
+<polygon fill="#ffffff" stroke="none" points="392.02,-521.50 392.02,-535.25 396.30,-535.25 396.30,-521.50 392.02,-521.50" />
+<polygon fill="none" stroke="#000000" points="392.02,-521.50 392.02,-535.25 396.30,-535.25 396.30,-521.50 392.02,-521.50" />
+<text text-anchor="start" x="394.02" y="-528.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-507.75 261.00,-521.50 265.27,-521.50 265.27,-507.75 261.00,-507.75" />
+<polygon fill="none" stroke="#000000" points="261.00,-507.75 261.00,-521.50 265.27,-521.50 265.27,-507.75 261.00,-507.75" />
+<text text-anchor="start" x="263.00" y="-514.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-507.75 265.27,-521.50 278.27,-521.50 278.27,-507.75 265.27,-507.75" />
+<polygon fill="none" stroke="#000000" points="265.27,-507.75 265.27,-521.50 278.27,-521.50 278.27,-507.75 265.27,-507.75" />
+<text text-anchor="start" x="267.27" y="-512.10" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="278.27,-507.75 278.27,-521.50 349.02,-521.50 349.02,-507.75 278.27,-507.75" />
+<text text-anchor="start" x="280.27" y="-511.89" font-family="Arial" font-size="8.00" fill="#000000">curriculum_item_id</text>
+<polygon fill="none" stroke="#000000" points="349.02,-507.75 349.02,-521.50 392.02,-521.50 392.02,-507.75 349.02,-507.75" />
+<text text-anchor="start" x="351.02" y="-512.10" font-family="Arial" font-size="7.00" fill="#000000">bigint null</text>
+<polygon fill="#ffffff" stroke="none" points="392.02,-507.75 392.02,-521.50 396.30,-521.50 396.30,-507.75 392.02,-507.75" />
+<polygon fill="none" stroke="#000000" points="392.02,-507.75 392.02,-521.50 396.30,-521.50 396.30,-507.75 392.02,-507.75" />
+<text text-anchor="start" x="394.02" y="-514.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-494.00 261.00,-507.75 265.27,-507.75 265.27,-494.00 261.00,-494.00" />
+<polygon fill="none" stroke="#000000" points="261.00,-494.00 261.00,-507.75 265.27,-507.75 265.27,-494.00 261.00,-494.00" />
+<text text-anchor="start" x="263.00" y="-500.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-494.00 265.27,-507.75 278.27,-507.75 278.27,-494.00 265.27,-494.00" />
+<polygon fill="none" stroke="#000000" points="265.27,-494.00 265.27,-507.75 278.27,-507.75 278.27,-494.00 265.27,-494.00" />
+<text text-anchor="start" x="267.27" y="-498.35" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-494.00 278.27,-507.75 349.02,-507.75 349.02,-494.00 278.27,-494.00" />
+<text text-anchor="start" x="280.27" y="-498.14" font-family="Arial" font-size="8.00" fill="#000000">subgroup</text>
+<polygon fill="none" stroke="#000000" points="349.02,-494.00 349.02,-507.75 392.02,-507.75 392.02,-494.00 349.02,-494.00" />
+<text text-anchor="start" x="351.02" y="-498.35" font-family="Arial" font-size="7.00" fill="#000000">smallint null</text>
+<polygon fill="#ffffff" stroke="none" points="392.02,-494.00 392.02,-507.75 396.30,-507.75 396.30,-494.00 392.02,-494.00" />
+<polygon fill="none" stroke="#000000" points="392.02,-494.00 392.02,-507.75 396.30,-507.75 396.30,-494.00 392.02,-494.00" />
+<text text-anchor="start" x="394.02" y="-500.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-480.25 261.00,-494.00 265.27,-494.00 265.27,-480.25 261.00,-480.25" />
+<polygon fill="none" stroke="#000000" points="261.00,-480.25 261.00,-494.00 265.27,-494.00 265.27,-480.25 261.00,-480.25" />
+<text text-anchor="start" x="263.00" y="-486.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-480.25 265.27,-494.00 278.27,-494.00 278.27,-480.25 265.27,-480.25" />
+<polygon fill="none" stroke="#000000" points="265.27,-480.25 265.27,-494.00 278.27,-494.00 278.27,-480.25 265.27,-480.25" />
+<text text-anchor="start" x="267.27" y="-484.60" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-480.25 278.27,-494.00 349.02,-494.00 349.02,-480.25 278.27,-480.25" />
+<text text-anchor="start" x="280.27" y="-484.39" font-family="Arial" font-size="8.00" fill="#000000">notes</text>
+<polygon fill="none" stroke="#000000" points="349.02,-480.25 349.02,-494.00 392.02,-494.00 392.02,-480.25 349.02,-480.25" />
+<text text-anchor="start" x="351.02" y="-484.60" font-family="Arial" font-size="7.00" fill="#000000">text null</text>
+<polygon fill="#ffffff" stroke="none" points="392.02,-480.25 392.02,-494.00 396.30,-494.00 396.30,-480.25 392.02,-480.25" />
+<polygon fill="none" stroke="#000000" points="392.02,-480.25 392.02,-494.00 396.30,-494.00 396.30,-480.25 392.02,-480.25" />
+<text text-anchor="start" x="394.02" y="-486.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-466.50 261.00,-480.25 265.27,-480.25 265.27,-466.50 261.00,-466.50" />
+<polygon fill="none" stroke="#000000" points="261.00,-466.50 261.00,-480.25 265.27,-480.25 265.27,-466.50 261.00,-466.50" />
+<text text-anchor="start" x="263.00" y="-473.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-466.50 265.27,-480.25 278.27,-480.25 278.27,-466.50 265.27,-466.50" />
+<polygon fill="none" stroke="#000000" points="265.27,-466.50 265.27,-480.25 278.27,-480.25 278.27,-466.50 265.27,-466.50" />
+<text text-anchor="start" x="267.27" y="-470.85" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-466.50 278.27,-480.25 349.02,-480.25 349.02,-466.50 278.27,-466.50" />
+<text text-anchor="start" x="280.27" y="-470.64" font-family="Arial" font-size="8.00" fill="#000000">created_at</text>
+<polygon fill="none" stroke="#000000" points="349.02,-466.50 349.02,-480.25 392.02,-480.25 392.02,-466.50 349.02,-466.50" />
+<text text-anchor="start" x="351.02" y="-470.85" font-family="Arial" font-size="7.00" fill="#000000">timestamptz</text>
+<polygon fill="#ffffff" stroke="none" points="392.02,-466.50 392.02,-480.25 396.30,-480.25 396.30,-466.50 392.02,-466.50" />
+<polygon fill="none" stroke="#000000" points="392.02,-466.50 392.02,-480.25 396.30,-480.25 396.30,-466.50 392.02,-466.50" />
+<text text-anchor="start" x="394.02" y="-473.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-452.75 261.00,-466.50 265.27,-466.50 265.27,-452.75 261.00,-452.75" />
+<polygon fill="none" stroke="#000000" points="261.00,-452.75 261.00,-466.50 265.27,-466.50 265.27,-452.75 261.00,-452.75" />
+<text text-anchor="start" x="263.00" y="-459.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-452.75 265.27,-466.50 278.27,-466.50 278.27,-452.75 265.27,-452.75" />
+<polygon fill="none" stroke="#000000" points="265.27,-452.75 265.27,-466.50 278.27,-466.50 278.27,-452.75 265.27,-452.75" />
+<text text-anchor="start" x="267.27" y="-457.10" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-452.75 278.27,-466.50 349.02,-466.50 349.02,-452.75 278.27,-452.75" />
+<text text-anchor="start" x="280.27" y="-456.89" font-family="Arial" font-size="8.00" fill="#000000">updated_at</text>
+<polygon fill="none" stroke="#000000" points="349.02,-452.75 349.02,-466.50 392.02,-466.50 392.02,-452.75 349.02,-452.75" />
+<text text-anchor="start" x="351.02" y="-457.10" font-family="Arial" font-size="7.00" fill="#000000">timestamptz</text>
+<polygon fill="#ffffff" stroke="none" points="392.02,-452.75 392.02,-466.50 396.30,-466.50 396.30,-452.75 392.02,-452.75" />
+<polygon fill="none" stroke="#000000" points="392.02,-452.75 392.02,-466.50 396.30,-466.50 396.30,-452.75 392.02,-452.75" />
+<text text-anchor="start" x="394.02" y="-459.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="none" stroke="#000000" points="260.00,-451.75 260.00,-650.00 397.30,-650.00 397.30,-451.75 260.00,-451.75" />
+</g>
+
+<g id="node6" class="node">
+<title>schedule_lessons</title>
+<polygon fill="#000000" stroke="none" points="261.00,-391.50 261.00,-409.00 388.80,-409.00 388.80,-391.50 261.00,-391.50" />
+<polygon fill="none" stroke="#000000" points="261.00,-391.50 261.00,-409.00 388.80,-409.00 388.80,-391.50 261.00,-391.50" />
+<text text-anchor="start" x="278.02" y="-397.55" font-family="Arial" font-weight="bold" font-size="11.00" fill="#ffffff">schedule_lessons</text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-377.75 261.00,-391.50 265.27,-391.50 265.27,-377.75 261.00,-377.75" />
+<polygon fill="none" stroke="#000000" points="261.00,-377.75 261.00,-391.50 265.27,-391.50 265.27,-377.75 261.00,-377.75" />
+<text text-anchor="start" x="263.00" y="-384.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-377.75 265.27,-391.50 278.27,-391.50 278.27,-377.75 265.27,-377.75" />
+<polygon fill="none" stroke="#000000" points="265.27,-377.75 265.27,-391.50 278.27,-391.50 278.27,-377.75 265.27,-377.75" />
+<text text-anchor="start" x="267.27" y="-382.10" font-family="Arial" font-size="7.00" fill="#000000">PK</text>
+<polygon fill="none" stroke="#000000" points="278.27,-377.75 278.27,-391.50 332.52,-391.50 332.52,-377.75 278.27,-377.75" />
+<text text-anchor="start" x="280.27" y="-382.89" font-family="Arial" font-weight="bold" font-size="8.00" fill="#000000">id</text>
+<polygon fill="none" stroke="#000000" points="332.52,-377.75 332.52,-391.50 384.52,-391.50 384.52,-377.75 332.52,-377.75" />
+<text text-anchor="start" x="334.52" y="-382.10" font-family="Arial" font-size="7.00" fill="#000000">bigserial</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-377.75 384.52,-391.50 388.80,-391.50 388.80,-377.75 384.52,-377.75" />
+<polygon fill="none" stroke="#000000" points="384.52,-377.75 384.52,-391.50 388.80,-391.50 388.80,-377.75 384.52,-377.75" />
+<text text-anchor="start" x="386.52" y="-384.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-364.00 261.00,-377.75 265.27,-377.75 265.27,-364.00 261.00,-364.00" />
+<polygon fill="none" stroke="#000000" points="261.00,-364.00 261.00,-377.75 265.27,-377.75 265.27,-364.00 261.00,-364.00" />
+<text text-anchor="start" x="263.00" y="-370.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-364.00 265.27,-377.75 278.27,-377.75 278.27,-364.00 265.27,-364.00" />
+<polygon fill="none" stroke="#000000" points="265.27,-364.00 265.27,-377.75 278.27,-377.75 278.27,-364.00 265.27,-364.00" />
+<text text-anchor="start" x="267.27" y="-368.35" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="278.27,-364.00 278.27,-377.75 332.52,-377.75 332.52,-364.00 278.27,-364.00" />
+<text text-anchor="start" x="280.27" y="-368.14" font-family="Arial" font-size="8.00" fill="#000000">group_id</text>
+<polygon fill="none" stroke="#000000" points="332.52,-364.00 332.52,-377.75 384.52,-377.75 384.52,-364.00 332.52,-364.00" />
+<text text-anchor="start" x="334.52" y="-368.35" font-family="Arial" font-size="7.00" fill="#000000">int</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-364.00 384.52,-377.75 388.80,-377.75 388.80,-364.00 384.52,-364.00" />
+<polygon fill="none" stroke="#000000" points="384.52,-364.00 384.52,-377.75 388.80,-377.75 388.80,-364.00 384.52,-364.00" />
+<text text-anchor="start" x="386.52" y="-370.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-350.25 261.00,-364.00 265.27,-364.00 265.27,-350.25 261.00,-350.25" />
+<polygon fill="none" stroke="#000000" points="261.00,-350.25 261.00,-364.00 265.27,-364.00 265.27,-350.25 261.00,-350.25" />
+<text text-anchor="start" x="263.00" y="-356.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-350.25 265.27,-364.00 278.27,-364.00 278.27,-350.25 265.27,-350.25" />
+<polygon fill="none" stroke="#000000" points="265.27,-350.25 265.27,-364.00 278.27,-364.00 278.27,-350.25 265.27,-350.25" />
+<text text-anchor="start" x="267.27" y="-354.60" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-350.25 278.27,-364.00 332.52,-364.00 332.52,-350.25 278.27,-350.25" />
+<text text-anchor="start" x="280.27" y="-354.39" font-family="Arial" font-size="8.00" fill="#000000">lesson_date</text>
+<polygon fill="none" stroke="#000000" points="332.52,-350.25 332.52,-364.00 384.52,-364.00 384.52,-350.25 332.52,-350.25" />
+<text text-anchor="start" x="334.52" y="-354.60" font-family="Arial" font-size="7.00" fill="#000000">date</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-350.25 384.52,-364.00 388.80,-364.00 388.80,-350.25 384.52,-350.25" />
+<polygon fill="none" stroke="#000000" points="384.52,-350.25 384.52,-364.00 388.80,-364.00 388.80,-350.25 384.52,-350.25" />
+<text text-anchor="start" x="386.52" y="-356.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-336.50 261.00,-350.25 265.27,-350.25 265.27,-336.50 261.00,-336.50" />
+<polygon fill="none" stroke="#000000" points="261.00,-336.50 261.00,-350.25 265.27,-350.25 265.27,-336.50 261.00,-336.50" />
+<text text-anchor="start" x="263.00" y="-343.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-336.50 265.27,-350.25 278.27,-350.25 278.27,-336.50 265.27,-336.50" />
+<polygon fill="none" stroke="#000000" points="265.27,-336.50 265.27,-350.25 278.27,-350.25 278.27,-336.50 265.27,-336.50" />
+<text text-anchor="start" x="267.27" y="-340.85" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-336.50 278.27,-350.25 332.52,-350.25 332.52,-336.50 278.27,-336.50" />
+<text text-anchor="start" x="280.27" y="-340.64" font-family="Arial" font-size="8.00" fill="#000000">pair_number</text>
+<polygon fill="none" stroke="#000000" points="332.52,-336.50 332.52,-350.25 384.52,-350.25 384.52,-336.50 332.52,-336.50" />
+<text text-anchor="start" x="334.52" y="-340.85" font-family="Arial" font-size="7.00" fill="#000000">smallint</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-336.50 384.52,-350.25 388.80,-350.25 388.80,-336.50 384.52,-336.50" />
+<polygon fill="none" stroke="#000000" points="384.52,-336.50 384.52,-350.25 388.80,-350.25 388.80,-336.50 384.52,-336.50" />
+<text text-anchor="start" x="386.52" y="-343.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-322.75 261.00,-336.50 265.27,-336.50 265.27,-322.75 261.00,-322.75" />
+<polygon fill="none" stroke="#000000" points="261.00,-322.75 261.00,-336.50 265.27,-336.50 265.27,-322.75 261.00,-322.75" />
+<text text-anchor="start" x="263.00" y="-329.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-322.75 265.27,-336.50 278.27,-336.50 278.27,-322.75 265.27,-322.75" />
+<polygon fill="none" stroke="#000000" points="265.27,-322.75 265.27,-336.50 278.27,-336.50 278.27,-322.75 265.27,-322.75" />
+<text text-anchor="start" x="267.27" y="-327.10" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-322.75 278.27,-336.50 332.52,-336.50 332.52,-322.75 278.27,-322.75" />
+<text text-anchor="start" x="280.27" y="-326.89" font-family="Arial" font-size="8.00" fill="#000000">subgroup</text>
+<polygon fill="none" stroke="#000000" points="332.52,-322.75 332.52,-336.50 384.52,-336.50 384.52,-322.75 332.52,-322.75" />
+<text text-anchor="start" x="334.52" y="-327.10" font-family="Arial" font-size="7.00" fill="#000000">smallint null</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-322.75 384.52,-336.50 388.80,-336.50 388.80,-322.75 384.52,-322.75" />
+<polygon fill="none" stroke="#000000" points="384.52,-322.75 384.52,-336.50 388.80,-336.50 388.80,-322.75 384.52,-322.75" />
+<text text-anchor="start" x="386.52" y="-329.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-309.00 261.00,-322.75 265.27,-322.75 265.27,-309.00 261.00,-309.00" />
+<polygon fill="none" stroke="#000000" points="261.00,-309.00 261.00,-322.75 265.27,-322.75 265.27,-309.00 261.00,-309.00" />
+<text text-anchor="start" x="263.00" y="-315.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-309.00 265.27,-322.75 278.27,-322.75 278.27,-309.00 265.27,-309.00" />
+<polygon fill="none" stroke="#000000" points="265.27,-309.00 265.27,-322.75 278.27,-322.75 278.27,-309.00 265.27,-309.00" />
+<text text-anchor="start" x="267.27" y="-313.35" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="278.27,-309.00 278.27,-322.75 332.52,-322.75 332.52,-309.00 278.27,-309.00" />
+<text text-anchor="start" x="280.27" y="-313.14" font-family="Arial" font-size="8.00" fill="#000000">subject_id</text>
+<polygon fill="none" stroke="#000000" points="332.52,-309.00 332.52,-322.75 384.52,-322.75 384.52,-309.00 332.52,-309.00" />
+<text text-anchor="start" x="334.52" y="-313.35" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-309.00 384.52,-322.75 388.80,-322.75 388.80,-309.00 384.52,-309.00" />
+<polygon fill="none" stroke="#000000" points="384.52,-309.00 384.52,-322.75 388.80,-322.75 388.80,-309.00 384.52,-309.00" />
+<text text-anchor="start" x="386.52" y="-315.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-295.25 261.00,-309.00 265.27,-309.00 265.27,-295.25 261.00,-295.25" />
+<polygon fill="none" stroke="#000000" points="261.00,-295.25 261.00,-309.00 265.27,-309.00 265.27,-295.25 261.00,-295.25" />
+<text text-anchor="start" x="263.00" y="-301.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-295.25 265.27,-309.00 278.27,-309.00 278.27,-295.25 265.27,-295.25" />
+<polygon fill="none" stroke="#000000" points="265.27,-295.25 265.27,-309.00 278.27,-309.00 278.27,-295.25 265.27,-295.25" />
+<text text-anchor="start" x="267.27" y="-299.60" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="278.27,-295.25 278.27,-309.00 332.52,-309.00 332.52,-295.25 278.27,-295.25" />
+<text text-anchor="start" x="280.27" y="-299.39" font-family="Arial" font-size="8.00" fill="#000000">teacher_id</text>
+<polygon fill="none" stroke="#000000" points="332.52,-295.25 332.52,-309.00 384.52,-309.00 384.52,-295.25 332.52,-295.25" />
+<text text-anchor="start" x="334.52" y="-299.60" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-295.25 384.52,-309.00 388.80,-309.00 388.80,-295.25 384.52,-295.25" />
+<polygon fill="none" stroke="#000000" points="384.52,-295.25 384.52,-309.00 388.80,-309.00 388.80,-295.25 384.52,-295.25" />
+<text text-anchor="start" x="386.52" y="-301.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-281.50 261.00,-295.25 265.27,-295.25 265.27,-281.50 261.00,-281.50" />
+<polygon fill="none" stroke="#000000" points="261.00,-281.50 261.00,-295.25 265.27,-295.25 265.27,-281.50 261.00,-281.50" />
+<text text-anchor="start" x="263.00" y="-288.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-281.50 265.27,-295.25 278.27,-295.25 278.27,-281.50 265.27,-281.50" />
+<polygon fill="none" stroke="#000000" points="265.27,-281.50 265.27,-295.25 278.27,-295.25 278.27,-281.50 265.27,-281.50" />
+<text text-anchor="start" x="267.27" y="-285.85" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-281.50 278.27,-295.25 332.52,-295.25 332.52,-281.50 278.27,-281.50" />
+<text text-anchor="start" x="280.27" y="-285.64" font-family="Arial" font-size="8.00" fill="#000000">lesson_format</text>
+<polygon fill="none" stroke="#000000" points="332.52,-281.50 332.52,-295.25 384.52,-295.25 384.52,-281.50 332.52,-281.50" />
+<text text-anchor="start" x="334.52" y="-285.85" font-family="Arial" font-size="7.00" fill="#000000">text</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-281.50 384.52,-295.25 388.80,-295.25 388.80,-281.50 384.52,-281.50" />
+<polygon fill="none" stroke="#000000" points="384.52,-281.50 384.52,-295.25 388.80,-295.25 388.80,-281.50 384.52,-281.50" />
+<text text-anchor="start" x="386.52" y="-288.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-267.75 261.00,-281.50 265.27,-281.50 265.27,-267.75 261.00,-267.75" />
+<polygon fill="none" stroke="#000000" points="261.00,-267.75 261.00,-281.50 265.27,-281.50 265.27,-267.75 261.00,-267.75" />
+<text text-anchor="start" x="263.00" y="-274.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-267.75 265.27,-281.50 278.27,-281.50 278.27,-267.75 265.27,-267.75" />
+<polygon fill="none" stroke="#000000" points="265.27,-267.75 265.27,-281.50 278.27,-281.50 278.27,-267.75 265.27,-267.75" />
+<text text-anchor="start" x="267.27" y="-272.10" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-267.75 278.27,-281.50 332.52,-281.50 332.52,-267.75 278.27,-267.75" />
+<text text-anchor="start" x="280.27" y="-271.89" font-family="Arial" font-size="8.00" fill="#000000">status</text>
+<polygon fill="none" stroke="#000000" points="332.52,-267.75 332.52,-281.50 384.52,-281.50 384.52,-267.75 332.52,-267.75" />
+<text text-anchor="start" x="334.52" y="-272.10" font-family="Arial" font-size="7.00" fill="#000000">text</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-267.75 384.52,-281.50 388.80,-281.50 388.80,-267.75 384.52,-267.75" />
+<polygon fill="none" stroke="#000000" points="384.52,-267.75 384.52,-281.50 388.80,-281.50 388.80,-267.75 384.52,-267.75" />
+<text text-anchor="start" x="386.52" y="-274.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-254.00 261.00,-267.75 265.27,-267.75 265.27,-254.00 261.00,-254.00" />
+<polygon fill="none" stroke="#000000" points="261.00,-254.00 261.00,-267.75 265.27,-267.75 265.27,-254.00 261.00,-254.00" />
+<text text-anchor="start" x="263.00" y="-260.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-254.00 265.27,-267.75 278.27,-267.75 278.27,-254.00 265.27,-254.00" />
+<polygon fill="none" stroke="#000000" points="265.27,-254.00 265.27,-267.75 278.27,-267.75 278.27,-254.00 265.27,-254.00" />
+<text text-anchor="start" x="267.27" y="-258.35" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-254.00 278.27,-267.75 332.52,-267.75 332.52,-254.00 278.27,-254.00" />
+<text text-anchor="start" x="280.27" y="-258.14" font-family="Arial" font-size="8.00" fill="#000000">source</text>
+<polygon fill="none" stroke="#000000" points="332.52,-254.00 332.52,-267.75 384.52,-267.75 384.52,-254.00 332.52,-254.00" />
+<text text-anchor="start" x="334.52" y="-258.35" font-family="Arial" font-size="7.00" fill="#000000">text</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-254.00 384.52,-267.75 388.80,-267.75 388.80,-254.00 384.52,-254.00" />
+<polygon fill="none" stroke="#000000" points="384.52,-254.00 384.52,-267.75 388.80,-267.75 388.80,-254.00 384.52,-254.00" />
+<text text-anchor="start" x="386.52" y="-260.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-240.25 261.00,-254.00 265.27,-254.00 265.27,-240.25 261.00,-240.25" />
+<polygon fill="none" stroke="#000000" points="261.00,-240.25 261.00,-254.00 265.27,-254.00 265.27,-240.25 261.00,-240.25" />
+<text text-anchor="start" x="263.00" y="-246.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-240.25 265.27,-254.00 278.27,-254.00 278.27,-240.25 265.27,-240.25" />
+<polygon fill="none" stroke="#000000" points="265.27,-240.25 265.27,-254.00 278.27,-254.00 278.27,-240.25 265.27,-240.25" />
+<text text-anchor="start" x="267.27" y="-244.60" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-240.25 278.27,-254.00 332.52,-254.00 332.52,-240.25 278.27,-240.25" />
+<text text-anchor="start" x="280.27" y="-244.39" font-family="Arial" font-size="8.00" fill="#000000">flow_key</text>
+<polygon fill="none" stroke="#000000" points="332.52,-240.25 332.52,-254.00 384.52,-254.00 384.52,-240.25 332.52,-240.25" />
+<text text-anchor="start" x="334.52" y="-244.60" font-family="Arial" font-size="7.00" fill="#000000">varchar(80) null</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-240.25 384.52,-254.00 388.80,-254.00 388.80,-240.25 384.52,-240.25" />
+<polygon fill="none" stroke="#000000" points="384.52,-240.25 384.52,-254.00 388.80,-254.00 388.80,-240.25 384.52,-240.25" />
+<text text-anchor="start" x="386.52" y="-246.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-226.50 261.00,-240.25 265.27,-240.25 265.27,-226.50 261.00,-226.50" />
+<polygon fill="none" stroke="#000000" points="261.00,-226.50 261.00,-240.25 265.27,-240.25 265.27,-226.50 261.00,-226.50" />
+<text text-anchor="start" x="263.00" y="-233.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-226.50 265.27,-240.25 278.27,-240.25 278.27,-226.50 265.27,-226.50" />
+<polygon fill="none" stroke="#000000" points="265.27,-226.50 265.27,-240.25 278.27,-240.25 278.27,-226.50 265.27,-226.50" />
+<text text-anchor="start" x="267.27" y="-230.85" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-226.50 278.27,-240.25 332.52,-240.25 332.52,-226.50 278.27,-226.50" />
+<text text-anchor="start" x="280.27" y="-230.64" font-family="Arial" font-size="8.00" fill="#000000">comment</text>
+<polygon fill="none" stroke="#000000" points="332.52,-226.50 332.52,-240.25 384.52,-240.25 384.52,-226.50 332.52,-226.50" />
+<text text-anchor="start" x="334.52" y="-230.85" font-family="Arial" font-size="7.00" fill="#000000">text null</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-226.50 384.52,-240.25 388.80,-240.25 388.80,-226.50 384.52,-226.50" />
+<polygon fill="none" stroke="#000000" points="384.52,-226.50 384.52,-240.25 388.80,-240.25 388.80,-226.50 384.52,-226.50" />
+<text text-anchor="start" x="386.52" y="-233.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-212.75 261.00,-226.50 265.27,-226.50 265.27,-212.75 261.00,-212.75" />
+<polygon fill="none" stroke="#000000" points="261.00,-212.75 261.00,-226.50 265.27,-226.50 265.27,-212.75 261.00,-212.75" />
+<text text-anchor="start" x="263.00" y="-219.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-212.75 265.27,-226.50 278.27,-226.50 278.27,-212.75 265.27,-212.75" />
+<polygon fill="none" stroke="#000000" points="265.27,-212.75 265.27,-226.50 278.27,-226.50 278.27,-212.75 265.27,-212.75" />
+<text text-anchor="start" x="267.27" y="-217.10" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-212.75 278.27,-226.50 332.52,-226.50 332.52,-212.75 278.27,-212.75" />
+<text text-anchor="start" x="280.27" y="-216.90" font-family="Arial" font-size="8.00" fill="#000000">version</text>
+<polygon fill="none" stroke="#000000" points="332.52,-212.75 332.52,-226.50 384.52,-226.50 384.52,-212.75 332.52,-212.75" />
+<text text-anchor="start" x="334.52" y="-217.10" font-family="Arial" font-size="7.00" fill="#000000">int</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-212.75 384.52,-226.50 388.80,-226.50 388.80,-212.75 384.52,-212.75" />
+<polygon fill="none" stroke="#000000" points="384.52,-212.75 384.52,-226.50 388.80,-226.50 388.80,-212.75 384.52,-212.75" />
+<text text-anchor="start" x="386.52" y="-219.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-199.00 261.00,-212.75 265.27,-212.75 265.27,-199.00 261.00,-199.00" />
+<polygon fill="none" stroke="#000000" points="261.00,-199.00 261.00,-212.75 265.27,-212.75 265.27,-199.00 261.00,-199.00" />
+<text text-anchor="start" x="263.00" y="-205.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-199.00 265.27,-212.75 278.27,-212.75 278.27,-199.00 265.27,-199.00" />
+<polygon fill="none" stroke="#000000" points="265.27,-199.00 265.27,-212.75 278.27,-212.75 278.27,-199.00 265.27,-199.00" />
+<text text-anchor="start" x="267.27" y="-203.35" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-199.00 278.27,-212.75 332.52,-212.75 332.52,-199.00 278.27,-199.00" />
+<text text-anchor="start" x="280.27" y="-203.15" font-family="Arial" font-size="8.00" fill="#000000">created_at</text>
+<polygon fill="none" stroke="#000000" points="332.52,-199.00 332.52,-212.75 384.52,-212.75 384.52,-199.00 332.52,-199.00" />
+<text text-anchor="start" x="334.52" y="-203.35" font-family="Arial" font-size="7.00" fill="#000000">timestamptz</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-199.00 384.52,-212.75 388.80,-212.75 388.80,-199.00 384.52,-199.00" />
+<polygon fill="none" stroke="#000000" points="384.52,-199.00 384.52,-212.75 388.80,-212.75 388.80,-199.00 384.52,-199.00" />
+<text text-anchor="start" x="386.52" y="-205.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="261.00,-185.25 261.00,-199.00 265.27,-199.00 265.27,-185.25 261.00,-185.25" />
+<polygon fill="none" stroke="#000000" points="261.00,-185.25 261.00,-199.00 265.27,-199.00 265.27,-185.25 261.00,-185.25" />
+<text text-anchor="start" x="263.00" y="-191.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="265.27,-185.25 265.27,-199.00 278.27,-199.00 278.27,-185.25 265.27,-185.25" />
+<polygon fill="none" stroke="#000000" points="265.27,-185.25 265.27,-199.00 278.27,-199.00 278.27,-185.25 265.27,-185.25" />
+<text text-anchor="start" x="267.27" y="-189.60" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="278.27,-185.25 278.27,-199.00 332.52,-199.00 332.52,-185.25 278.27,-185.25" />
+<text text-anchor="start" x="280.27" y="-189.40" font-family="Arial" font-size="8.00" fill="#000000">updated_at</text>
+<polygon fill="none" stroke="#000000" points="332.52,-185.25 332.52,-199.00 384.52,-199.00 384.52,-185.25 332.52,-185.25" />
+<text text-anchor="start" x="334.52" y="-189.60" font-family="Arial" font-size="7.00" fill="#000000">timestamptz</text>
+<polygon fill="#ffffff" stroke="none" points="384.52,-185.25 384.52,-199.00 388.80,-199.00 388.80,-185.25 384.52,-185.25" />
+<polygon fill="none" stroke="#000000" points="384.52,-185.25 384.52,-199.00 388.80,-199.00 388.80,-185.25 384.52,-185.25" />
+<text text-anchor="start" x="386.52" y="-191.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="none" stroke="#000000" points="260.00,-184.25 260.00,-410.00 389.80,-410.00 389.80,-184.25 260.00,-184.25" />
+</g>
+
+<g id="node7" class="node">
+<title>schedule_overrides</title>
+<polygon fill="#000000" stroke="none" points="466.00,-701.50 466.00,-719.00 646.31,-719.00 646.31,-701.50 466.00,-701.50" />
+<polygon fill="none" stroke="#000000" points="466.00,-701.50 466.00,-719.00 646.31,-719.00 646.31,-701.50 466.00,-701.50" />
+<text text-anchor="start" x="504.78" y="-707.55" font-family="Arial" font-weight="bold" font-size="11.00" fill="#ffffff">schedule_overrides</text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-687.75 466.00,-701.50 470.28,-701.50 470.28,-687.75 466.00,-687.75" />
+<polygon fill="none" stroke="#000000" points="466.00,-687.75 466.00,-701.50 470.28,-701.50 470.28,-687.75 466.00,-687.75" />
+<text text-anchor="start" x="468.00" y="-694.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-687.75 470.28,-701.50 483.28,-701.50 483.28,-687.75 470.28,-687.75" />
+<polygon fill="none" stroke="#000000" points="470.28,-687.75 470.28,-701.50 483.28,-701.50 483.28,-687.75 470.28,-687.75" />
+<text text-anchor="start" x="472.28" y="-692.10" font-family="Arial" font-size="7.00" fill="#000000">PK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-687.75 483.28,-701.50 586.28,-701.50 586.28,-687.75 483.28,-687.75" />
+<text text-anchor="start" x="485.28" y="-692.90" font-family="Arial" font-weight="bold" font-size="8.00" fill="#000000">id</text>
+<polygon fill="none" stroke="#000000" points="586.28,-687.75 586.28,-701.50 642.03,-701.50 642.03,-687.75 586.28,-687.75" />
+<text text-anchor="start" x="588.28" y="-692.10" font-family="Arial" font-size="7.00" fill="#000000">bigserial</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-687.75 642.03,-701.50 646.31,-701.50 646.31,-687.75 642.03,-687.75" />
+<polygon fill="none" stroke="#000000" points="642.03,-687.75 642.03,-701.50 646.31,-701.50 646.31,-687.75 642.03,-687.75" />
+<text text-anchor="start" x="644.03" y="-694.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-674.00 466.00,-687.75 470.28,-687.75 470.28,-674.00 466.00,-674.00" />
+<polygon fill="none" stroke="#000000" points="466.00,-674.00 466.00,-687.75 470.28,-687.75 470.28,-674.00 466.00,-674.00" />
+<text text-anchor="start" x="468.00" y="-680.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-674.00 470.28,-687.75 483.28,-687.75 483.28,-674.00 470.28,-674.00" />
+<polygon fill="none" stroke="#000000" points="470.28,-674.00 470.28,-687.75 483.28,-687.75 483.28,-674.00 470.28,-674.00" />
+<text text-anchor="start" x="472.28" y="-678.35" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-674.00 483.28,-687.75 586.28,-687.75 586.28,-674.00 483.28,-674.00" />
+<text text-anchor="start" x="485.28" y="-678.15" font-family="Arial" font-size="8.00" fill="#000000">schedule_lesson_id</text>
+<polygon fill="none" stroke="#000000" points="586.28,-674.00 586.28,-687.75 642.03,-687.75 642.03,-674.00 586.28,-674.00" />
+<text text-anchor="start" x="588.28" y="-678.35" font-family="Arial" font-size="7.00" fill="#000000">bigint null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-674.00 642.03,-687.75 646.31,-687.75 646.31,-674.00 642.03,-674.00" />
+<polygon fill="none" stroke="#000000" points="642.03,-674.00 642.03,-687.75 646.31,-687.75 646.31,-674.00 642.03,-674.00" />
+<text text-anchor="start" x="644.03" y="-680.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-660.25 466.00,-674.00 470.28,-674.00 470.28,-660.25 466.00,-660.25" />
+<polygon fill="none" stroke="#000000" points="466.00,-660.25 466.00,-674.00 470.28,-674.00 470.28,-660.25 466.00,-660.25" />
+<text text-anchor="start" x="468.00" y="-666.83" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-660.25 470.28,-674.00 483.28,-674.00 483.28,-660.25 470.28,-660.25" />
+<polygon fill="none" stroke="#000000" points="470.28,-660.25 470.28,-674.00 483.28,-674.00 483.28,-660.25 470.28,-660.25" />
+<text text-anchor="start" x="472.28" y="-664.60" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-660.25 483.28,-674.00 586.28,-674.00 586.28,-660.25 483.28,-660.25" />
+<text text-anchor="start" x="485.28" y="-664.40" font-family="Arial" font-size="8.00" fill="#000000">group_id</text>
+<polygon fill="none" stroke="#000000" points="586.28,-660.25 586.28,-674.00 642.03,-674.00 642.03,-660.25 586.28,-660.25" />
+<text text-anchor="start" x="588.28" y="-664.60" font-family="Arial" font-size="7.00" fill="#000000">int</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-660.25 642.03,-674.00 646.31,-674.00 646.31,-660.25 642.03,-660.25" />
+<polygon fill="none" stroke="#000000" points="642.03,-660.25 642.03,-674.00 646.31,-674.00 646.31,-660.25 642.03,-660.25" />
+<text text-anchor="start" x="644.03" y="-666.83" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-646.50 466.00,-660.25 470.28,-660.25 470.28,-646.50 466.00,-646.50" />
+<polygon fill="none" stroke="#000000" points="466.00,-646.50 466.00,-660.25 470.28,-660.25 470.28,-646.50 466.00,-646.50" />
+<text text-anchor="start" x="468.00" y="-653.08" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-646.50 470.28,-660.25 483.28,-660.25 483.28,-646.50 470.28,-646.50" />
+<polygon fill="none" stroke="#000000" points="470.28,-646.50 470.28,-660.25 483.28,-660.25 483.28,-646.50 470.28,-646.50" />
+<text text-anchor="start" x="472.28" y="-650.85" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-646.50 483.28,-660.25 586.28,-660.25 586.28,-646.50 483.28,-646.50" />
+<text text-anchor="start" x="485.28" y="-650.65" font-family="Arial" font-size="8.00" fill="#000000">lesson_date</text>
+<polygon fill="none" stroke="#000000" points="586.28,-646.50 586.28,-660.25 642.03,-660.25 642.03,-646.50 586.28,-646.50" />
+<text text-anchor="start" x="588.28" y="-650.85" font-family="Arial" font-size="7.00" fill="#000000">date</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-646.50 642.03,-660.25 646.31,-660.25 646.31,-646.50 642.03,-646.50" />
+<polygon fill="none" stroke="#000000" points="642.03,-646.50 642.03,-660.25 646.31,-660.25 646.31,-646.50 642.03,-646.50" />
+<text text-anchor="start" x="644.03" y="-653.08" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-632.75 466.00,-646.50 470.28,-646.50 470.28,-632.75 466.00,-632.75" />
+<polygon fill="none" stroke="#000000" points="466.00,-632.75 466.00,-646.50 470.28,-646.50 470.28,-632.75 466.00,-632.75" />
+<text text-anchor="start" x="468.00" y="-639.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-632.75 470.28,-646.50 483.28,-646.50 483.28,-632.75 470.28,-632.75" />
+<polygon fill="none" stroke="#000000" points="470.28,-632.75 470.28,-646.50 483.28,-646.50 483.28,-632.75 470.28,-632.75" />
+<text text-anchor="start" x="472.28" y="-637.10" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-632.75 483.28,-646.50 586.28,-646.50 586.28,-632.75 483.28,-632.75" />
+<text text-anchor="start" x="485.28" y="-636.90" font-family="Arial" font-size="8.00" fill="#000000">pair_number</text>
+<polygon fill="none" stroke="#000000" points="586.28,-632.75 586.28,-646.50 642.03,-646.50 642.03,-632.75 586.28,-632.75" />
+<text text-anchor="start" x="588.28" y="-637.10" font-family="Arial" font-size="7.00" fill="#000000">smallint</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-632.75 642.03,-646.50 646.31,-646.50 646.31,-632.75 642.03,-632.75" />
+<polygon fill="none" stroke="#000000" points="642.03,-632.75 642.03,-646.50 646.31,-646.50 646.31,-632.75 642.03,-632.75" />
+<text text-anchor="start" x="644.03" y="-639.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-619.00 466.00,-632.75 470.28,-632.75 470.28,-619.00 466.00,-619.00" />
+<polygon fill="none" stroke="#000000" points="466.00,-619.00 466.00,-632.75 470.28,-632.75 470.28,-619.00 466.00,-619.00" />
+<text text-anchor="start" x="468.00" y="-625.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-619.00 470.28,-632.75 483.28,-632.75 483.28,-619.00 470.28,-619.00" />
+<polygon fill="none" stroke="#000000" points="470.28,-619.00 470.28,-632.75 483.28,-632.75 483.28,-619.00 470.28,-619.00" />
+<text text-anchor="start" x="472.28" y="-623.35" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-619.00 483.28,-632.75 586.28,-632.75 586.28,-619.00 483.28,-619.00" />
+<text text-anchor="start" x="485.28" y="-623.15" font-family="Arial" font-size="8.00" fill="#000000">subgroup</text>
+<polygon fill="none" stroke="#000000" points="586.28,-619.00 586.28,-632.75 642.03,-632.75 642.03,-619.00 586.28,-619.00" />
+<text text-anchor="start" x="588.28" y="-623.35" font-family="Arial" font-size="7.00" fill="#000000">smallint null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-619.00 642.03,-632.75 646.31,-632.75 646.31,-619.00 642.03,-619.00" />
+<polygon fill="none" stroke="#000000" points="642.03,-619.00 642.03,-632.75 646.31,-632.75 646.31,-619.00 642.03,-619.00" />
+<text text-anchor="start" x="644.03" y="-625.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-605.25 466.00,-619.00 470.28,-619.00 470.28,-605.25 466.00,-605.25" />
+<polygon fill="none" stroke="#000000" points="466.00,-605.25 466.00,-619.00 470.28,-619.00 470.28,-605.25 466.00,-605.25" />
+<text text-anchor="start" x="468.00" y="-611.83" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-605.25 470.28,-619.00 483.28,-619.00 483.28,-605.25 470.28,-605.25" />
+<polygon fill="none" stroke="#000000" points="470.28,-605.25 470.28,-619.00 483.28,-619.00 483.28,-605.25 470.28,-605.25" />
+<text text-anchor="start" x="472.28" y="-609.60" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-605.25 483.28,-619.00 586.28,-619.00 586.28,-605.25 483.28,-605.25" />
+<text text-anchor="start" x="485.28" y="-609.40" font-family="Arial" font-size="8.00" fill="#000000">action_type</text>
+<polygon fill="none" stroke="#000000" points="586.28,-605.25 586.28,-619.00 642.03,-619.00 642.03,-605.25 586.28,-605.25" />
+<text text-anchor="start" x="588.28" y="-609.60" font-family="Arial" font-size="7.00" fill="#000000">text</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-605.25 642.03,-619.00 646.31,-619.00 646.31,-605.25 642.03,-605.25" />
+<polygon fill="none" stroke="#000000" points="642.03,-605.25 642.03,-619.00 646.31,-619.00 646.31,-605.25 642.03,-605.25" />
+<text text-anchor="start" x="644.03" y="-611.83" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-591.50 466.00,-605.25 470.28,-605.25 470.28,-591.50 466.00,-591.50" />
+<polygon fill="none" stroke="#000000" points="466.00,-591.50 466.00,-605.25 470.28,-605.25 470.28,-591.50 466.00,-591.50" />
+<text text-anchor="start" x="468.00" y="-598.08" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-591.50 470.28,-605.25 483.28,-605.25 483.28,-591.50 470.28,-591.50" />
+<polygon fill="none" stroke="#000000" points="470.28,-591.50 470.28,-605.25 483.28,-605.25 483.28,-591.50 470.28,-591.50" />
+<text text-anchor="start" x="472.28" y="-595.85" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-591.50 483.28,-605.25 586.28,-605.25 586.28,-591.50 483.28,-591.50" />
+<text text-anchor="start" x="485.28" y="-595.65" font-family="Arial" font-size="8.00" fill="#000000">source_subject_id</text>
+<polygon fill="none" stroke="#000000" points="586.28,-591.50 586.28,-605.25 642.03,-605.25 642.03,-591.50 586.28,-591.50" />
+<text text-anchor="start" x="588.28" y="-595.85" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-591.50 642.03,-605.25 646.31,-605.25 646.31,-591.50 642.03,-591.50" />
+<polygon fill="none" stroke="#000000" points="642.03,-591.50 642.03,-605.25 646.31,-605.25 646.31,-591.50 642.03,-591.50" />
+<text text-anchor="start" x="644.03" y="-598.08" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-577.75 466.00,-591.50 470.28,-591.50 470.28,-577.75 466.00,-577.75" />
+<polygon fill="none" stroke="#000000" points="466.00,-577.75 466.00,-591.50 470.28,-591.50 470.28,-577.75 466.00,-577.75" />
+<text text-anchor="start" x="468.00" y="-584.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-577.75 470.28,-591.50 483.28,-591.50 483.28,-577.75 470.28,-577.75" />
+<polygon fill="none" stroke="#000000" points="470.28,-577.75 470.28,-591.50 483.28,-591.50 483.28,-577.75 470.28,-577.75" />
+<text text-anchor="start" x="472.28" y="-582.10" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-577.75 483.28,-591.50 586.28,-591.50 586.28,-577.75 483.28,-577.75" />
+<text text-anchor="start" x="485.28" y="-581.90" font-family="Arial" font-size="8.00" fill="#000000">source_teacher_id</text>
+<polygon fill="none" stroke="#000000" points="586.28,-577.75 586.28,-591.50 642.03,-591.50 642.03,-577.75 586.28,-577.75" />
+<text text-anchor="start" x="588.28" y="-582.10" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-577.75 642.03,-591.50 646.31,-591.50 646.31,-577.75 642.03,-577.75" />
+<polygon fill="none" stroke="#000000" points="642.03,-577.75 642.03,-591.50 646.31,-591.50 646.31,-577.75 642.03,-577.75" />
+<text text-anchor="start" x="644.03" y="-584.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-564.00 466.00,-577.75 470.28,-577.75 470.28,-564.00 466.00,-564.00" />
+<polygon fill="none" stroke="#000000" points="466.00,-564.00 466.00,-577.75 470.28,-577.75 470.28,-564.00 466.00,-564.00" />
+<text text-anchor="start" x="468.00" y="-570.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-564.00 470.28,-577.75 483.28,-577.75 483.28,-564.00 470.28,-564.00" />
+<polygon fill="none" stroke="#000000" points="470.28,-564.00 470.28,-577.75 483.28,-577.75 483.28,-564.00 470.28,-564.00" />
+<text text-anchor="start" x="472.28" y="-568.35" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-564.00 483.28,-577.75 586.28,-577.75 586.28,-564.00 483.28,-564.00" />
+<text text-anchor="start" x="485.28" y="-568.15" font-family="Arial" font-size="8.00" fill="#000000">source_location_id</text>
+<polygon fill="none" stroke="#000000" points="586.28,-564.00 586.28,-577.75 642.03,-577.75 642.03,-564.00 586.28,-564.00" />
+<text text-anchor="start" x="588.28" y="-568.35" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-564.00 642.03,-577.75 646.31,-577.75 646.31,-564.00 642.03,-564.00" />
+<polygon fill="none" stroke="#000000" points="642.03,-564.00 642.03,-577.75 646.31,-577.75 646.31,-564.00 642.03,-564.00" />
+<text text-anchor="start" x="644.03" y="-570.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-550.25 466.00,-564.00 470.28,-564.00 470.28,-550.25 466.00,-550.25" />
+<polygon fill="none" stroke="#000000" points="466.00,-550.25 466.00,-564.00 470.28,-564.00 470.28,-550.25 466.00,-550.25" />
+<text text-anchor="start" x="468.00" y="-556.83" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-550.25 470.28,-564.00 483.28,-564.00 483.28,-550.25 470.28,-550.25" />
+<polygon fill="none" stroke="#000000" points="470.28,-550.25 470.28,-564.00 483.28,-564.00 483.28,-550.25 470.28,-550.25" />
+<text text-anchor="start" x="472.28" y="-554.60" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-550.25 483.28,-564.00 586.28,-564.00 586.28,-550.25 483.28,-550.25" />
+<text text-anchor="start" x="485.28" y="-554.40" font-family="Arial" font-size="8.00" fill="#000000">source_lesson_format</text>
+<polygon fill="none" stroke="#000000" points="586.28,-550.25 586.28,-564.00 642.03,-564.00 642.03,-550.25 586.28,-550.25" />
+<text text-anchor="start" x="588.28" y="-554.60" font-family="Arial" font-size="7.00" fill="#000000">text null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-550.25 642.03,-564.00 646.31,-564.00 646.31,-550.25 642.03,-550.25" />
+<polygon fill="none" stroke="#000000" points="642.03,-550.25 642.03,-564.00 646.31,-564.00 646.31,-550.25 642.03,-550.25" />
+<text text-anchor="start" x="644.03" y="-556.83" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-536.50 466.00,-550.25 470.28,-550.25 470.28,-536.50 466.00,-536.50" />
+<polygon fill="none" stroke="#000000" points="466.00,-536.50 466.00,-550.25 470.28,-550.25 470.28,-536.50 466.00,-536.50" />
+<text text-anchor="start" x="468.00" y="-543.08" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-536.50 470.28,-550.25 483.28,-550.25 483.28,-536.50 470.28,-536.50" />
+<polygon fill="none" stroke="#000000" points="470.28,-536.50 470.28,-550.25 483.28,-550.25 483.28,-536.50 470.28,-536.50" />
+<text text-anchor="start" x="472.28" y="-540.85" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-536.50 483.28,-550.25 586.28,-550.25 586.28,-536.50 483.28,-536.50" />
+<text text-anchor="start" x="485.28" y="-540.65" font-family="Arial" font-size="8.00" fill="#000000">replacement_subject_id</text>
+<polygon fill="none" stroke="#000000" points="586.28,-536.50 586.28,-550.25 642.03,-550.25 642.03,-536.50 586.28,-536.50" />
+<text text-anchor="start" x="588.28" y="-540.85" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-536.50 642.03,-550.25 646.31,-550.25 646.31,-536.50 642.03,-536.50" />
+<polygon fill="none" stroke="#000000" points="642.03,-536.50 642.03,-550.25 646.31,-550.25 646.31,-536.50 642.03,-536.50" />
+<text text-anchor="start" x="644.03" y="-543.08" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-522.75 466.00,-536.50 470.28,-536.50 470.28,-522.75 466.00,-522.75" />
+<polygon fill="none" stroke="#000000" points="466.00,-522.75 466.00,-536.50 470.28,-536.50 470.28,-522.75 466.00,-522.75" />
+<text text-anchor="start" x="468.00" y="-529.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-522.75 470.28,-536.50 483.28,-536.50 483.28,-522.75 470.28,-522.75" />
+<polygon fill="none" stroke="#000000" points="470.28,-522.75 470.28,-536.50 483.28,-536.50 483.28,-522.75 470.28,-522.75" />
+<text text-anchor="start" x="472.28" y="-527.10" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-522.75 483.28,-536.50 586.28,-536.50 586.28,-522.75 483.28,-522.75" />
+<text text-anchor="start" x="485.28" y="-526.90" font-family="Arial" font-size="8.00" fill="#000000">replacement_teacher_id</text>
+<polygon fill="none" stroke="#000000" points="586.28,-522.75 586.28,-536.50 642.03,-536.50 642.03,-522.75 586.28,-522.75" />
+<text text-anchor="start" x="588.28" y="-527.10" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-522.75 642.03,-536.50 646.31,-536.50 646.31,-522.75 642.03,-522.75" />
+<polygon fill="none" stroke="#000000" points="642.03,-522.75 642.03,-536.50 646.31,-536.50 646.31,-522.75 642.03,-522.75" />
+<text text-anchor="start" x="644.03" y="-529.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-509.00 466.00,-522.75 470.28,-522.75 470.28,-509.00 466.00,-509.00" />
+<polygon fill="none" stroke="#000000" points="466.00,-509.00 466.00,-522.75 470.28,-522.75 470.28,-509.00 466.00,-509.00" />
+<text text-anchor="start" x="468.00" y="-515.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-509.00 470.28,-522.75 483.28,-522.75 483.28,-509.00 470.28,-509.00" />
+<polygon fill="none" stroke="#000000" points="470.28,-509.00 470.28,-522.75 483.28,-522.75 483.28,-509.00 470.28,-509.00" />
+<text text-anchor="start" x="472.28" y="-513.35" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-509.00 483.28,-522.75 586.28,-522.75 586.28,-509.00 483.28,-509.00" />
+<text text-anchor="start" x="485.28" y="-513.15" font-family="Arial" font-size="8.00" fill="#000000">replacement_location_id</text>
+<polygon fill="none" stroke="#000000" points="586.28,-509.00 586.28,-522.75 642.03,-522.75 642.03,-509.00 586.28,-509.00" />
+<text text-anchor="start" x="588.28" y="-513.35" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-509.00 642.03,-522.75 646.31,-522.75 646.31,-509.00 642.03,-509.00" />
+<polygon fill="none" stroke="#000000" points="642.03,-509.00 642.03,-522.75 646.31,-522.75 646.31,-509.00 642.03,-509.00" />
+<text text-anchor="start" x="644.03" y="-515.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-495.25 466.00,-509.00 470.28,-509.00 470.28,-495.25 466.00,-495.25" />
+<polygon fill="none" stroke="#000000" points="466.00,-495.25 466.00,-509.00 470.28,-509.00 470.28,-495.25 466.00,-495.25" />
+<text text-anchor="start" x="468.00" y="-501.83" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-495.25 470.28,-509.00 483.28,-509.00 483.28,-495.25 470.28,-495.25" />
+<polygon fill="none" stroke="#000000" points="470.28,-495.25 470.28,-509.00 483.28,-509.00 483.28,-495.25 470.28,-495.25" />
+<text text-anchor="start" x="472.28" y="-499.60" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-495.25 483.28,-509.00 586.28,-509.00 586.28,-495.25 483.28,-495.25" />
+<text text-anchor="start" x="485.28" y="-499.40" font-family="Arial" font-size="8.00" fill="#000000">replacement_lesson_format</text>
+<polygon fill="none" stroke="#000000" points="586.28,-495.25 586.28,-509.00 642.03,-509.00 642.03,-495.25 586.28,-495.25" />
+<text text-anchor="start" x="588.28" y="-499.60" font-family="Arial" font-size="7.00" fill="#000000">text null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-495.25 642.03,-509.00 646.31,-509.00 646.31,-495.25 642.03,-495.25" />
+<polygon fill="none" stroke="#000000" points="642.03,-495.25 642.03,-509.00 646.31,-509.00 646.31,-495.25 642.03,-495.25" />
+<text text-anchor="start" x="644.03" y="-501.83" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-481.50 466.00,-495.25 470.28,-495.25 470.28,-481.50 466.00,-481.50" />
+<polygon fill="none" stroke="#000000" points="466.00,-481.50 466.00,-495.25 470.28,-495.25 470.28,-481.50 466.00,-481.50" />
+<text text-anchor="start" x="468.00" y="-488.08" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-481.50 470.28,-495.25 483.28,-495.25 483.28,-481.50 470.28,-481.50" />
+<polygon fill="none" stroke="#000000" points="470.28,-481.50 470.28,-495.25 483.28,-495.25 483.28,-481.50 470.28,-481.50" />
+<text text-anchor="start" x="472.28" y="-485.85" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-481.50 483.28,-495.25 586.28,-495.25 586.28,-481.50 483.28,-481.50" />
+<text text-anchor="start" x="485.28" y="-485.65" font-family="Arial" font-size="8.00" fill="#000000">reason</text>
+<polygon fill="none" stroke="#000000" points="586.28,-481.50 586.28,-495.25 642.03,-495.25 642.03,-481.50 586.28,-481.50" />
+<text text-anchor="start" x="588.28" y="-485.85" font-family="Arial" font-size="7.00" fill="#000000">text null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-481.50 642.03,-495.25 646.31,-495.25 646.31,-481.50 642.03,-481.50" />
+<polygon fill="none" stroke="#000000" points="642.03,-481.50 642.03,-495.25 646.31,-495.25 646.31,-481.50 642.03,-481.50" />
+<text text-anchor="start" x="644.03" y="-488.08" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-467.75 466.00,-481.50 470.28,-481.50 470.28,-467.75 466.00,-467.75" />
+<polygon fill="none" stroke="#000000" points="466.00,-467.75 466.00,-481.50 470.28,-481.50 470.28,-467.75 466.00,-467.75" />
+<text text-anchor="start" x="468.00" y="-474.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-467.75 470.28,-481.50 483.28,-481.50 483.28,-467.75 470.28,-467.75" />
+<polygon fill="none" stroke="#000000" points="470.28,-467.75 470.28,-481.50 483.28,-481.50 483.28,-467.75 470.28,-467.75" />
+<text text-anchor="start" x="472.28" y="-472.10" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-467.75 483.28,-481.50 586.28,-481.50 586.28,-467.75 483.28,-467.75" />
+<text text-anchor="start" x="485.28" y="-471.90" font-family="Arial" font-size="8.00" fill="#000000">status</text>
+<polygon fill="none" stroke="#000000" points="586.28,-467.75 586.28,-481.50 642.03,-481.50 642.03,-467.75 586.28,-467.75" />
+<text text-anchor="start" x="588.28" y="-472.10" font-family="Arial" font-size="7.00" fill="#000000">text</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-467.75 642.03,-481.50 646.31,-481.50 646.31,-467.75 642.03,-467.75" />
+<polygon fill="none" stroke="#000000" points="642.03,-467.75 642.03,-481.50 646.31,-481.50 646.31,-467.75 642.03,-467.75" />
+<text text-anchor="start" x="644.03" y="-474.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-454.00 466.00,-467.75 470.28,-467.75 470.28,-454.00 466.00,-454.00" />
+<polygon fill="none" stroke="#000000" points="466.00,-454.00 466.00,-467.75 470.28,-467.75 470.28,-454.00 466.00,-454.00" />
+<text text-anchor="start" x="468.00" y="-460.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-454.00 470.28,-467.75 483.28,-467.75 483.28,-454.00 470.28,-454.00" />
+<polygon fill="none" stroke="#000000" points="470.28,-454.00 470.28,-467.75 483.28,-467.75 483.28,-454.00 470.28,-454.00" />
+<text text-anchor="start" x="472.28" y="-458.35" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-454.00 483.28,-467.75 586.28,-467.75 586.28,-454.00 483.28,-454.00" />
+<text text-anchor="start" x="485.28" y="-458.15" font-family="Arial" font-size="8.00" fill="#000000">expected_lesson_version</text>
+<polygon fill="none" stroke="#000000" points="586.28,-454.00 586.28,-467.75 642.03,-467.75 642.03,-454.00 586.28,-454.00" />
+<text text-anchor="start" x="588.28" y="-458.35" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-454.00 642.03,-467.75 646.31,-467.75 646.31,-454.00 642.03,-454.00" />
+<polygon fill="none" stroke="#000000" points="642.03,-454.00 642.03,-467.75 646.31,-467.75 646.31,-454.00 642.03,-454.00" />
+<text text-anchor="start" x="644.03" y="-460.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-440.25 466.00,-454.00 470.28,-454.00 470.28,-440.25 466.00,-440.25" />
+<polygon fill="none" stroke="#000000" points="466.00,-440.25 466.00,-454.00 470.28,-454.00 470.28,-440.25 466.00,-440.25" />
+<text text-anchor="start" x="468.00" y="-446.83" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-440.25 470.28,-454.00 483.28,-454.00 483.28,-440.25 470.28,-440.25" />
+<polygon fill="none" stroke="#000000" points="470.28,-440.25 470.28,-454.00 483.28,-454.00 483.28,-440.25 470.28,-440.25" />
+<text text-anchor="start" x="472.28" y="-444.60" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-440.25 483.28,-454.00 586.28,-454.00 586.28,-440.25 483.28,-440.25" />
+<text text-anchor="start" x="485.28" y="-444.40" font-family="Arial" font-size="8.00" fill="#000000">applied_lesson_version</text>
+<polygon fill="none" stroke="#000000" points="586.28,-440.25 586.28,-454.00 642.03,-454.00 642.03,-440.25 586.28,-440.25" />
+<text text-anchor="start" x="588.28" y="-444.60" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-440.25 642.03,-454.00 646.31,-454.00 646.31,-440.25 642.03,-440.25" />
+<polygon fill="none" stroke="#000000" points="642.03,-440.25 642.03,-454.00 646.31,-454.00 646.31,-440.25 642.03,-440.25" />
+<text text-anchor="start" x="644.03" y="-446.83" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-426.50 466.00,-440.25 470.28,-440.25 470.28,-426.50 466.00,-426.50" />
+<polygon fill="none" stroke="#000000" points="466.00,-426.50 466.00,-440.25 470.28,-440.25 470.28,-426.50 466.00,-426.50" />
+<text text-anchor="start" x="468.00" y="-433.08" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-426.50 470.28,-440.25 483.28,-440.25 483.28,-426.50 470.28,-426.50" />
+<polygon fill="none" stroke="#000000" points="470.28,-426.50 470.28,-440.25 483.28,-440.25 483.28,-426.50 470.28,-426.50" />
+<text text-anchor="start" x="472.28" y="-430.85" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-426.50 483.28,-440.25 586.28,-440.25 586.28,-426.50 483.28,-426.50" />
+<text text-anchor="start" x="485.28" y="-430.65" font-family="Arial" font-size="8.00" fill="#000000">created_by</text>
+<polygon fill="none" stroke="#000000" points="586.28,-426.50 586.28,-440.25 642.03,-440.25 642.03,-426.50 586.28,-426.50" />
+<text text-anchor="start" x="588.28" y="-430.85" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-426.50 642.03,-440.25 646.31,-440.25 646.31,-426.50 642.03,-426.50" />
+<polygon fill="none" stroke="#000000" points="642.03,-426.50 642.03,-440.25 646.31,-440.25 646.31,-426.50 642.03,-426.50" />
+<text text-anchor="start" x="644.03" y="-433.08" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-412.75 466.00,-426.50 470.28,-426.50 470.28,-412.75 466.00,-412.75" />
+<polygon fill="none" stroke="#000000" points="466.00,-412.75 466.00,-426.50 470.28,-426.50 470.28,-412.75 466.00,-412.75" />
+<text text-anchor="start" x="468.00" y="-419.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-412.75 470.28,-426.50 483.28,-426.50 483.28,-412.75 470.28,-412.75" />
+<polygon fill="none" stroke="#000000" points="470.28,-412.75 470.28,-426.50 483.28,-426.50 483.28,-412.75 470.28,-412.75" />
+<text text-anchor="start" x="472.28" y="-417.10" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-412.75 483.28,-426.50 586.28,-426.50 586.28,-412.75 483.28,-412.75" />
+<text text-anchor="start" x="485.28" y="-416.90" font-family="Arial" font-size="8.00" fill="#000000">created_at</text>
+<polygon fill="none" stroke="#000000" points="586.28,-412.75 586.28,-426.50 642.03,-426.50 642.03,-412.75 586.28,-412.75" />
+<text text-anchor="start" x="588.28" y="-417.10" font-family="Arial" font-size="7.00" fill="#000000">timestamptz</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-412.75 642.03,-426.50 646.31,-426.50 646.31,-412.75 642.03,-412.75" />
+<polygon fill="none" stroke="#000000" points="642.03,-412.75 642.03,-426.50 646.31,-426.50 646.31,-412.75 642.03,-412.75" />
+<text text-anchor="start" x="644.03" y="-419.33" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-399.00 466.00,-412.75 470.28,-412.75 470.28,-399.00 466.00,-399.00" />
+<polygon fill="none" stroke="#000000" points="466.00,-399.00 466.00,-412.75 470.28,-412.75 470.28,-399.00 466.00,-399.00" />
+<text text-anchor="start" x="468.00" y="-405.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-399.00 470.28,-412.75 483.28,-412.75 483.28,-399.00 470.28,-399.00" />
+<polygon fill="none" stroke="#000000" points="470.28,-399.00 470.28,-412.75 483.28,-412.75 483.28,-399.00 470.28,-399.00" />
+<text text-anchor="start" x="472.28" y="-403.35" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-399.00 483.28,-412.75 586.28,-412.75 586.28,-399.00 483.28,-399.00" />
+<text text-anchor="start" x="485.28" y="-403.15" font-family="Arial" font-size="8.00" fill="#000000">applied_at</text>
+<polygon fill="none" stroke="#000000" points="586.28,-399.00 586.28,-412.75 642.03,-412.75 642.03,-399.00 586.28,-399.00" />
+<text text-anchor="start" x="588.28" y="-403.35" font-family="Arial" font-size="7.00" fill="#000000">timestamptz null</text>
+<polygon fill="#ffffff" stroke="none" points="642.03,-399.00 642.03,-412.75 646.31,-412.75 646.31,-399.00 642.03,-399.00" />
+<polygon fill="none" stroke="#000000" points="642.03,-399.00 642.03,-412.75 646.31,-412.75 646.31,-399.00 642.03,-399.00" />
+<text text-anchor="start" x="644.03" y="-405.58" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="none" stroke="#000000" points="465.00,-398.00 465.00,-720.00 647.31,-720.00 647.31,-398.00 465.00,-398.00" />
+</g>
+
+<g id="node8" class="node">
+<title>schedule_replacements</title>
+<polygon fill="#000000" stroke="none" points="466.00,-311.50 466.00,-329.00 620.81,-329.00 620.81,-311.50 466.00,-311.50" />
+<polygon fill="none" stroke="#000000" points="466.00,-311.50 466.00,-329.00 620.81,-329.00 620.81,-311.50 466.00,-311.50" />
+<text text-anchor="start" x="481.53" y="-317.55" font-family="Arial" font-weight="bold" font-size="11.00" fill="#ffffff">schedule_replacements</text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-297.75 466.00,-311.50 470.28,-311.50 470.28,-297.75 466.00,-297.75" />
+<polygon fill="none" stroke="#000000" points="466.00,-297.75 466.00,-311.50 470.28,-311.50 470.28,-297.75 466.00,-297.75" />
+<text text-anchor="start" x="468.00" y="-304.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-297.75 470.28,-311.50 483.28,-311.50 483.28,-297.75 470.28,-297.75" />
+<polygon fill="none" stroke="#000000" points="470.28,-297.75 470.28,-311.50 483.28,-311.50 483.28,-297.75 470.28,-297.75" />
+<text text-anchor="start" x="472.28" y="-302.10" font-family="Arial" font-size="7.00" fill="#000000">PK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-297.75 483.28,-311.50 573.53,-311.50 573.53,-297.75 483.28,-297.75" />
+<text text-anchor="start" x="485.28" y="-302.89" font-family="Arial" font-weight="bold" font-size="8.00" fill="#000000">id</text>
+<polygon fill="none" stroke="#000000" points="573.53,-297.75 573.53,-311.50 616.53,-311.50 616.53,-297.75 573.53,-297.75" />
+<text text-anchor="start" x="575.53" y="-302.10" font-family="Arial" font-size="7.00" fill="#000000">bigserial</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-297.75 616.53,-311.50 620.81,-311.50 620.81,-297.75 616.53,-297.75" />
+<polygon fill="none" stroke="#000000" points="616.53,-297.75 616.53,-311.50 620.81,-311.50 620.81,-297.75 616.53,-297.75" />
+<text text-anchor="start" x="618.53" y="-304.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-284.00 466.00,-297.75 470.28,-297.75 470.28,-284.00 466.00,-284.00" />
+<polygon fill="none" stroke="#000000" points="466.00,-284.00 466.00,-297.75 470.28,-297.75 470.28,-284.00 466.00,-284.00" />
+<text text-anchor="start" x="468.00" y="-290.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-284.00 470.28,-297.75 483.28,-297.75 483.28,-284.00 470.28,-284.00" />
+<polygon fill="none" stroke="#000000" points="470.28,-284.00 470.28,-297.75 483.28,-297.75 483.28,-284.00 470.28,-284.00" />
+<text text-anchor="start" x="472.28" y="-288.35" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-284.00 483.28,-297.75 573.53,-297.75 573.53,-284.00 483.28,-284.00" />
+<text text-anchor="start" x="485.28" y="-288.15" font-family="Arial" font-size="8.00" fill="#000000">target_date</text>
+<polygon fill="none" stroke="#000000" points="573.53,-284.00 573.53,-297.75 616.53,-297.75 616.53,-284.00 573.53,-284.00" />
+<text text-anchor="start" x="575.53" y="-288.35" font-family="Arial" font-size="7.00" fill="#000000">date</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-284.00 616.53,-297.75 620.81,-297.75 620.81,-284.00 616.53,-284.00" />
+<polygon fill="none" stroke="#000000" points="616.53,-284.00 616.53,-297.75 620.81,-297.75 620.81,-284.00 616.53,-284.00" />
+<text text-anchor="start" x="618.53" y="-290.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-270.25 466.00,-284.00 470.28,-284.00 470.28,-270.25 466.00,-270.25" />
+<polygon fill="none" stroke="#000000" points="466.00,-270.25 466.00,-284.00 470.28,-284.00 470.28,-270.25 466.00,-270.25" />
+<text text-anchor="start" x="468.00" y="-276.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-270.25 470.28,-284.00 483.28,-284.00 483.28,-270.25 470.28,-270.25" />
+<polygon fill="none" stroke="#000000" points="470.28,-270.25 470.28,-284.00 483.28,-284.00 483.28,-270.25 470.28,-270.25" />
+<text text-anchor="start" x="472.28" y="-274.60" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-270.25 483.28,-284.00 573.53,-284.00 573.53,-270.25 483.28,-270.25" />
+<text text-anchor="start" x="485.28" y="-274.40" font-family="Arial" font-size="8.00" fill="#000000">group_id</text>
+<polygon fill="none" stroke="#000000" points="573.53,-270.25 573.53,-284.00 616.53,-284.00 616.53,-270.25 573.53,-270.25" />
+<text text-anchor="start" x="575.53" y="-274.60" font-family="Arial" font-size="7.00" fill="#000000">int</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-270.25 616.53,-284.00 620.81,-284.00 620.81,-270.25 616.53,-270.25" />
+<polygon fill="none" stroke="#000000" points="616.53,-270.25 616.53,-284.00 620.81,-284.00 620.81,-270.25 616.53,-270.25" />
+<text text-anchor="start" x="618.53" y="-276.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-256.50 466.00,-270.25 470.28,-270.25 470.28,-256.50 466.00,-256.50" />
+<polygon fill="none" stroke="#000000" points="466.00,-256.50 466.00,-270.25 470.28,-270.25 470.28,-256.50 466.00,-256.50" />
+<text text-anchor="start" x="468.00" y="-263.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-256.50 470.28,-270.25 483.28,-270.25 483.28,-256.50 470.28,-256.50" />
+<polygon fill="none" stroke="#000000" points="470.28,-256.50 470.28,-270.25 483.28,-270.25 483.28,-256.50 470.28,-256.50" />
+<text text-anchor="start" x="472.28" y="-260.85" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-256.50 483.28,-270.25 573.53,-270.25 573.53,-256.50 483.28,-256.50" />
+<text text-anchor="start" x="485.28" y="-260.65" font-family="Arial" font-size="8.00" fill="#000000">pair_number</text>
+<polygon fill="none" stroke="#000000" points="573.53,-256.50 573.53,-270.25 616.53,-270.25 616.53,-256.50 573.53,-256.50" />
+<text text-anchor="start" x="575.53" y="-260.85" font-family="Arial" font-size="7.00" fill="#000000">smallint</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-256.50 616.53,-270.25 620.81,-270.25 620.81,-256.50 616.53,-256.50" />
+<polygon fill="none" stroke="#000000" points="616.53,-256.50 616.53,-270.25 620.81,-270.25 620.81,-256.50 616.53,-256.50" />
+<text text-anchor="start" x="618.53" y="-263.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-242.75 466.00,-256.50 470.28,-256.50 470.28,-242.75 466.00,-242.75" />
+<polygon fill="none" stroke="#000000" points="466.00,-242.75 466.00,-256.50 470.28,-256.50 470.28,-242.75 466.00,-242.75" />
+<text text-anchor="start" x="468.00" y="-249.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-242.75 470.28,-256.50 483.28,-256.50 483.28,-242.75 470.28,-242.75" />
+<polygon fill="none" stroke="#000000" points="470.28,-242.75 470.28,-256.50 483.28,-256.50 483.28,-242.75 470.28,-242.75" />
+<text text-anchor="start" x="472.28" y="-247.10" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-242.75 483.28,-256.50 573.53,-256.50 573.53,-242.75 483.28,-242.75" />
+<text text-anchor="start" x="485.28" y="-246.90" font-family="Arial" font-size="8.00" fill="#000000">subgroup</text>
+<polygon fill="none" stroke="#000000" points="573.53,-242.75 573.53,-256.50 616.53,-256.50 616.53,-242.75 573.53,-242.75" />
+<text text-anchor="start" x="575.53" y="-247.10" font-family="Arial" font-size="7.00" fill="#000000">smallint null</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-242.75 616.53,-256.50 620.81,-256.50 620.81,-242.75 616.53,-242.75" />
+<polygon fill="none" stroke="#000000" points="616.53,-242.75 616.53,-256.50 620.81,-256.50 620.81,-242.75 616.53,-242.75" />
+<text text-anchor="start" x="618.53" y="-249.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-229.00 466.00,-242.75 470.28,-242.75 470.28,-229.00 466.00,-229.00" />
+<polygon fill="none" stroke="#000000" points="466.00,-229.00 466.00,-242.75 470.28,-242.75 470.28,-229.00 466.00,-229.00" />
+<text text-anchor="start" x="468.00" y="-235.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-229.00 470.28,-242.75 483.28,-242.75 483.28,-229.00 470.28,-229.00" />
+<polygon fill="none" stroke="#000000" points="470.28,-229.00 470.28,-242.75 483.28,-242.75 483.28,-229.00 470.28,-229.00" />
+<text text-anchor="start" x="472.28" y="-233.35" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-229.00 483.28,-242.75 573.53,-242.75 573.53,-229.00 483.28,-229.00" />
+<text text-anchor="start" x="485.28" y="-233.15" font-family="Arial" font-size="8.00" fill="#000000">source_subject_id</text>
+<polygon fill="none" stroke="#000000" points="573.53,-229.00 573.53,-242.75 616.53,-242.75 616.53,-229.00 573.53,-229.00" />
+<text text-anchor="start" x="575.53" y="-233.35" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-229.00 616.53,-242.75 620.81,-242.75 620.81,-229.00 616.53,-229.00" />
+<polygon fill="none" stroke="#000000" points="616.53,-229.00 616.53,-242.75 620.81,-242.75 620.81,-229.00 616.53,-229.00" />
+<text text-anchor="start" x="618.53" y="-235.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-215.25 466.00,-229.00 470.28,-229.00 470.28,-215.25 466.00,-215.25" />
+<polygon fill="none" stroke="#000000" points="466.00,-215.25 466.00,-229.00 470.28,-229.00 470.28,-215.25 466.00,-215.25" />
+<text text-anchor="start" x="468.00" y="-221.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-215.25 470.28,-229.00 483.28,-229.00 483.28,-215.25 470.28,-215.25" />
+<polygon fill="none" stroke="#000000" points="470.28,-215.25 470.28,-229.00 483.28,-229.00 483.28,-215.25 470.28,-215.25" />
+<text text-anchor="start" x="472.28" y="-219.60" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-215.25 483.28,-229.00 573.53,-229.00 573.53,-215.25 483.28,-215.25" />
+<text text-anchor="start" x="485.28" y="-219.40" font-family="Arial" font-size="8.00" fill="#000000">source_location_id</text>
+<polygon fill="none" stroke="#000000" points="573.53,-215.25 573.53,-229.00 616.53,-229.00 616.53,-215.25 573.53,-215.25" />
+<text text-anchor="start" x="575.53" y="-219.60" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-215.25 616.53,-229.00 620.81,-229.00 620.81,-215.25 616.53,-215.25" />
+<polygon fill="none" stroke="#000000" points="616.53,-215.25 616.53,-229.00 620.81,-229.00 620.81,-215.25 616.53,-215.25" />
+<text text-anchor="start" x="618.53" y="-221.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-201.50 466.00,-215.25 470.28,-215.25 470.28,-201.50 466.00,-201.50" />
+<polygon fill="none" stroke="#000000" points="466.00,-201.50 466.00,-215.25 470.28,-215.25 470.28,-201.50 466.00,-201.50" />
+<text text-anchor="start" x="468.00" y="-208.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-201.50 470.28,-215.25 483.28,-215.25 483.28,-201.50 470.28,-201.50" />
+<polygon fill="none" stroke="#000000" points="470.28,-201.50 470.28,-215.25 483.28,-215.25 483.28,-201.50 470.28,-201.50" />
+<text text-anchor="start" x="472.28" y="-205.85" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-201.50 483.28,-215.25 573.53,-215.25 573.53,-201.50 483.28,-201.50" />
+<text text-anchor="start" x="485.28" y="-205.65" font-family="Arial" font-size="8.00" fill="#000000">source_teacher_id</text>
+<polygon fill="none" stroke="#000000" points="573.53,-201.50 573.53,-215.25 616.53,-215.25 616.53,-201.50 573.53,-201.50" />
+<text text-anchor="start" x="575.53" y="-205.85" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-201.50 616.53,-215.25 620.81,-215.25 620.81,-201.50 616.53,-201.50" />
+<polygon fill="none" stroke="#000000" points="616.53,-201.50 616.53,-215.25 620.81,-215.25 620.81,-201.50 616.53,-201.50" />
+<text text-anchor="start" x="618.53" y="-208.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-187.75 466.00,-201.50 470.28,-201.50 470.28,-187.75 466.00,-187.75" />
+<polygon fill="none" stroke="#000000" points="466.00,-187.75 466.00,-201.50 470.28,-201.50 470.28,-187.75 466.00,-187.75" />
+<text text-anchor="start" x="468.00" y="-194.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-187.75 470.28,-201.50 483.28,-201.50 483.28,-187.75 470.28,-187.75" />
+<polygon fill="none" stroke="#000000" points="470.28,-187.75 470.28,-201.50 483.28,-201.50 483.28,-187.75 470.28,-187.75" />
+<text text-anchor="start" x="472.28" y="-192.10" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-187.75 483.28,-201.50 573.53,-201.50 573.53,-187.75 483.28,-187.75" />
+<text text-anchor="start" x="485.28" y="-191.90" font-family="Arial" font-size="8.00" fill="#000000">replacement_subject_id</text>
+<polygon fill="none" stroke="#000000" points="573.53,-187.75 573.53,-201.50 616.53,-201.50 616.53,-187.75 573.53,-187.75" />
+<text text-anchor="start" x="575.53" y="-192.10" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-187.75 616.53,-201.50 620.81,-201.50 620.81,-187.75 616.53,-187.75" />
+<polygon fill="none" stroke="#000000" points="616.53,-187.75 616.53,-201.50 620.81,-201.50 620.81,-187.75 616.53,-187.75" />
+<text text-anchor="start" x="618.53" y="-194.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-174.00 466.00,-187.75 470.28,-187.75 470.28,-174.00 466.00,-174.00" />
+<polygon fill="none" stroke="#000000" points="466.00,-174.00 466.00,-187.75 470.28,-187.75 470.28,-174.00 466.00,-174.00" />
+<text text-anchor="start" x="468.00" y="-180.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-174.00 470.28,-187.75 483.28,-187.75 483.28,-174.00 470.28,-174.00" />
+<polygon fill="none" stroke="#000000" points="470.28,-174.00 470.28,-187.75 483.28,-187.75 483.28,-174.00 470.28,-174.00" />
+<text text-anchor="start" x="472.28" y="-178.35" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-174.00 483.28,-187.75 573.53,-187.75 573.53,-174.00 483.28,-174.00" />
+<text text-anchor="start" x="485.28" y="-178.15" font-family="Arial" font-size="8.00" fill="#000000">replacement_location_id</text>
+<polygon fill="none" stroke="#000000" points="573.53,-174.00 573.53,-187.75 616.53,-187.75 616.53,-174.00 573.53,-174.00" />
+<text text-anchor="start" x="575.53" y="-178.35" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-174.00 616.53,-187.75 620.81,-187.75 620.81,-174.00 616.53,-174.00" />
+<polygon fill="none" stroke="#000000" points="616.53,-174.00 616.53,-187.75 620.81,-187.75 620.81,-174.00 616.53,-174.00" />
+<text text-anchor="start" x="618.53" y="-180.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-160.25 466.00,-174.00 470.28,-174.00 470.28,-160.25 466.00,-160.25" />
+<polygon fill="none" stroke="#000000" points="466.00,-160.25 466.00,-174.00 470.28,-174.00 470.28,-160.25 466.00,-160.25" />
+<text text-anchor="start" x="468.00" y="-166.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-160.25 470.28,-174.00 483.28,-174.00 483.28,-160.25 470.28,-160.25" />
+<polygon fill="none" stroke="#000000" points="470.28,-160.25 470.28,-174.00 483.28,-174.00 483.28,-160.25 470.28,-160.25" />
+<text text-anchor="start" x="472.28" y="-164.60" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-160.25 483.28,-174.00 573.53,-174.00 573.53,-160.25 483.28,-160.25" />
+<text text-anchor="start" x="485.28" y="-164.40" font-family="Arial" font-size="8.00" fill="#000000">replacement_teacher_id</text>
+<polygon fill="none" stroke="#000000" points="573.53,-160.25 573.53,-174.00 616.53,-174.00 616.53,-160.25 573.53,-160.25" />
+<text text-anchor="start" x="575.53" y="-164.60" font-family="Arial" font-size="7.00" fill="#000000">int null</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-160.25 616.53,-174.00 620.81,-174.00 620.81,-160.25 616.53,-160.25" />
+<polygon fill="none" stroke="#000000" points="616.53,-160.25 616.53,-174.00 620.81,-174.00 620.81,-160.25 616.53,-160.25" />
+<text text-anchor="start" x="618.53" y="-166.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-146.50 466.00,-160.25 470.28,-160.25 470.28,-146.50 466.00,-146.50" />
+<polygon fill="none" stroke="#000000" points="466.00,-146.50 466.00,-160.25 470.28,-160.25 470.28,-146.50 466.00,-146.50" />
+<text text-anchor="start" x="468.00" y="-153.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-146.50 470.28,-160.25 483.28,-160.25 483.28,-146.50 470.28,-146.50" />
+<polygon fill="none" stroke="#000000" points="470.28,-146.50 470.28,-160.25 483.28,-160.25 483.28,-146.50 470.28,-146.50" />
+<text text-anchor="start" x="472.28" y="-150.85" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-146.50 483.28,-160.25 573.53,-160.25 573.53,-146.50 483.28,-146.50" />
+<text text-anchor="start" x="485.28" y="-150.65" font-family="Arial" font-size="8.00" fill="#000000">reason</text>
+<polygon fill="none" stroke="#000000" points="573.53,-146.50 573.53,-160.25 616.53,-160.25 616.53,-146.50 573.53,-146.50" />
+<text text-anchor="start" x="575.53" y="-150.85" font-family="Arial" font-size="7.00" fill="#000000">text null</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-146.50 616.53,-160.25 620.81,-160.25 620.81,-146.50 616.53,-146.50" />
+<polygon fill="none" stroke="#000000" points="616.53,-146.50 616.53,-160.25 620.81,-160.25 620.81,-146.50 616.53,-146.50" />
+<text text-anchor="start" x="618.53" y="-153.07" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-132.75 466.00,-146.50 470.28,-146.50 470.28,-132.75 466.00,-132.75" />
+<polygon fill="none" stroke="#000000" points="466.00,-132.75 466.00,-146.50 470.28,-146.50 470.28,-132.75 466.00,-132.75" />
+<text text-anchor="start" x="468.00" y="-139.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-132.75 470.28,-146.50 483.28,-146.50 483.28,-132.75 470.28,-132.75" />
+<polygon fill="none" stroke="#000000" points="470.28,-132.75 470.28,-146.50 483.28,-146.50 483.28,-132.75 470.28,-132.75" />
+<text text-anchor="start" x="472.28" y="-137.10" font-family="Arial" font-size="7.00" fill="#000000">FK</text>
+<polygon fill="none" stroke="#000000" points="483.28,-132.75 483.28,-146.50 573.53,-146.50 573.53,-132.75 483.28,-132.75" />
+<text text-anchor="start" x="485.28" y="-136.90" font-family="Arial" font-size="8.00" fill="#000000">schedule_override_id</text>
+<polygon fill="none" stroke="#000000" points="573.53,-132.75 573.53,-146.50 616.53,-146.50 616.53,-132.75 573.53,-132.75" />
+<text text-anchor="start" x="575.53" y="-137.10" font-family="Arial" font-size="7.00" fill="#000000">bigint null</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-132.75 616.53,-146.50 620.81,-146.50 620.81,-132.75 616.53,-132.75" />
+<polygon fill="none" stroke="#000000" points="616.53,-132.75 616.53,-146.50 620.81,-146.50 620.81,-132.75 616.53,-132.75" />
+<text text-anchor="start" x="618.53" y="-139.32" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-119.00 466.00,-132.75 470.28,-132.75 470.28,-119.00 466.00,-119.00" />
+<polygon fill="none" stroke="#000000" points="466.00,-119.00 466.00,-132.75 470.28,-132.75 470.28,-119.00 466.00,-119.00" />
+<text text-anchor="start" x="468.00" y="-125.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-119.00 470.28,-132.75 483.28,-132.75 483.28,-119.00 470.28,-119.00" />
+<polygon fill="none" stroke="#000000" points="470.28,-119.00 470.28,-132.75 483.28,-132.75 483.28,-119.00 470.28,-119.00" />
+<text text-anchor="start" x="472.28" y="-123.35" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-119.00 483.28,-132.75 573.53,-132.75 573.53,-119.00 483.28,-119.00" />
+<text text-anchor="start" x="485.28" y="-123.15" font-family="Arial" font-size="8.00" fill="#000000">created_at</text>
+<polygon fill="none" stroke="#000000" points="573.53,-119.00 573.53,-132.75 616.53,-132.75 616.53,-119.00 573.53,-119.00" />
+<text text-anchor="start" x="575.53" y="-123.35" font-family="Arial" font-size="7.00" fill="#000000">timestamptz</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-119.00 616.53,-132.75 620.81,-132.75 620.81,-119.00 616.53,-119.00" />
+<polygon fill="none" stroke="#000000" points="616.53,-119.00 616.53,-132.75 620.81,-132.75 620.81,-119.00 616.53,-119.00" />
+<text text-anchor="start" x="618.53" y="-125.57" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="466.00,-105.25 466.00,-119.00 470.28,-119.00 470.28,-105.25 466.00,-105.25" />
+<polygon fill="none" stroke="#000000" points="466.00,-105.25 466.00,-119.00 470.28,-119.00 470.28,-105.25 466.00,-105.25" />
+<text text-anchor="start" x="468.00" y="-111.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="#ffffff" stroke="none" points="470.28,-105.25 470.28,-119.00 483.28,-119.00 483.28,-105.25 470.28,-105.25" />
+<polygon fill="none" stroke="#000000" points="470.28,-105.25 470.28,-119.00 483.28,-119.00 483.28,-105.25 470.28,-105.25" />
+<text text-anchor="start" x="472.28" y="-109.60" font-family="Arial" font-size="7.00" fill="#000000"> </text>
+<polygon fill="none" stroke="#000000" points="483.28,-105.25 483.28,-119.00 573.53,-119.00 573.53,-105.25 483.28,-105.25" />
+<text text-anchor="start" x="485.28" y="-109.40" font-family="Arial" font-size="8.00" fill="#000000">updated_at</text>
+<polygon fill="none" stroke="#000000" points="573.53,-105.25 573.53,-119.00 616.53,-119.00 616.53,-105.25 573.53,-105.25" />
+<text text-anchor="start" x="575.53" y="-109.60" font-family="Arial" font-size="7.00" fill="#000000">timestamptz</text>
+<polygon fill="#ffffff" stroke="none" points="616.53,-105.25 616.53,-119.00 620.81,-119.00 620.81,-105.25 616.53,-105.25" />
+<polygon fill="none" stroke="#000000" points="616.53,-105.25 616.53,-119.00 620.81,-119.00 620.81,-105.25 616.53,-105.25" />
+<text text-anchor="start" x="618.53" y="-111.82" font-family="Arial" font-size="1.00" fill="#ffffff"> </text>
+<polygon fill="none" stroke="#000000" points="465.00,-104.25 465.00,-330.00 621.81,-330.00 621.81,-104.25 465.00,-104.25" />
+</g>
+
+<g id="node9" class="node">
+<title>connector_01</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="411.16" cy="-384.62" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="411.16" y="-382.11" font-family="Arial" font-size="7.00">1</text>
+</g>
+
+<g id="node10" class="node">
+<title>connector_02</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="668.67" cy="-515.88" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="668.67" y="-513.36" font-family="Arial" font-size="7.00">2</text>
+</g>
+
+<g id="node11" class="node">
+<title>connector_03</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="668.67" cy="-570.88" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="668.67" y="-568.36" font-family="Arial" font-size="7.00">3</text>
+</g>
+
+<g id="node12" class="node">
+<title>connector_04</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="643.17" cy="-180.88" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="643.17" y="-178.35" font-family="Arial" font-size="7.00">4</text>
+</g>
+
+<g id="node13" class="node">
+<title>connector_05</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="643.17" cy="-222.12" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="643.17" y="-219.60" font-family="Arial" font-size="7.00">5</text>
+</g>
+
+<g id="node14" class="node">
+<title>connector_06</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="418.66" cy="-542.12" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="418.66" y="-539.61" font-family="Arial" font-size="7.00">6</text>
+</g>
+
+<g id="node15" class="node">
+<title>connector_07</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="418.66" cy="-514.62" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="418.66" y="-512.11" font-family="Arial" font-size="7.00">7</text>
+</g>
+
+<g id="node16" class="node">
+<title>connector_08</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-482.44" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-479.92" font-family="Arial" font-size="7.00">8</text>
+</g>
+
+<g id="node17" class="node">
+<title>connector_09</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-458.44" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-455.92" font-family="Arial" font-size="7.00">9</text>
+</g>
+
+<g id="node18" class="node">
+<title>connector_10</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-815.62" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-813.11" font-family="Arial" font-size="7.00">10</text>
+</g>
+
+<g id="node19" class="node">
+<title>connector_11</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-176.62" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-174.10" font-family="Arial" font-size="7.00">11</text>
+</g>
+
+<g id="node20" class="node">
+<title>connector_12</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-626.44" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-623.92" font-family="Arial" font-size="7.00">12</text>
+</g>
+
+<g id="node21" class="node">
+<title>connector_13</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-791.62" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-789.11" font-family="Arial" font-size="7.00">13</text>
+</g>
+
+<g id="node22" class="node">
+<title>connector_14</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-767.62" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-765.11" font-family="Arial" font-size="7.00">14</text>
+</g>
+
+<g id="node23" class="node">
+<title>connector_15</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-602.44" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-599.92" font-family="Arial" font-size="7.00">15</text>
+</g>
+
+<g id="node24" class="node">
+<title>connector_16</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-578.44" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-575.92" font-family="Arial" font-size="7.00">16</text>
+</g>
+
+<g id="node25" class="node">
+<title>connector_17</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-152.62" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-150.09" font-family="Arial" font-size="7.00">17</text>
+</g>
+
+<g id="node26" class="node">
+<title>connector_18</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-554.44" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-551.92" font-family="Arial" font-size="7.00">18</text>
+</g>
+
+<g id="node27" class="node">
+<title>connector_19</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-530.44" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-527.92" font-family="Arial" font-size="7.00">19</text>
+</g>
+
+<g id="node28" class="node">
+<title>connector_20</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-743.62" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-741.11" font-family="Arial" font-size="7.00">20</text>
+</g>
+
+<g id="node29" class="node">
+<title>connector_21</title>
+<ellipse fill="#ffffff" stroke="#000000" cx="23.64" cy="-506.44" rx="9.36" ry="9.36" />
+<text text-anchor="middle" x="23.64" y="-503.92" font-family="Arial" font-size="7.00">21</text>
+</g>
+</g>
+</svg>
